@@ -17,7 +17,10 @@ import {
   Sun,
   Moon,
   Palette,
+  Info,
 } from "lucide-react";
+import packageInfo from "../../../../package.json";
+
 
 interface UserProfile {
   uid: string;
@@ -316,6 +319,37 @@ export default function Settings() {
                   ))}
                 </ul>
               )}
+            </div>
+          </div>
+
+          {/* System Information Card */}
+          <div className="rounded-xl backdrop-blur-md p-6 space-y-4" style={{ border: '1px solid var(--th-border)', background: 'var(--th-surface)' }}>
+            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 pb-3" style={{ color: 'var(--th-text-heading)', borderBottom: '1px solid var(--th-border)' }}>
+              <Info className="h-4 w-4 text-indigo-400" />
+              System Information
+            </h3>
+            <div className="space-y-3.5">
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--th-text-muted)' }}>Software Version</span>
+                <span className="font-mono font-bold px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  v{packageInfo.version}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--th-text-muted)' }}>Status</span>
+                <span className="flex items-center gap-1.5 font-bold text-emerald-400">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  Operational
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--th-text-muted)' }}>Environment</span>
+                <span className="font-semibold" style={{ color: 'var(--th-text-body)' }}>Production (Baseline)</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span style={{ color: 'var(--th-text-muted)' }}>Database</span>
+                <span className="font-semibold text-indigo-400">Cloud Firestore (Spark)</span>
+              </div>
             </div>
           </div>
         </div>

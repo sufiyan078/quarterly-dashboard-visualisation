@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.2.0] - 2026-07-11
+### Added
+- **System Information Card**: Integrated a new card on the Settings page displaying the active software version, system operational status, environment name, and database provider.
+
+### Files Modified
+- `src/app/(dashboard)/settings/page.tsx`
+
+### Reason
+- User request to show the current version of the webapp on the settings page.
+
+---
+
 ## [0.1.0] - 2026-07-11
 ### Added
 - **Stable Baseline Release (v0.1)**: Established the core versioning baseline for the Inventory Analytics & Reporting Portal.

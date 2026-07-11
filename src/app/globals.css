@@ -1,0 +1,1269 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+  --color-slate-950: var(--th-app-bg);
+  --color-slate-900: var(--th-surface-solid);
+  --color-slate-800: var(--th-border);
+  --color-slate-850: var(--th-border-strong);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM TOKENS
+   Centralized design tokens for typography, spacing, radii,
+   shadows, transitions. All components reference these tokens.
+   ════════════════════════════════════════════════════════════════ */
+:root {
+  /* ─── Typography Scale ─── */
+  --ds-font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --ds-font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  --ds-fs-page-title: 1.875rem;    /* 30px */
+  --ds-fw-page-title: 700;
+  --ds-lh-page-title: 1.25;
+
+  --ds-fs-section-title: 1.375rem; /* 22px */
+  --ds-fw-section-title: 600;
+  --ds-lh-section-title: 1.3;
+
+  --ds-fs-card-title: 1.125rem;    /* 18px */
+  --ds-fw-card-title: 600;
+  --ds-lh-card-title: 1.35;
+
+  --ds-fs-kpi-primary: 2.125rem;   /* 34px */
+  --ds-fw-kpi-primary: 700;
+  --ds-lh-kpi-primary: 1.15;
+
+  --ds-fs-kpi-secondary: 1.5rem;   /* 24px */
+  --ds-fw-kpi-secondary: 600;
+  --ds-lh-kpi-secondary: 1.2;
+
+  --ds-fs-table-header: 0.8125rem; /* 13px */
+  --ds-fw-table-header: 600;
+
+  --ds-fs-body: 0.875rem;          /* 14px */
+  --ds-fw-body: 400;
+  --ds-lh-body: 1.6;
+
+  --ds-fs-label: 0.8125rem;        /* 13px */
+  --ds-fw-label: 500;
+
+  --ds-fs-caption: 0.75rem;        /* 12px */
+  --ds-fw-caption: 400;
+  --ds-lh-caption: 1.5;
+
+  --ds-fs-badge: 0.6875rem;        /* 11px */
+  --ds-fw-badge: 500;
+
+  --ds-fs-button: 0.875rem;        /* 14px */
+  --ds-fw-button: 600;
+
+  --ds-fs-overline: 0.625rem;      /* 10px */
+  --ds-fw-overline: 700;
+
+  /* ─── 8-Point Spacing Grid ─── */
+  --ds-space-1: 0.25rem;   /* 4px */
+  --ds-space-2: 0.5rem;    /* 8px */
+  --ds-space-3: 0.75rem;   /* 12px */
+  --ds-space-4: 1rem;      /* 16px */
+  --ds-space-5: 1.25rem;   /* 20px */
+  --ds-space-6: 1.5rem;    /* 24px */
+  --ds-space-8: 2rem;      /* 32px */
+  --ds-space-10: 2.5rem;   /* 40px */
+  --ds-space-12: 3rem;     /* 48px */
+  --ds-space-16: 4rem;     /* 64px */
+
+  /* ─── Border Radius ─── */
+  --ds-radius-sm: 0.375rem;   /* 6px */
+  --ds-radius-md: 0.5rem;     /* 8px */
+  --ds-radius-lg: 0.75rem;    /* 12px */
+  --ds-radius-xl: 1rem;       /* 16px */
+  --ds-radius-full: 9999px;
+
+  /* ─── Shadows ─── */
+  --ds-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.08);
+  --ds-shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.16), 0 2px 8px rgba(0, 0, 0, 0.1);
+  --ds-shadow-elevated: 0 12px 40px rgba(0, 0, 0, 0.2), 0 4px 12px rgba(0, 0, 0, 0.1);
+
+  /* ─── Transitions ─── */
+  --ds-transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-transition-smooth: 300ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ─── Component Tokens ─── */
+  --ds-card-padding: var(--ds-space-6);
+  --ds-card-gap: var(--ds-space-4);
+  --ds-card-radius: var(--ds-radius-xl);
+  --ds-section-gap: var(--ds-space-8);
+  --ds-header-height: 4rem;
+  --ds-icon-sm: 1rem;       /* 16px */
+  --ds-icon-md: 1.25rem;    /* 20px */
+  --ds-icon-lg: 1.5rem;     /* 24px */
+  --ds-btn-height: 2.375rem; /* 38px */
+  --ds-btn-padding-x: var(--ds-space-4);
+  --ds-btn-radius: var(--ds-radius-md);
+  --ds-badge-height: 1.375rem; /* 22px */
+  --ds-badge-padding-x: var(--ds-space-2);
+  --ds-badge-radius: var(--ds-radius-sm);
+  --ds-table-row-height: 2.75rem;  /* 44px */
+  --ds-table-header-height: 2.5rem; /* 40px */
+  --ds-table-cell-padding-x: var(--ds-space-4);
+  --ds-table-cell-padding-y: var(--ds-space-3);
+  --ds-input-height: 2.375rem;
+  --ds-input-padding-x: var(--ds-space-3);
+  --ds-input-radius: var(--ds-radius-md);
+  --ds-sidebar-card-padding: var(--ds-space-5);
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DARK THEME (default)
+   ════════════════════════════════════════════════════════════════ */
+:root,
+[data-theme="dark"] {
+  --background: #040e0e;
+  --foreground: #d1e2e2;
+  --th-app-bg: #040e0e;
+  --th-surface: rgba(8, 23, 23, 0.65);
+  --th-surface-solid: #081717;
+  --th-header-bg: rgba(6, 18, 18, 0.9);
+  --th-input-bg: #030a0a;
+  --th-elevated-bg: #0a2020;
+  --th-border: rgba(20, 55, 55, 0.6);
+  --th-border-strong: rgba(30, 80, 80, 0.6);
+  --th-text-heading: #ffffff;
+  --th-text-body: #d1e2e2;
+  --th-text-muted: #8fa5a5;
+  --th-text-faint: #5f7d7d;
+  --th-nav-pill-bg: rgba(8, 23, 23, 0.5);
+  --th-nav-pill-border: rgba(20, 55, 55, 0.8);
+  --th-nav-active: rgba(255, 255, 255, 0.08);
+  --th-modal-backdrop: rgba(2, 8, 8, 0.85);
+  --th-shadow-accent: rgba(0, 229, 255, 0.1);
+  --th-spinner-track: #102d2d;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LIGHT THEME
+   Warm cream/yellow palette inspired by the design reference
+   ════════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --background: #fdf8e1;
+  --foreground: #3d3520;
+  --th-app-bg: #fdf8e1;
+  --th-surface: rgba(255, 255, 245, 0.75);
+  --th-surface-solid: #fffef2;
+  --th-header-bg: rgba(253, 248, 225, 0.92);
+  --th-input-bg: #fffef6;
+  --th-elevated-bg: #fffdf0;
+  --th-border: rgba(195, 185, 130, 0.35);
+  --th-border-strong: rgba(180, 170, 110, 0.45);
+  --th-text-heading: #1a1500;
+  --th-text-body: #3d3520;
+  --th-text-muted: #7a7050;
+  --th-text-faint: #9a9070;
+  --th-nav-pill-bg: rgba(255, 255, 245, 0.6);
+  --th-nav-pill-border: rgba(195, 185, 130, 0.4);
+  --th-nav-active: rgba(79, 70, 229, 0.1);
+  --th-modal-backdrop: rgba(200, 195, 160, 0.6);
+  --th-shadow-accent: rgba(79, 70, 229, 0.15);
+  --th-spinner-track: #e8e0b8;
+}
+
+/* ═══ Base Body ═══ */
+body {
+  background: var(--th-app-bg) !important;
+  color: var(--th-text-body) !important;
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-fs-body);
+  font-weight: var(--ds-fw-body);
+  line-height: var(--ds-lh-body);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  transition: background-color 0.35s ease, color 0.35s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code, kbd, samp, pre {
+  font-family: var(--ds-font-mono) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LIGHT THEME — GLOBAL OVERRIDES
+   Comprehensive CSS rules that transform the dark-first UI
+   into the warm cream light theme.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ─── Force all backgrounds via specificity ─── */
+[data-theme="light"],
+[data-theme="light"] body,
+[data-theme="light"] main {
+  background-color: #fdf8e1 !important;
+  color: #3d3520 !important;
+}
+
+/* ─── Card / Surface panels (only divs/forms, not buttons/links) ─── */
+[data-theme="light"] div.rounded-xl,
+[data-theme="light"] div.rounded-2xl,
+[data-theme="light"] form.rounded-xl,
+[data-theme="light"] form.rounded-2xl,
+[data-theme="light"] div.rounded-xl[class*="bg-"],
+[data-theme="light"] div.rounded-2xl[class*="bg-"],
+[data-theme="light"] form.rounded-xl[class*="bg-"],
+[data-theme="light"] form.rounded-2xl[class*="bg-"] {
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 245, 0.3) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(253, 248, 225, 0.6) 100%) !important;
+  backdrop-filter: blur(16px) saturate(120%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
+  border: 1px solid rgba(140, 123, 80, 0.18) !important;
+  box-shadow: 0 8px 32px 0 rgba(140, 123, 80, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+[data-theme="light"] div.rounded-xl:hover,
+[data-theme="light"] div.rounded-2xl:hover,
+[data-theme="light"] form.rounded-xl:hover,
+[data-theme="light"] form.rounded-2xl:hover {
+  border-color: rgba(140, 123, 80, 0.32) !important;
+  background: 
+    linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 245, 0.5) 100%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(253, 248, 225, 0.75) 100%) !important;
+  box-shadow: 0 12px 40px 0 rgba(140, 123, 80, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Nested rounded panels inside cards */
+[data-theme="light"] div.rounded-xl div.rounded-xl,
+[data-theme="light"] div.rounded-xl div.rounded-lg,
+[data-theme="light"] div.rounded-xl li.rounded-lg {
+  background-color: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(195, 185, 130, 0.2) !important;
+}
+
+/* ─── Specific hex-background overrides (catch-all for arbitrary values) ─── */
+[data-theme="light"] [style*="background"][style*="#090b11"],
+[data-theme="light"] [style*="background"][style*="#08090d"],
+[data-theme="light"] [style*="background"][style*="#0c0e14"],
+[data-theme="light"] [style*="background"][style*="#0c0e15"] {
+  background-color: #fffef2 !important;
+}
+
+[data-theme="light"] [class*="bg-[#0c0e15]"],
+[data-theme="light"] [class*="bg-[#0c0e14]"],
+[data-theme="light"] [class*="bg-[#090b11]"],
+[data-theme="light"] [class*="bg-[#08090d]"] {
+  background-color: #fffef2 !important;
+}
+
+[data-theme="light"] [class*="bg-[#0c0e15]/20"],
+[data-theme="light"] [class*="bg-[#0c0e14]/20"] {
+  background-color: rgba(255, 255, 245, 0.2) !important;
+}
+[data-theme="light"] [class*="bg-[#0c0e15]/30"],
+[data-theme="light"] [class*="bg-[#0c0e14]/30"] {
+  background-color: rgba(255, 255, 245, 0.3) !important;
+}
+[data-theme="light"] [class*="bg-[#0c0e15]/40"],
+[data-theme="light"] [class*="bg-[#0c0e14]/40"] {
+  background-color: rgba(255, 255, 245, 0.4) !important;
+}
+[data-theme="light"] [class*="bg-[#0c0e15]/50"],
+[data-theme="light"] [class*="bg-[#0c0e14]/50"] {
+  background-color: rgba(255, 255, 245, 0.5) !important;
+}
+[data-theme="light"] [class*="bg-[#0c0e15]/60"],
+[data-theme="light"] [class*="bg-[#0c0e14]/60"] {
+  background-color: rgba(255, 255, 245, 0.6) !important;
+}
+[data-theme="light"] [class*="bg-[#0c0e15]/80"],
+[data-theme="light"] [class*="bg-[#0c0e14]/80"] {
+  background-color: rgba(255, 255, 245, 0.8) !important;
+}
+
+[data-theme="light"] [class*="bg-[#05070a]"] {
+  background-color: #fffef6 !important;
+}
+
+[data-theme="light"] [class*="from-[#0c0e15]"] {
+  background-image: linear-gradient(to bottom right, #fffef2, #fffdf0) !important;
+}
+
+/* ─── Header / Nav bar ─── */
+[data-theme="light"] header {
+  background: rgba(253, 248, 225, 0.92) !important;
+  border-bottom-color: rgba(195, 185, 130, 0.35) !important;
+  backdrop-filter: blur(20px) !important;
+}
+
+[data-theme="light"] nav {
+  background: rgba(255, 255, 245, 0.6) !important;
+  border-color: rgba(195, 185, 130, 0.4) !important;
+}
+
+/* ─── Text: Headings ─── */
+[data-theme="light"] h1,
+[data-theme="light"] h2,
+[data-theme="light"] h3,
+[data-theme="light"] h4 {
+  color: #1a1500 !important;
+}
+
+/* ─── Text: Labels, spans, paragraphs ─── */
+[data-theme="light"] label {
+  color: #554d30 !important;
+}
+
+[data-theme="light"] p {
+  color: #3d3520;
+}
+
+/* ─── Text slate classes ─── */
+[data-theme="light"] .text-slate-100 { color: #2d2810 !important; }
+[data-theme="light"] .text-slate-200 { color: #3d3520 !important; }
+[data-theme="light"] .text-slate-300 { color: #554d30 !important; }
+[data-theme="light"] .text-slate-400 { color: #7a7050 !important; }
+[data-theme="light"] .text-slate-500 { color: #9a9070 !important; }
+[data-theme="light"] .text-slate-600 { color: #8a8060 !important; }
+
+/* text-white: only override on non-interactive containers */
+/* Do NOT touch buttons, links, or anything inside a colored background */
+[data-theme="light"] h1.text-white,
+[data-theme="light"] h2.text-white,
+[data-theme="light"] h3.text-white,
+[data-theme="light"] h4.text-white,
+[data-theme="light"] div.text-white,
+[data-theme="light"] span.text-white:not([class*="bg-"]),
+[data-theme="light"] p.text-white,
+[data-theme="light"] li.text-white {
+  color: #1a1500 !important;
+}
+
+/* Buttons and links with text-white should keep white */
+[data-theme="light"] button.text-white,
+[data-theme="light"] a.text-white {
+  /* Only override if they don't have a colored bg */
+}
+
+/* Force white text on SOLID accent-colored buttons/links only */
+/* Using specific class names to avoid matching translucent bg-indigo-500/5 etc. */
+[data-theme="light"] .bg-indigo-500,
+[data-theme="light"] .bg-indigo-600,
+[data-theme="light"] .bg-emerald-500,
+[data-theme="light"] .bg-emerald-600,
+[data-theme="light"] .bg-rose-500,
+[data-theme="light"] .bg-rose-600,
+[data-theme="light"] .bg-purple-500,
+[data-theme="light"] .bg-purple-600 {
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .bg-indigo-500 *,
+[data-theme="light"] .bg-indigo-600 *,
+[data-theme="light"] .bg-emerald-500 *,
+[data-theme="light"] .bg-emerald-600 *,
+[data-theme="light"] .bg-rose-500 *,
+[data-theme="light"] .bg-rose-600 *,
+[data-theme="light"] .bg-purple-500 *,
+[data-theme="light"] .bg-purple-600 * {
+  color: #ffffff !important;
+}
+
+/* Also catch hover variants */
+[data-theme="light"] .hover\:bg-indigo-600:hover,
+[data-theme="light"] .hover\:bg-emerald-500:hover {
+  color: #ffffff !important;
+}
+
+/* Keep logo text on indigo bg white */
+[data-theme="light"] .bg-indigo-500 svg {
+  color: #ffffff !important;
+}
+
+/* ─── Border overrides ─── */
+[data-theme="light"] .border-slate-800 { border-color: rgba(195, 185, 130, 0.35) !important; }
+[data-theme="light"] .border-slate-700 { border-color: rgba(180, 170, 110, 0.45) !important; }
+[data-theme="light"] .border-slate-900 { border-color: rgba(210, 200, 150, 0.3) !important; }
+
+/* All generic border elements */
+[data-theme="light"] [class*="border-slate-8"] {
+  border-color: rgba(195, 185, 130, 0.35) !important;
+}
+[data-theme="light"] [class*="border-slate-7"] {
+  border-color: rgba(180, 170, 110, 0.45) !important;
+}
+[data-theme="light"] [class*="border-slate-9"] {
+  border-color: rgba(210, 200, 150, 0.3) !important;
+}
+
+/* ─── Dividers ─── */
+[data-theme="light"] [class*="divide-slate"] > :not([hidden]) ~ :not([hidden]) {
+  border-color: rgba(195, 185, 130, 0.25) !important;
+}
+
+/* ─── Backgrounds: slate tones ─── */
+[data-theme="light"] .bg-slate-950 { background-color: #fffef6 !important; }
+[data-theme="light"] .bg-slate-900 { background-color: #fffdf0 !important; }
+[data-theme="light"] .bg-slate-800 { background-color: #f5f0d5 !important; }
+
+[data-theme="light"] [class*="bg-slate-950"] { background-color: #fffef6 !important; }
+[data-theme="light"] [class*="bg-slate-900"]:not(button):not(a) { background-color: #fffdf0 !important; }
+
+/* ─── Dashed border containers ─── */
+[data-theme="light"] .border-dashed {
+  border-color: rgba(180, 170, 110, 0.5) !important;
+}
+
+/* ─── Input / Select / Textarea ─── */
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background-color: #fffef6 !important;
+  color: #1a1500 !important;
+  border-color: rgba(195, 185, 130, 0.4) !important;
+}
+
+[data-theme="light"] input::placeholder,
+[data-theme="light"] textarea::placeholder {
+  color: #b0a880 !important;
+}
+
+[data-theme="light"] select option {
+  background-color: #fffef5;
+  color: #1a1500;
+}
+
+[data-theme="light"] input:focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 1px #6366f1 !important;
+}
+
+/* ─── Tables ─── */
+[data-theme="light"] table {
+  background-color: transparent !important;
+}
+
+[data-theme="light"] thead tr {
+  background-color: #fefbe6 !important;
+}
+
+[data-theme="light"] tbody tr:hover {
+  background-color: rgba(253, 248, 225, 0.6) !important;
+}
+
+[data-theme="light"] th {
+  color: #7a7050 !important;
+}
+
+[data-theme="light"] td {
+  color: #3d3520 !important;
+}
+
+/* ─── Ring overrides ─── */
+[data-theme="light"] [class*="ring-slate"] {
+  --tw-ring-color: rgba(195, 185, 130, 0.4) !important;
+}
+
+/* ─── Backdrop/modal overrides ─── */
+[data-theme="light"] [class*="backdrop-blur"] {
+  backdrop-filter: blur(20px) !important;
+}
+
+/* ─── Scrollbar (webkit) ─── */
+[data-theme="light"] ::-webkit-scrollbar {
+  width: 6px;
+}
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f5f0d8;
+}
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #d4ce98;
+  border-radius: 3px;
+}
+
+/* ─── Selection ─── */
+[data-theme="light"] ::selection {
+  background: rgba(99, 102, 241, 0.15);
+  color: #1a1500;
+}
+
+/* ─── Gradient text (clip) should stay intact ─── */
+[data-theme="light"] .bg-clip-text {
+  color: transparent !important;
+}
+
+/* ─── Spinner track fix ─── */
+[data-theme="light"] .animate-spin {
+  border-color: #e8e0b8 !important;
+  border-top-color: #6366f1 !important;
+}
+
+/* ─── Keep accent badge backgrounds (they have alpha) ─── */
+[data-theme="light"] [class*="bg-indigo-500/10"],
+[data-theme="light"] [class*="bg-emerald-500/10"],
+[data-theme="light"] [class*="bg-purple-500/10"],
+[data-theme="light"] [class*="bg-sky-500/10"],
+[data-theme="light"] [class*="bg-amber-500/10"],
+[data-theme="light"] [class*="bg-rose-500/10"],
+[data-theme="light"] [class*="bg-red-500/10"] {
+  background-color: inherit;
+}
+
+
+
+
+/* ─── White Google sign-in button must stay white ─── */
+[data-theme="light"] button.bg-white,
+[data-theme="light"] button[class*="bg-white"] {
+  background-color: #ffffff !important;
+  color: #1e293b !important;
+}
+
+/* ─── Ensure the .rounded-full nav pill doesn't get cream bg ─── */
+[data-theme="light"] nav.rounded-full,
+[data-theme="light"] nav[class*="rounded-full"] {
+  background-color: rgba(255, 255, 245, 0.6) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DARK THEME — GLOBAL OVERRIDES
+   Comprehensive CSS rules that transform the default dark UI
+   into the dark teal-green theme from the screenshot.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ─── Force all backgrounds via specificity in dark mode ─── */
+[data-theme="dark"],
+[data-theme="dark"] body,
+[data-theme="dark"] main,
+:root:not([data-theme="light"]),
+:root:not([data-theme="light"]) body,
+:root:not([data-theme="light"]) main {
+  background-color: #040e0e !important;
+  color: #d1e2e2 !important;
+}
+
+/* ─── Card / Surface panels in dark mode ─── */
+[data-theme="dark"] div.rounded-xl,
+[data-theme="dark"] div.rounded-2xl,
+[data-theme="dark"] form.rounded-xl,
+[data-theme="dark"] form.rounded-2xl,
+[data-theme="dark"] div.rounded-xl[class*="bg-"],
+[data-theme="dark"] div.rounded-2xl[class*="bg-"],
+[data-theme="dark"] form.rounded-xl[class*="bg-"],
+[data-theme="dark"] form.rounded-2xl[class*="bg-"],
+:root:not([data-theme="light"]) div.rounded-xl,
+:root:not([data-theme="light"]) div.rounded-2xl,
+:root:not([data-theme="light"]) form.rounded-xl,
+:root:not([data-theme="light"]) form.rounded-2xl,
+:root:not([data-theme="light"]) div.rounded-xl[class*="bg-"],
+:root:not([data-theme="light"]) div.rounded-2xl[class*="bg-"],
+:root:not([data-theme="light"]) form.rounded-xl[class*="bg-"],
+:root:not([data-theme="light"]) form.rounded-2xl[class*="bg-"] {
+  background: 
+    linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(8, 28, 28, 0.45) 0%, rgba(4, 15, 15, 0.75) 100%) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  border: 1px solid rgba(45, 212, 191, 0.15) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Card hover animation in dark mode */
+[data-theme="dark"] div.rounded-xl:hover,
+[data-theme="dark"] div.rounded-2xl:hover,
+[data-theme="dark"] form.rounded-xl:hover,
+[data-theme="dark"] form.rounded-2xl:hover,
+:root:not([data-theme="light"]) div.rounded-xl:hover,
+:root:not([data-theme="light"]) div.rounded-2xl:hover,
+:root:not([data-theme="light"]) form.rounded-xl:hover,
+:root:not([data-theme="light"]) form.rounded-2xl:hover {
+  border-color: rgba(45, 212, 191, 0.3) !important;
+  background: 
+    linear-gradient(135deg, rgba(20, 184, 166, 0.12) 0%, transparent 100%),
+    linear-gradient(180deg, rgba(10, 35, 35, 0.55) 0%, rgba(5, 20, 20, 0.8) 100%) !important;
+  box-shadow: 0 12px 40px 0 rgba(0, 229, 255, 0.08), inset 0 1px 2px rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Nested rounded panels inside cards */
+[data-theme="dark"] div.rounded-xl div.rounded-xl,
+[data-theme="dark"] div.rounded-xl div.rounded-lg,
+[data-theme="dark"] div.rounded-xl li.rounded-lg,
+:root:not([data-theme="light"]) div.rounded-xl div.rounded-xl,
+:root:not([data-theme="light"]) div.rounded-xl div.rounded-lg,
+:root:not([data-theme="light"]) div.rounded-xl li.rounded-lg {
+  background-color: rgba(12, 32, 32, 0.5) !important;
+  border-color: rgba(45, 212, 191, 0.1) !important;
+}
+
+/* Specific overrides for hardcoded dark colors to map to the new dark teal colors */
+[data-theme="dark"] [class*="bg-[#0c0e15]"],
+[data-theme="dark"] [class*="bg-[#0c0e14]"],
+[data-theme="dark"] [class*="bg-[#090b11]"],
+[data-theme="dark"] [class*="bg-[#08090d]"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]"],
+:root:not([data-theme="light"]) [class*="bg-[#090b11]"],
+:root:not([data-theme="light"]) [class*="bg-[#08090d]"] {
+  background-color: #081717 !important;
+}
+
+/* Specific overrides for backgrounds that should match app background */
+[data-theme="dark"] [class*="bg-[#090b11]"],
+[data-theme="dark"] [class*="bg-[#08090d]"],
+:root:not([data-theme="light"]) [class*="bg-[#090b11]"],
+:root:not([data-theme="light"]) [class*="bg-[#08090d]"] {
+  background-color: #040e0e !important;
+}
+
+/* Semi-transparent ones */
+[data-theme="dark"] [class*="bg-[#0c0e15]/20"],
+[data-theme="dark"] [class*="bg-[#0c0e14]/20"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]/20"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]/20"] {
+  background-color: rgba(8, 23, 23, 0.2) !important;
+}
+[data-theme="dark"] [class*="bg-[#0c0e15]/30"],
+[data-theme="dark"] [class*="bg-[#0c0e14]/30"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]/30"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]/30"] {
+  background-color: rgba(8, 23, 23, 0.3) !important;
+}
+[data-theme="dark"] [class*="bg-[#0c0e15]/40"],
+[data-theme="dark"] [class*="bg-[#0c0e14]/40"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]/40"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]/40"] {
+  background-color: rgba(8, 23, 23, 0.4) !important;
+}
+[data-theme="dark"] [class*="bg-[#0c0e15]/50"],
+[data-theme="dark"] [class*="bg-[#0c0e14]/50"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]/50"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]/50"] {
+  background-color: rgba(8, 23, 23, 0.5) !important;
+}
+[data-theme="dark"] [class*="bg-[#0c0e15]/60"],
+[data-theme="dark"] [class*="bg-[#0c0e14]/60"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]/60"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]/60"] {
+  background-color: rgba(8, 23, 23, 0.6) !important;
+}
+[data-theme="dark"] [class*="bg-[#0c0e15]/80"],
+[data-theme="dark"] [class*="bg-[#0c0e14]/80"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e15]/80"],
+:root:not([data-theme="light"]) [class*="bg-[#0c0e14]/80"] {
+  background-color: rgba(8, 23, 23, 0.8) !important;
+}
+
+[data-theme="dark"] [class*="bg-[#05070a]"],
+:root:not([data-theme="light"]) [class*="bg-[#05070a]"] {
+  background-color: #030a0a !important;
+}
+
+/* Overriding background gradients like `from-[#0c0e15] to-[#121524]` */
+[data-theme="dark"] [class*="from-[#0c0e15]"],
+:root:not([data-theme="light"]) [class*="from-[#0c0e15]"] {
+  background-image: linear-gradient(to bottom right, #081717, #0c2020) !important;
+}
+
+/* Dark mode specific text slate overrides */
+[data-theme="dark"] .text-slate-100,
+:root:not([data-theme="light"]) .text-slate-100 { color: #ffffff !important; }
+[data-theme="dark"] .text-slate-200,
+:root:not([data-theme="light"]) .text-slate-200 { color: #d1e2e2 !important; }
+[data-theme="dark"] .text-slate-300,
+:root:not([data-theme="light"]) .text-slate-300 { color: #b1c5c5 !important; }
+[data-theme="dark"] .text-slate-400,
+:root:not([data-theme="light"]) .text-slate-400 { color: #8fa5a5 !important; }
+[data-theme="dark"] .text-slate-500,
+:root:not([data-theme="light"]) .text-slate-500 { color: #5f7d7d !important; }
+[data-theme="dark"] .text-slate-650,
+[data-theme="dark"] .text-slate-600,
+:root:not([data-theme="light"]) .text-slate-650,
+:root:not([data-theme="light"]) .text-slate-600 { color: #405858 !important; }
+
+/* Border overrides */
+[data-theme="dark"] .border-slate-800,
+:root:not([data-theme="light"]) .border-slate-800 { border-color: rgba(20, 55, 55, 0.6) !important; }
+[data-theme="dark"] .border-slate-700,
+:root:not([data-theme="light"]) .border-slate-700 { border-color: rgba(30, 80, 80, 0.6) !important; }
+[data-theme="dark"] .border-slate-900,
+:root:not([data-theme="light"]) .border-slate-900 { border-color: rgba(10, 35, 35, 0.6) !important; }
+[data-theme="dark"] .border-slate-850,
+:root:not([data-theme="light"]) .border-slate-850 { border-color: rgba(15, 45, 45, 0.5) !important; }
+
+[data-theme="dark"] [class*="border-slate-8"],
+:root:not([data-theme="light"]) [class*="border-slate-8"] {
+  border-color: rgba(20, 55, 55, 0.6) !important;
+}
+[data-theme="dark"] [class*="border-slate-7"],
+:root:not([data-theme="light"]) [class*="border-slate-7"] {
+  border-color: rgba(30, 80, 80, 0.6) !important;
+}
+[data-theme="dark"] [class*="border-slate-9"],
+:root:not([data-theme="light"]) [class*="border-slate-9"] {
+  border-color: rgba(10, 35, 35, 0.6) !important;
+}
+
+/* Background overrides */
+[data-theme="dark"] .bg-slate-950,
+:root:not([data-theme="light"]) .bg-slate-950 { background-color: #030a0a !important; }
+[data-theme="dark"] .bg-slate-900,
+:root:not([data-theme="light"]) .bg-slate-900 { background-color: #081717 !important; }
+[data-theme="dark"] .bg-slate-800,
+:root:not([data-theme="light"]) .bg-slate-800 { background-color: #0e2b2b !important; }
+
+/* ─── Dashed border containers ─── */
+[data-theme="dark"] .border-dashed,
+:root:not([data-theme="light"]) .border-dashed {
+  border-color: rgba(20, 55, 55, 0.8) !important;
+}
+
+/* ─── Input / Select / Textarea ─── */
+[data-theme="dark"] input,
+[data-theme="dark"] select,
+[data-theme="dark"] textarea,
+:root:not([data-theme="light"]) input,
+:root:not([data-theme="light"]) select,
+:root:not([data-theme="light"]) textarea {
+  background-color: #030a0a !important;
+  color: #ffffff !important;
+  border-color: rgba(20, 55, 55, 0.8) !important;
+}
+
+/* ─── Tables ─── */
+[data-theme="dark"] thead tr,
+:root:not([data-theme="light"]) thead tr {
+  background-color: #030a0a !important;
+}
+
+[data-theme="dark"] tbody tr:hover,
+:root:not([data-theme="light"]) tbody tr:hover {
+  background-color: rgba(8, 23, 23, 0.3) !important;
+}
+
+/* ─── Keep accent badge backgrounds in dark mode ─── */
+[data-theme="dark"] [class*="bg-indigo-500/10"],
+[data-theme="dark"] [class*="bg-emerald-500/10"],
+[data-theme="dark"] [class*="bg-purple-500/10"],
+[data-theme="dark"] [class*="bg-sky-500/10"],
+[data-theme="dark"] [class*="bg-amber-500/10"],
+[data-theme="dark"] [class*="bg-rose-500/10"],
+[data-theme="dark"] [class*="bg-red-500/10"] {
+  background-color: rgba(16, 45, 45, 0.35) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DARK THEME: ACCENT OVERRIDES (INDIGO/VIOLET TO TEAL/EMERALD)
+   ════════════════════════════════════════════════════════════════ */
+[data-theme="dark"] .bg-indigo-500,
+[data-theme="dark"] .bg-indigo-600,
+:root:not([data-theme="light"]) .bg-indigo-500,
+:root:not([data-theme="light"]) .bg-indigo-600 {
+  background-color: #0d9488 !important; /* Teal 600 */
+}
+
+[data-theme="dark"] .hover\:bg-indigo-600:hover,
+[data-theme="dark"] .hover\:bg-indigo-500:hover,
+:root:not([data-theme="light"]) .hover\:bg-indigo-600:hover,
+:root:not([data-theme="light"]) .hover\:bg-indigo-500:hover {
+  background-color: #0f766e !important; /* Teal 700 */
+}
+
+[data-theme="dark"] .text-indigo-400,
+[data-theme="dark"] .text-indigo-500,
+:root:not([data-theme="light"]) .text-indigo-400,
+:root:not([data-theme="light"]) .text-indigo-500 {
+  color: #2dd4bf !important; /* Teal 400 */
+}
+
+[data-theme="dark"] .text-indigo-600,
+:root:not([data-theme="light"]) .text-indigo-600 {
+  color: #0d9488 !important; /* Teal 600 */
+}
+
+[data-theme="dark"] .border-indigo-500,
+[data-theme="dark"] .border-indigo-600,
+:root:not([data-theme="light"]) .border-indigo-500,
+:root:not([data-theme="light"]) .border-indigo-600 {
+  border-color: #0d9488 !important;
+}
+
+[data-theme="dark"] .border-l-indigo-500,
+:root:not([data-theme="light"]) .border-l-indigo-500 {
+  border-left-color: #0d9488 !important;
+}
+
+[data-theme="dark"] .border-t-indigo-500,
+:root:not([data-theme="light"]) .border-t-indigo-500 {
+  border-top-color: #2dd4bf !important;
+}
+
+[data-theme="dark"] [class*="focus:border-indigo-500"]:focus,
+:root:not([data-theme="light"]) [class*="focus:border-indigo-500"]:focus {
+  border-color: #2dd4bf !important;
+}
+
+[data-theme="dark"] [class*="focus:ring-indigo-500"]:focus,
+:root:not([data-theme="light"]) [class*="focus:ring-indigo-500"]:focus {
+  --tw-ring-color: #0d9488 !important;
+}
+
+[data-theme="dark"] [class*="bg-indigo-600/10"],
+[data-theme="dark"] [class*="bg-indigo-500/10"],
+:root:not([data-theme="light"]) [class*="bg-indigo-600/10"],
+:root:not([data-theme="light"]) [class*="bg-indigo-500/10"] {
+  background-color: rgba(13, 148, 136, 0.15) !important;
+  color: #2dd4bf !important;
+}
+
+[data-theme="dark"] [class*="bg-indigo-500/20"],
+:root:not([data-theme="light"]) [class*="bg-indigo-500/20"] {
+  background-color: rgba(13, 148, 136, 0.25) !important;
+}
+
+[data-theme="dark"] [class*="shadow-indigo-500"],
+:root:not([data-theme="light"]) [class*="shadow-indigo-500"] {
+  --tw-shadow-color: rgba(13, 148, 136, 0.25) !important;
+  box-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color) !important;
+}
+
+/* Spinner color adjustments */
+[data-theme="dark"] .border-t-indigo-500,
+:root:not([data-theme="light"]) .border-t-indigo-500 {
+  border-top-color: #2dd4bf !important;
+}
+
+[data-theme="dark"] ::selection,
+:root:not([data-theme="light"]) ::selection {
+  background: rgba(13, 148, 136, 0.3) !important;
+  color: #ffffff !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   LIGHT THEME: ACCENT OVERRIDES (INDIGO/VIOLET TO WARM GOLD/BRONZE)
+   ════════════════════════════════════════════════════════════════ */
+[data-theme="light"] .bg-indigo-500,
+[data-theme="light"] .bg-indigo-600 {
+  background-color: #8c7b50 !important; /* Bronze 600 */
+}
+
+[data-theme="light"] .hover\:bg-indigo-600:hover,
+[data-theme="light"] .hover\:bg-indigo-500:hover {
+  background-color: #736235 !important; /* Bronze 700 */
+}
+
+[data-theme="light"] .text-indigo-400,
+[data-theme="light"] .text-indigo-500 {
+  color: #8c7b50 !important; /* Bronze 500 */
+}
+
+[data-theme="light"] .text-indigo-600 {
+  color: #736235 !important; /* Bronze 700 */
+}
+
+[data-theme="light"] .border-indigo-500,
+[data-theme="light"] .border-indigo-600 {
+  border-color: #8c7b50 !important;
+}
+
+[data-theme="light"] .border-l-indigo-500 {
+  border-left-color: #8c7b50 !important;
+}
+
+[data-theme="light"] .border-t-indigo-500 {
+  border-top-color: #8c7b50 !important;
+}
+
+[data-theme="light"] [class*="focus:border-indigo-500"]:focus {
+  border-color: #8c7b50 !important;
+}
+
+[data-theme="light"] [class*="focus:ring-indigo-500"]:focus {
+  --tw-ring-color: #8c7b50 !important;
+}
+
+[data-theme="light"] [class*="bg-indigo-600/10"],
+[data-theme="light"] [class*="bg-indigo-500/10"] {
+  background-color: rgba(140, 123, 80, 0.15) !important;
+  color: #736235 !important;
+}
+
+[data-theme="light"] [class*="bg-indigo-500/20"] {
+  background-color: rgba(140, 123, 80, 0.25) !important;
+}
+
+[data-theme="light"] [class*="shadow-indigo-500"] {
+  --tw-shadow-color: rgba(140, 123, 80, 0.15) !important;
+  box-shadow: 0 10px 15px -3px var(--tw-shadow-color), 0 4px 6px -4px var(--tw-shadow-color) !important;
+}
+
+[data-theme="light"] .border-t-indigo-500 {
+  border-top-color: #8c7b50 !important;
+}
+
+[data-theme="light"] ::selection {
+  background: rgba(140, 123, 80, 0.25) !important;
+  color: #1a1500 !important;
+}
+
+/* ─── Light Mode: Emerald gradient buttons → Bronze/Warm-Gold ─── */
+/* The "Proceed to Validation" button uses from-emerald-600 to-emerald-500.
+   In light mode these must match the rest of the warm bronze accent palette. */
+[data-theme="light"] .from-emerald-600,
+[data-theme="light"] [class*="from-emerald-600"] {
+  --tw-gradient-from: #8c7b50 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+[data-theme="light"] .to-emerald-500,
+[data-theme="light"] [class*="to-emerald-500"] {
+  --tw-gradient-to: #7a6838 !important;
+}
+[data-theme="light"] .from-emerald-500,
+[data-theme="light"] [class*="from-emerald-500"] {
+  --tw-gradient-from: #7a6838 !important;
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to) !important;
+}
+[data-theme="light"] .to-emerald-400,
+[data-theme="light"] [class*="to-emerald-400"] {
+  --tw-gradient-to: #6b5a2e !important;
+}
+
+/* Solid emerald bg buttons in light mode → bronze */
+[data-theme="light"] .bg-emerald-600 {
+  background-color: #8c7b50 !important;
+}
+[data-theme="light"] .hover\:from-emerald-500:hover {
+  --tw-gradient-from: #7a6838 !important;
+}
+[data-theme="light"] .hover\:from-emerald-400:hover,
+[data-theme="light"] .hover\:to-emerald-400:hover {
+  --tw-gradient-to: #6b5a2e !important;
+}
+
+
+/* ─── Navigation Pill Liquid Glass Overrides ─── */
+.nav-glass-container {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.nav-glass-item {
+  border: 1px solid transparent !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Dark Theme overrides */
+[data-theme="dark"] .nav-glass-container,
+:root:not([data-theme="light"]) .nav-glass-container {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.05) 0%, rgba(8, 23, 23, 0.45) 100%) !important;
+  border: 1px solid rgba(45, 212, 191, 0.15) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25), inset 0 1px 0px rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+[data-theme="dark"] .nav-glass-item-active,
+:root:not([data-theme="light"]) .nav-glass-item-active {
+  background: linear-gradient(135deg, rgba(20, 184, 166, 0.22) 0%, rgba(20, 184, 166, 0.1) 100%) !important;
+  border: 1px solid rgba(45, 212, 191, 0.4) !important;
+  box-shadow: 0 2px 8px rgba(45, 212, 191, 0.15), inset 0 1px 0px rgba(255, 255, 255, 0.1) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] .nav-glass-item:hover:not(.nav-glass-item-active),
+:root:not([data-theme="light"]) .nav-glass-item:hover:not(.nav-glass-item-active) {
+  background: rgba(20, 184, 166, 0.08) !important;
+  border-color: rgba(45, 212, 191, 0.25) !important;
+  color: #ffffff !important;
+}
+
+/* Light Theme overrides */
+[data-theme="light"] .nav-glass-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 245, 0.35) 100%) !important;
+  border: 1px solid rgba(140, 123, 80, 0.25) !important;
+  box-shadow: 0 4px 16px rgba(140, 123, 80, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+}
+
+[data-theme="light"] .nav-glass-item-active {
+  background: linear-gradient(135deg, rgba(140, 123, 80, 0.16) 0%, rgba(140, 123, 80, 0.08) 100%) !important;
+  border: 1px solid rgba(140, 123, 80, 0.35) !important;
+  box-shadow: 0 2px 8px rgba(140, 123, 80, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.9) !important;
+  color: #736235 !important;
+}
+
+[data-theme="light"] .nav-glass-item:hover:not(.nav-glass-item-active) {
+  background: rgba(140, 123, 80, 0.06) !important;
+  border-color: rgba(140, 123, 80, 0.2) !important;
+  color: #3d3520 !important;
+}
+
+/* ════════════════════════════════════════════════════════════════
+   DESIGN SYSTEM — GLOBAL COMPONENT STYLES
+   Applied via element/class selectors, referencing design tokens.
+   These style the app-wide typography, tables, buttons, badges,
+   cards, inputs, scrollbars, focus rings, and accessibility.
+   ════════════════════════════════════════════════════════════════ */
+
+/* ─── Tabular Numerals for all numeric content ─── */
+.font-mono,
+[class*="font-mono"],
+td[class*="text-right"],
+span[class*="font-mono"] {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ─── Typography Hierarchy ─── */
+h1 {
+  font-size: var(--ds-fs-page-title);
+  font-weight: var(--ds-fw-page-title);
+  line-height: var(--ds-lh-page-title);
+  letter-spacing: -0.025em;
+}
+
+h2 {
+  font-size: var(--ds-fs-section-title);
+  font-weight: var(--ds-fw-section-title);
+  line-height: var(--ds-lh-section-title);
+  letter-spacing: -0.02em;
+}
+
+h3 {
+  font-size: var(--ds-fs-card-title);
+  font-weight: var(--ds-fw-card-title);
+  line-height: var(--ds-lh-card-title);
+  letter-spacing: -0.01em;
+}
+
+h4 {
+  font-size: var(--ds-fs-body);
+  font-weight: var(--ds-fw-section-title);
+  line-height: var(--ds-lh-body);
+}
+
+/* Override small title patterns used as section/card headings */
+h3.text-sm,
+h3[class*="text-sm"] {
+  font-size: var(--ds-fs-body) !important;
+  font-weight: var(--ds-fw-card-title) !important;
+  letter-spacing: 0.04em;
+}
+
+h3.text-xs,
+h3[class*="text-xs"] {
+  font-size: var(--ds-fs-table-header) !important;
+  font-weight: var(--ds-fw-card-title) !important;
+  letter-spacing: 0.06em;
+}
+
+h1.text-2xl,
+h1[class*="text-2xl"] {
+  font-size: var(--ds-fs-page-title) !important;
+  font-weight: var(--ds-fw-page-title) !important;
+  letter-spacing: -0.025em !important;
+}
+
+h1.text-3xl,
+h1[class*="text-3xl"] {
+  font-size: 2rem !important;
+  font-weight: var(--ds-fw-page-title) !important;
+  letter-spacing: -0.03em !important;
+}
+
+/* ─── Overline / Tracking-Wider Micro Labels ─── */
+[class*="tracking-widest"],
+[class*="tracking-wider"] {
+  font-weight: var(--ds-fw-overline);
+  text-transform: uppercase;
+}
+
+/* ─── Label Styling ─── */
+label {
+  font-size: var(--ds-fs-label);
+  font-weight: var(--ds-fw-label);
+}
+
+/* ─── Table Design System ─── */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+thead th {
+  font-size: var(--ds-fs-table-header) !important;
+  font-weight: var(--ds-fw-table-header) !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: var(--ds-table-cell-padding-y) var(--ds-table-cell-padding-x) !important;
+  height: var(--ds-table-header-height);
+  white-space: nowrap;
+  vertical-align: middle;
+  text-align: left;
+  border-bottom: 1px solid var(--th-border);
+}
+
+tbody td {
+  padding: var(--ds-table-cell-padding-y) var(--ds-table-cell-padding-x) !important;
+  height: var(--ds-table-row-height);
+  vertical-align: middle;
+  font-size: var(--ds-fs-body);
+  border-bottom: 1px solid var(--th-border);
+}
+
+/* Right-align numeric columns */
+td.text-right,
+td[class*="text-right"],
+th.text-right,
+th[class*="text-right"] {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
+}
+
+tbody tr {
+  transition: background-color var(--ds-transition-fast);
+}
+
+/* ─── Badge Design System ─── */
+[class*="rounded-full"][class*="px-2"][class*="py-0"],
+[class*="rounded"][class*="px-2"][class*="py-0.5"],
+[class*="rounded"][class*="px-1.5"][class*="py-0"],
+[class*="rounded-md"][class*="px-1.5"][class*="py-0.5"] {
+  font-size: var(--ds-fs-badge) !important;
+  font-weight: var(--ds-fw-badge) !important;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-1);
+  padding: 0.1875rem var(--ds-badge-padding-x) !important;
+  border-radius: var(--ds-badge-radius);
+  white-space: nowrap;
+}
+
+/* ─── Button Design System ─── */
+button,
+a[class*="rounded-lg"][class*="px-"] {
+  font-family: var(--ds-font-family);
+  font-weight: var(--ds-fw-button);
+  transition: all var(--ds-transition-normal);
+}
+
+/* Primary / action buttons */
+button[class*="bg-indigo"],
+button[class*="bg-emerald"],
+a[class*="bg-indigo"],
+a[class*="bg-emerald"] {
+  border-radius: var(--ds-btn-radius) !important;
+  font-size: var(--ds-fs-body) !important;
+  font-weight: var(--ds-fw-button) !important;
+  letter-spacing: 0.01em;
+}
+
+/* Ghost / outline buttons */
+button[class*="border"][class*="bg-slate"],
+a[class*="border"][class*="bg-slate"],
+button[class*="border"][class*="bg-indigo-500/5"],
+a[class*="border"][class*="bg-indigo-500/5"] {
+  border-radius: var(--ds-btn-radius) !important;
+  font-size: var(--ds-fs-body) !important;
+  font-weight: var(--ds-fw-button) !important;
+}
+
+/* Danger buttons */
+button[class*="bg-rose"],
+a[class*="bg-rose"] {
+  border-radius: var(--ds-btn-radius) !important;
+  font-size: var(--ds-fs-body) !important;
+  font-weight: var(--ds-fw-button) !important;
+}
+
+/* ─── Input / Select / Textarea ─── */
+input, select, textarea {
+  font-family: var(--ds-font-family);
+  font-size: var(--ds-fs-body);
+  border-radius: var(--ds-input-radius) !important;
+  padding: var(--ds-space-2) var(--ds-input-padding-x) !important;
+  transition: border-color var(--ds-transition-fast), box-shadow var(--ds-transition-fast);
+}
+
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--th-shadow-accent);
+  outline-offset: 1px;
+}
+
+/* ─── Focus Ring System ─── */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--th-shadow-accent);
+  outline-offset: 2px;
+  border-radius: var(--ds-radius-md);
+}
+
+/* ─── Card Glass Panels — Standardized Spacing ─── */
+div.rounded-xl,
+div.rounded-2xl {
+  border-radius: var(--ds-card-radius) !important;
+}
+
+/* ─── Scrollbar System ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb,
+:root:not([data-theme="light"]) ::-webkit-scrollbar-thumb {
+  background: rgba(45, 212, 191, 0.15);
+  border-radius: var(--ds-radius-full);
+}
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover,
+:root:not([data-theme="light"]) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(45, 212, 191, 0.3);
+}
+
+/* ─── Selection ─── */
+::selection {
+  background: var(--th-shadow-accent);
+}
+
+/* ─── Smooth Transitions (non-animated elements only) ─── */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, box-shadow, opacity;
+  transition-duration: 0.15s;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Preserve existing: disable transition on spinners & animated elements */
+.animate-spin, .animate-spin *,
+[class*="animate-in"], [class*="animate-in"] * {
+  transition: none !important;
+}
+
+/* ─── Accessibility: Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Accessibility: Minimum Touch Target ─── */
+@media (pointer: coarse) {
+  button, a[class*="rounded-lg"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+}

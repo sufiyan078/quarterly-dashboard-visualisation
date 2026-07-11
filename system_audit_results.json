@@ -1,0 +1,683 @@
+{
+  "Bartec 09.11.2025.xlsx": {
+    "totalRawRows": 478,
+    "totalSheets": 3,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "SUMMARY",
+        "datasetType": "summary_sheet",
+        "totalRows": 12,
+        "imported": 0,
+        "ignored": 12,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Counting Sheet",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 235,
+        "imported": 230,
+        "ignored": 5,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "DATA",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 231,
+        "imported": 230,
+        "ignored": 1,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 0,
+      "financialValueStatus": "not_found",
+      "blankValueCount": 460,
+      "invalidValueCount": 0,
+      "zeroValueCount": 0,
+      "quantityProfile": {
+        "totalSystemOnHand": 184024,
+        "totalPhysicalCount": 89290,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 0
+      },
+      "warningsCount": 2,
+      "warnings": [
+        {
+          "code": "DUPLICATE_ITEM_CODES",
+          "severity": "info",
+          "message": "230 duplicate item codes detected. Ensure these are intended multi-location stocks."
+        },
+        {
+          "code": "MISSING_FINANCIAL_COLUMN",
+          "severity": "error",
+          "message": "No financial value or unit price column was detected in the uploaded files. Total inventory value cannot be computed."
+        }
+      ]
+    }
+  },
+  "Copy of MCH 07.12.2025.xlsx": {
+    "totalRawRows": 26,
+    "totalSheets": 2,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "Summary ",
+        "datasetType": "summary_sheet",
+        "totalRows": 4,
+        "imported": 0,
+        "ignored": 4,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "DATA",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 22,
+        "imported": 20,
+        "ignored": 2,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 0,
+      "financialValueStatus": "not_found",
+      "blankValueCount": 20,
+      "invalidValueCount": 0,
+      "zeroValueCount": 0,
+      "quantityProfile": {
+        "totalSystemOnHand": 280250.9,
+        "totalPhysicalCount": 280250,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 0
+      },
+      "warningsCount": 1,
+      "warnings": [
+        {
+          "code": "MISSING_FINANCIAL_COLUMN",
+          "severity": "error",
+          "message": "No financial value or unit price column was detected in the uploaded files. Total inventory value cannot be computed."
+        }
+      ]
+    }
+  },
+  "Copy of MEC 07.12.2025.xlsx": {
+    "totalRawRows": 682,
+    "totalSheets": 2,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "Summary ",
+        "datasetType": "summary_sheet",
+        "totalRows": 11,
+        "imported": 0,
+        "ignored": 11,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "MEC",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 671,
+        "imported": 670,
+        "ignored": 1,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 0,
+      "financialValueStatus": "not_found",
+      "blankValueCount": 670,
+      "invalidValueCount": 0,
+      "zeroValueCount": 0,
+      "quantityProfile": {
+        "totalSystemOnHand": 0,
+        "totalPhysicalCount": 2801,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 669
+      },
+      "warningsCount": 3,
+      "warnings": [
+        {
+          "code": "DUPLICATE_ITEM_CODES",
+          "severity": "info",
+          "message": "4 duplicate item codes detected. Ensure these are intended multi-location stocks."
+        },
+        {
+          "code": "QUANTITY_VARIATION_MISMATCH",
+          "severity": "error",
+          "message": "669 rows have variation mismatch where Variation !== (Physical - System)."
+        },
+        {
+          "code": "MISSING_FINANCIAL_COLUMN",
+          "severity": "error",
+          "message": "No financial value or unit price column was detected in the uploaded files. Total inventory value cannot be computed."
+        }
+      ]
+    }
+  },
+  "Copy of MET - 27.11.2025 (003).xlsx": {
+    "totalRawRows": 419,
+    "totalSheets": 3,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "Summary ",
+        "datasetType": "summary_sheet",
+        "totalRows": 11,
+        "imported": 0,
+        "ignored": 11,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "DATA",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 401,
+        "imported": 399,
+        "ignored": 2,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "CASH SALES ",
+        "datasetType": "unknown_sheet",
+        "totalRows": 7,
+        "imported": 0,
+        "ignored": 7,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 0,
+      "financialValueStatus": "not_found",
+      "blankValueCount": 399,
+      "invalidValueCount": 0,
+      "zeroValueCount": 0,
+      "quantityProfile": {
+        "totalSystemOnHand": 3917,
+        "totalPhysicalCount": 3853,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 1
+      },
+      "warningsCount": 3,
+      "warnings": [
+        {
+          "code": "QUANTITY_VARIATION_MISMATCH",
+          "severity": "error",
+          "message": "1 rows have variation mismatch where Variation !== (Physical - System)."
+        },
+        {
+          "code": "UNKNOWN_SHEETS_DETECTED",
+          "severity": "warning",
+          "message": "One or more sheets were classified as unknown. Mappings may be incomplete."
+        },
+        {
+          "code": "MISSING_FINANCIAL_COLUMN",
+          "severity": "error",
+          "message": "No financial value or unit price column was detected in the uploaded files. Total inventory value cannot be computed."
+        }
+      ]
+    }
+  },
+  "IPR  IRA - 17.11.2025.xlsx": {
+    "totalRawRows": 226,
+    "totalSheets": 3,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "Summary ",
+        "datasetType": "summary_sheet",
+        "totalRows": 11,
+        "imported": 0,
+        "ignored": 11,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Counting Sheet",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 203,
+        "imported": 201,
+        "ignored": 2,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Sheet2",
+        "datasetType": "unknown_sheet",
+        "totalRows": 12,
+        "imported": 0,
+        "ignored": 12,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 0,
+      "financialValueStatus": "not_found",
+      "blankValueCount": 201,
+      "invalidValueCount": 0,
+      "zeroValueCount": 0,
+      "quantityProfile": {
+        "totalSystemOnHand": 2056,
+        "totalPhysicalCount": 1914,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 0
+      },
+      "warningsCount": 2,
+      "warnings": [
+        {
+          "code": "UNKNOWN_SHEETS_DETECTED",
+          "severity": "warning",
+          "message": "One or more sheets were classified as unknown. Mappings may be incomplete."
+        },
+        {
+          "code": "MISSING_FINANCIAL_COLUMN",
+          "severity": "error",
+          "message": "No financial value or unit price column was detected in the uploaded files. Total inventory value cannot be computed."
+        }
+      ]
+    }
+  },
+  "Pepperl+Fuchs - 04.11.2025- Fathah.xlsx": {
+    "totalRawRows": 551,
+    "totalSheets": 3,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "Summary ",
+        "datasetType": "summary_sheet",
+        "totalRows": 6,
+        "imported": 0,
+        "ignored": 6,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Counting Sheet",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 275,
+        "imported": 265,
+        "ignored": 10,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Sheet2",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 270,
+        "imported": 268,
+        "ignored": 2,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 0,
+      "financialValueStatus": "not_found",
+      "blankValueCount": 533,
+      "invalidValueCount": 0,
+      "zeroValueCount": 0,
+      "quantityProfile": {
+        "totalSystemOnHand": 2528,
+        "totalPhysicalCount": 1746186.9603189505,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 0
+      },
+      "warningsCount": 2,
+      "warnings": [
+        {
+          "code": "DUPLICATE_ITEM_CODES",
+          "severity": "info",
+          "message": "265 duplicate item codes detected. Ensure these are intended multi-location stocks."
+        },
+        {
+          "code": "MISSING_FINANCIAL_COLUMN",
+          "severity": "error",
+          "message": "No financial value or unit price column was detected in the uploaded files. Total inventory value cannot be computed."
+        }
+      ]
+    }
+  },
+  "Weidmuller INVENTORY 4TH COUNT(02-11-2025-04-11-2025).xlsx": {
+    "totalRawRows": 4216,
+    "totalSheets": 4,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "SUMMARY",
+        "datasetType": "summary_sheet",
+        "totalRows": 29,
+        "imported": 0,
+        "ignored": 29,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Counting Sheet",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 401,
+        "imported": 399,
+        "ignored": 2,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Weidmuller",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 413,
+        "imported": 412,
+        "ignored": 1,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": "totalValueSar",
+          "selectedValueColumnName": "CLOSING_VALUE",
+          "confidence": "high",
+          "reason": "Selected direct total value column \"CLOSING_VALUE\" containing 412 numeric values.",
+          "candidateColumns": [
+            {
+              "columnName": "CLOSING_VALUE",
+              "numericCellCount": 412,
+              "blankCellCount": 0,
+              "isRejected": false
+            }
+          ]
+        }
+      },
+      {
+        "sheetName": "ALL",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 3373,
+        "imported": 3372,
+        "ignored": 1,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 3345044.7027160376,
+      "financialValueStatus": "parsed_successfully",
+      "blankValueCount": 3771,
+      "invalidValueCount": 0,
+      "zeroValueCount": 1,
+      "quantityProfile": {
+        "totalSystemOnHand": 7931159,
+        "totalPhysicalCount": 2042927,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 52
+      },
+      "warningsCount": 3,
+      "warnings": [
+        {
+          "code": "DUPLICATE_ITEM_CODES",
+          "severity": "info",
+          "message": "493 duplicate item codes detected. Ensure these are intended multi-location stocks."
+        },
+        {
+          "code": "ZERO_VALUE_ROWS",
+          "severity": "info",
+          "message": "1 items have an inventory value of 0.00 SAR."
+        },
+        {
+          "code": "QUANTITY_VARIATION_MISMATCH",
+          "severity": "error",
+          "message": "52 rows have variation mismatch where Variation !== (Physical - System)."
+        }
+      ]
+    }
+  },
+  "Copy of 2026 - PHYSICAL STOCK - 01- Q.xlsx": {
+    "totalRawRows": 7729,
+    "totalSheets": 4,
+    "sheetDiagnoses": [
+      {
+        "sheetName": "Reports ",
+        "datasetType": "unknown_sheet",
+        "totalRows": 31,
+        "imported": 0,
+        "ignored": 31,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "Sheet3",
+        "datasetType": "unknown_sheet",
+        "totalRows": 26,
+        "imported": 0,
+        "ignored": 26,
+        "needsReview": 0,
+        "confidence": "medium",
+        "financialDiscovery": {
+          "selectedValueColumn": null,
+          "selectedValueColumnName": null,
+          "confidence": "none",
+          "reason": "Financial value column not found in uploaded files.",
+          "candidateColumns": []
+        }
+      },
+      {
+        "sheetName": "COUNT",
+        "datasetType": "inventory_count_sheet",
+        "totalRows": 3005,
+        "imported": 3004,
+        "ignored": 1,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": "totalValueSar",
+          "selectedValueColumnName": "Total Value (SAR)",
+          "confidence": "high",
+          "reason": "Selected direct total value column \"Total Value (SAR)\" containing 3004 numeric values.",
+          "candidateColumns": [
+            {
+              "columnName": "Total Value (SAR)",
+              "numericCellCount": 3004,
+              "blankCellCount": 0,
+              "isRejected": false
+            }
+          ]
+        }
+      },
+      {
+        "sheetName": "Items",
+        "datasetType": "inventory_aging_sheet",
+        "totalRows": 4667,
+        "imported": 4666,
+        "ignored": 1,
+        "needsReview": 0,
+        "confidence": "high",
+        "financialDiscovery": {
+          "selectedValueColumn": "totalValueSar",
+          "selectedValueColumnName": "Total Value (SAR)",
+          "confidence": "high",
+          "reason": "Selected direct total value column \"Total Value (SAR)\" containing 4666 numeric values.",
+          "candidateColumns": [
+            {
+              "columnName": "Total Value (SAR)",
+              "numericCellCount": 4666,
+              "blankCellCount": 0,
+              "isRejected": false
+            }
+          ]
+        }
+      }
+    ],
+    "profile": {
+      "totalInventoryValueSar": 63512791.22392642,
+      "financialValueStatus": "parsed_successfully",
+      "blankValueCount": 0,
+      "invalidValueCount": 0,
+      "zeroValueCount": 141,
+      "quantityProfile": {
+        "totalSystemOnHand": 1632159,
+        "totalPhysicalCount": 1613740,
+        "negativeQuantityCount": 0,
+        "variationMismatchCount": 59
+      },
+      "warningsCount": 4,
+      "warnings": [
+        {
+          "code": "DUPLICATE_ITEM_CODES",
+          "severity": "info",
+          "message": "3069 duplicate item codes detected. Ensure these are intended multi-location stocks."
+        },
+        {
+          "code": "ZERO_VALUE_ROWS",
+          "severity": "info",
+          "message": "141 items have an inventory value of 0.00 SAR."
+        },
+        {
+          "code": "QUANTITY_VARIATION_MISMATCH",
+          "severity": "error",
+          "message": "59 rows have variation mismatch where Variation !== (Physical - System)."
+        },
+        {
+          "code": "UNKNOWN_SHEETS_DETECTED",
+          "severity": "warning",
+          "message": "One or more sheets were classified as unknown. Mappings may be incomplete."
+        }
+      ]
+    }
+  }
+}

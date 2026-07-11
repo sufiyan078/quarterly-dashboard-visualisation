@@ -1,0 +1,73 @@
+
+=== Inspecting File: Bartec 09.11.2025.xlsx ===
+
+Sheet: "SUMMARY" (Total raw rows: 12)
+  Row 0 candidate headers (3 non-empty): ["Row Labels","Count of REMARKS","Mafaz Comments"]
+  Row 1 candidate headers (3 non-empty): [" Bartec (SKF)",1,"System Errors "]
+  Row 2 candidate headers (3 non-empty): [" Sample ",8,"Division will be Responsible "]
+  Row 3 candidate headers (3 non-empty): ["customer will Retun",5,"Division will be Responsible"]
+  Row 4 candidate headers (3 non-empty): ["Description is not matching from ERP",1,"System Errors "]
+  Row 5 candidate headers (3 non-empty): ["ISR not Available",2,"Division will be Responsible"]
+  Row 6 candidate headers (3 non-empty): ["MISSING",17,"Logistic Re- checking "]
+  Row 7 candidate headers (3 non-empty): ["Pending to close",9,"Logistic will be Responsible"]
+  Row 8 candidate headers (3 non-empty): ["Return to Supplier",1,"Division will be Responsible"]
+  Row 9 candidate headers (3 non-empty): ["RMA is Pending",2,"Logistic Re- checking "]
+  Row 10 candidate headers (3 non-empty): ["Stock Matching",184,"Logistic will be Responsible"]
+
+Sheet: "Counting Sheet" (Total raw rows: 235)
+  Row 0 candidate headers (9 non-empty): ["No","ITEM_CODE","ITEM_DESCRIPTION","INS","ISR","Grand Total","PHY","DIF","REMARKS"]
+  Row 1 candidate headers (8 non-empty): [1,"1000015002","Bartec Feam Cable Gland; PAP-01 MON Bartec cable gland, armored cable type PAP-01-MON execution Ex d/e/I IIC, size 1 , male M20, in Nickel Plated Brass complete with kit of gaskets in EPDM + Accessories ",192,192,192,0,"Stock Matching"]
+  Row 2 candidate headers (8 non-empty): [2,"1000015003","Bartec Feam Cable Gland; PAP-02 MON",231,231,231,0,"Stock Matching"]
+  Row 3 candidate headers (8 non-empty): [3,"1000015004","Bartec Feam Cable Gland; PAP-03-MON, male M32 in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories ",1777,1777,1774,-3,"customer will Retun"]
+  Row 4 candidate headers (8 non-empty): [4,"1000015005","Bartec Feam Cable Gland; PAP-04 MON",857,857,857,0,"Stock Matching"]
+  Row 5 candidate headers (8 non-empty): [5,"1000015006","Bartec Feam Cable Gland; PAP-05-MON, male M50 in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories ",412,412,412,0,"Stock Matching"]
+  Row 6 candidate headers (8 non-empty): [6,"1000015007","Bartec Feam Cable Gland; PAP-06-MON, male M63 in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories ",99,99,99,0,"Stock Matching"]
+  Row 7 candidate headers (8 non-empty): [7,"1000015008","Bartec Feam Cable Gland; PAP-07-MON, male M75 in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories ",229,229,229,0,"Stock Matching"]
+  Row 8 candidate headers (8 non-empty): [8,"1000015009","Bartec Feam Cable Gland; PAP-08 MON",50,50,50,0,"Stock Matching"]
+  Row 9 candidate headers (8 non-empty): [9,"1000015011","Bartec Feam Cable Gland; PAP-01-NON, male 1/2\" NPT in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories",4,4,4,0,"Stock Matching"]
+  Row 10 candidate headers (8 non-empty): [10,"1000015012","Bartec Feam Cable Gland; PAP-02-NON, male 3/4\" NPT in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories",1821,1821,1821,0,"Stock Matching"]
+  Row 11 candidate headers (8 non-empty): [11,"1000015013","Bartec Feam Cable Gland; PAP-03-NON, male 1\" NPT in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories",177,177,177,0,"Stock Matching"]
+  Row 12 candidate headers (8 non-empty): [12,"1000015014","Bartec Feam Cable Gland; PAP-04-NON, male 1 1 /4\" NPT in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories ",1220,1220,1220,0,"Stock Matching"]
+  Row 13 candidate headers (8 non-empty): [13,"1000015015","Bartec Feam Cable Gland; PAP-05-NON, male 1 1 /2\" NPT in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories ",164,164,164,0,"Stock Matching"]
+  Row 14 candidate headers (8 non-empty): [14,"1000015016","Bartec Feam Cable Gland; PAP-06-NON, male 2\" NPT in Nickel Plated Brass complete with kit of gaskets in EPDM with all accessories",167,167,167,0,"Stock Matching"]
+
+Sheet: "DATA" (Total raw rows: 231)
+  Row 0 candidate headers (6 non-empty): ["No","UNIT","Item Code","Supplier Name","Description","ERP"]
+  Row 1 candidate headers (6 non-empty): [1,"INS","1000093076","Bartec Middle East LLC","3-SS Cable Glands Including Accessories (PAP-R-05-MIX) ",885]
+  Row 2 candidate headers (6 non-empty): [2,"INS","1000097213","Bartec Middle East LLC","3-SS Cable Glands Including Accessories (PNA-R-01-MIX) ",512]
+  Row 3 candidate headers (6 non-empty): [3,"INS","1000103589","Bartec Middle East LLC","Barrier cable gland, Unarmored cable type PNA-R-01-NXX execution Ex d/e/I IIC, size 1 , male 1/2\" NPT, in stainless steel complete with kit of gaskets in EPDM + Accessories + FS0904-1 ",983]
+  Row 4 candidate headers (6 non-empty): [4,"INS","1000104330","Bartec Middle East LLC","Ammeeter AM72 , X/1A, 0-20 A with fixing kit EXE ",2]
+  Row 5 candidate headers (6 non-empty): [5,"INS","1000106261","Bartec Middle East LLC","Reducre female-male type REB05N05MXX, execution Ex d/e IIC, female  1-1/2\" NPT, male M50x1.5, in stainless steel AISI316L ",257]
+  Row 6 candidate headers (6 non-empty): [6,"INS","1000108220","Bartec Middle East LLC","Seal compound part number - INN-FS0904-2",20]
+  Row 7 candidate headers (6 non-empty): [7,"INS","1000093085","Bartec Middle East LLC","3-SS Cable Glands Including Accessories (PNA-R-02-NIX) ",128]
+  Row 8 candidate headers (6 non-empty): [8,"INS","1000094250","Bartec Middle East LLC","3-SS Cable Glands Including Accessories   (PAP-R-04-MIX) ",118]
+  Row 9 candidate headers (6 non-empty): [9,"INS","1000106265","Bartec Middle East LLC","HEXAGONAL HEAD COLLAR; PLG-04-NXX  ",135]
+  Row 10 candidate headers (6 non-empty): [10,"INS","1000099598","Bartec Middle East LLC","3-SS Cable Glands Including Accessories (PAP-R-06-MIX) ",200]
+  Row 11 candidate headers (6 non-empty): [11,"INS","1000102156","Bartec Middle East LLC","Yellow Lamp Module Actuator: 05-0003-001500  ",50]
+  Row 12 candidate headers (6 non-empty): [12,"INS","1000103261","Bartec Middle East LLC","Selector switch 3 position PN:05-0003-001000 ",65]
+  Row 13 candidate headers (6 non-empty): [13,"INS","1000104623","Bartec Middle East LLC","SS316 (Ex'd') Reducer : 1 1/2\" NPTM X 1\" NPTF Part Number RE05N03NXX",1]
+  Row 14 candidate headers (6 non-empty): [14,"INS","1000106502","Bartec Middle East LLC","SS316L ADAPTOR, 1/2\" MALE TO M20 FEMALE, COLLAR R TYPE ADAPTOR Exe / Exd, IP 66 TYPE, REB01N01MXX",80]
+
+=== Inspecting File: Copy of MCH 07.12.2025.xlsx ===
+
+Sheet: "Summary " (Total raw rows: 4)
+  Row 0 candidate headers (3 non-empty): ["Row Labels","Count of REMARKS","Count of REMARKS"]
+  Row 1 candidate headers (3 non-empty): ["Next order will clear from stock ",1,"No issues for Stock"]
+  Row 2 candidate headers (3 non-empty): ["Stock matching",19,"No issues for Stock"]
+
+Sheet: "DATA" (Total raw rows: 22)
+  Row 0 candidate headers (8 non-empty): ["VAL_UNIT_CODE","ITEM_CODE","PARTY_NAME","ITEM_DESCRIPTION","CLOSING_QTY","PHY","DIF","REMARKS"]
+  Row 1 candidate headers (8 non-empty): ["MCH","2300000134","Quaker Houghton Sales B.V.","MATL : 1000704416 : OIL; TYPE: BASE, CONTAINER TYPE: IBC; PN:HQ ADDITIVE E 5581, MFR: QUAKER HOUGHTON; FOR HCM EMULSION SYSTEM  ",9200,9200,0,"Stock matching"]
+  Row 2 candidate headers (8 non-empty): ["MCH",2300000156,"Quaker Houghton Sales B.V.","\"MATL : 1000716548 ADDITIVE; TYPE: OIL, CONTAINER TYPE: DRUM, CONTAINER CAPACITY:188.10 KG/DRUM; PN:QH ADDITIVE E 1600, MFR: QUAKER HOUGHTON; APPLICATION: FOR EMULSION SYSTEM\"  ",0.9,0,-0.9,"Next order will clear from stock "]
+  Row 3 candidate headers (8 non-empty): ["MCH","2300000107","Quaker Houghton Sales B.V.","MATL : 983548 OIL, INDUSTRIAL: QUAKEROL HD 1.0 , TYPE COLD ROLLING EMMULSION,Part No: N 612-HD-DPD,",36000,36000,0,"Stock matching"]
+  Row 4 candidate headers (8 non-empty): ["MCH","2300000138","Quaker Houghton Sales B.V.","MATL : 1000735452 ADDITIVE; TYPE: B, PHYSICAL FORM: LIQUID, CONTAINER TYPE: TOTE, CONTAINER CAPACITY: 860 KG; PN:QH ADDITIVE UA 3300, MFR: QUAKER HOUGHTON   ",18480,18480,0,"Stock matching"]
+  Row 5 candidate headers (8 non-empty): ["MCH","2300000104","Quaker Houghton Sales B.V."," MATL : 050-05-02-00002  OIL CK-QUAKERCOOL - 2870-2 ",20,20,0,"Stock matching"]
+  Row 6 candidate headers (8 non-empty): ["MCH","2300000141","Quaker Houghton Sales B.V.","MATL : QUAKEROL CLA-412 BIO   ",2000,2000,0,"Stock matching"]
+  Row 7 candidate headers (8 non-empty): ["MCH","2300000101","Quaker Houghton Sales B.V.","MATL : 1400055920  QUAKER QUINTOLUBRIC 888-46 ",32,32,0,"Stock matching"]
+  Row 8 candidate headers (8 non-empty): ["MCH","2300000129","Quaker Houghton Sales B.V.","MATL : QUINTOLUBRIC 888-68  ",8,8,0,"Stock matching"]
+  Row 9 candidate headers (8 non-empty): ["MCH","2300000174","Quaker Houghton Sales B.V.","Quakerol 25 LVB",2625,2625,0,"Stock matching"]
+  Row 10 candidate headers (8 non-empty): ["MCH","2300000116","QUAKER HOUGHTON SALES B.V. SUCURSAL EN ESPANA","QUAKERCOAT 872 BLACK MATT",4000,4000,0,"Stock matching"]
+  Row 11 candidate headers (8 non-empty): ["MCH","2300000125","QUAKER HOUGHTON SALES B.V. SUCURSAL EN ESPANA","MATL : QUAKLEEN TURBO 200 AC-A1     ",15000,15000,0,"Stock matching"]
+  Row 12 candidate headers (8 non-empty): ["MCH","2300000127","Quaker Houghton Sales B.V.","MATL : QUAKLEEN WASHTREAT 400A       ",6150,6150,0,"Stock matching"]
+  Row 13 candidate headers (8 non-empty): ["MCH","2300000135","Quaker Houghton Sales B.V.","MATL : 1000704415 : OIL; TYPE: BASE, CONTAINER TYPE: IBC; PN:HQ ADDITIVE UA 8490, MFR: QUAKER HOUGHTON; FOR HCM EMULSION SYSTEM  ",17000,17000,0,"Stock matching"]
+  Row 14 candidate headers (8 non-empty): ["MCH","2300000162","SR INTERNATIONAL ","MATL: 1000022170, ADMIXTURE: DRILLING MUD; 25 KG BAG,POTATO STARCH-NON-IONIC DRILLING GRADE,ADDITIVE DRILLING FLUID; DRY,FREE FLOWING COARSE GRANULATED POWDER FORM,POTATO STARCH, ",60072,60072,0,"Stock matching"]

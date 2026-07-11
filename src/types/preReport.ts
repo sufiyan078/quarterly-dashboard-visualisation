@@ -1,7 +1,24 @@
+export type ReportSectionType =
+  | 'cover'
+  | 'executive'
+  | 'kpi'            // Inventory Overview (facts grid)
+  | 'financial'      // Financial Overview
+  | 'health'         // Inventory Health
+  | 'divisions'      // Organization Analysis
+  | 'suppliers'      // Supplier Analysis
+  | 'distribution'   // Inventory Distribution
+  | 'validation'     // Validation Summary
+  | 'risk'           // Key Risks & risk assessment
+  | 'opportunities'  // Business Opportunities
+  | 'recommendations'// Consolidated Recommendations
+  | 'conclusion'     // Executive Conclusion
+  | 'team'           // Personnel & Evidence appendix
+  | 'custom';
+
 export interface ReportSection {
   id: string;
   title: string;
-  type: 'cover' | 'kpi' | 'executive' | 'divisions' | 'suppliers' | 'risk' | 'team' | 'custom';
+  type: ReportSectionType;
   enabled: boolean;
   order: number;
   description: string;
@@ -46,13 +63,46 @@ export interface ApprovalState {
 
 export const DEFAULT_SECTIONS: ReportSection[] = [
   { id: 'cover', title: 'Cover Page', type: 'cover', enabled: true, order: 0, description: 'Report title, metadata, and branding', notes: '' },
-  { id: 'kpi', title: 'Executive KPIs', type: 'kpi', enabled: true, order: 1, description: 'Key performance indicators and health score', notes: '' },
-  { id: 'executive', title: 'Executive Summary & Audit Opinion', type: 'executive', enabled: true, order: 2, description: 'Financial overview, coverage, and audit conclusion', notes: '' },
-  { id: 'divisions', title: 'Operational Divisions Breakdown', type: 'divisions', enabled: true, order: 3, description: 'Variance and reconciliation by business division', notes: '' },
-  { id: 'suppliers', title: 'Supplier Analysis', type: 'suppliers', enabled: true, order: 4, description: 'Top suppliers by financial risk exposure', notes: '' },
-  { id: 'risk', title: 'High-Risk Items Ledger', type: 'risk', enabled: true, order: 5, description: 'Top 10 discrepancy items requiring attention', notes: '' },
-  { id: 'team', title: 'Personnel & Evidence', type: 'team', enabled: true, order: 6, description: 'On-site audit team and verification evidence', notes: '' },
+  { id: 'executive', title: 'Executive Summary', type: 'executive', enabled: true, order: 1, description: 'The complete inventory position in one page for senior management', notes: '' },
+  { id: 'kpi', title: 'Inventory Overview', type: 'kpi', enabled: true, order: 2, description: 'Scale of the inventory: lines, value, organizations, and suppliers', notes: '' },
+  { id: 'financial', title: 'Financial Overview', type: 'financial', enabled: true, order: 3, description: 'Book value versus verified value, variances, and financial exposure', notes: '' },
+  { id: 'health', title: 'Inventory Health', type: 'health', enabled: true, order: 4, description: 'Composite health score, accuracy, and verification coverage', notes: '' },
+  { id: 'divisions', title: 'Organization Analysis', type: 'divisions', enabled: true, order: 5, description: 'Value, accuracy, and variance by organization', notes: '' },
+  { id: 'suppliers', title: 'Supplier Analysis', type: 'suppliers', enabled: true, order: 6, description: 'Supplier dependency, concentration, and variance exposure', notes: '' },
+  { id: 'distribution', title: 'Inventory Distribution', type: 'distribution', enabled: true, order: 7, description: 'How value and volume are spread across the operation', notes: '' },
+  { id: 'validation', title: 'Validation Summary', type: 'validation', enabled: true, order: 8, description: 'Data quality flags and reporting confidence', notes: '' },
+  { id: 'risk', title: 'Key Risks', type: 'risk', enabled: true, order: 9, description: 'Data-supported business risks and the high-variance item ledger', notes: '' },
+  { id: 'opportunities', title: 'Business Opportunities', type: 'opportunities', enabled: true, order: 10, description: 'Positive findings and improvement opportunities', notes: '' },
+  { id: 'recommendations', title: 'Recommendations', type: 'recommendations', enabled: true, order: 11, description: 'Prioritized management actions with reasons and expected benefits', notes: '' },
+  { id: 'conclusion', title: 'Executive Conclusion', type: 'conclusion', enabled: true, order: 12, description: 'Overall assessment, audit readiness, and sign-off', notes: '' },
+  { id: 'team', title: 'Personnel & Evidence', type: 'team', enabled: true, order: 13, description: 'On-site audit team and verification evidence', notes: '' },
 ];
+
+/**
+ * Merges a previously saved section configuration (possibly from the
+ * older 7-section schema) with the current storytelling defaults.
+ * User customizations (enabled flag, notes) survive for sections that
+ * still exist; new narrative sections are added in story order; any
+ * custom sections the user created are appended at the end.
+ */
+export function mergeWithDefaultSections(saved: ReportSection[] | undefined): ReportSection[] {
+  if (!saved || saved.length === 0) return DEFAULT_SECTIONS;
+
+  // Already migrated configs keep their own ordering and titles.
+  const isCurrentSchema = saved.some(s => s.id === 'conclusion');
+  if (isCurrentSchema) return saved;
+
+  const savedById = new Map(saved.map(s => [s.id, s]));
+  const merged = DEFAULT_SECTIONS.map(def => {
+    const prev = savedById.get(def.id);
+    return prev ? { ...def, enabled: prev.enabled, notes: prev.notes } : { ...def };
+  });
+
+  const customs = saved.filter(s => s.type === 'custom');
+  customs.forEach((c, i) => merged.push({ ...c, order: merged.length + i }));
+
+  return merged;
+}
 
 export const DEFAULT_COVER: CoverPageData = {
   reportTitle: '',

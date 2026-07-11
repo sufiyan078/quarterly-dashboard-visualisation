@@ -22,6 +22,12 @@ import html2canvas from "html2canvas";
 import { EvidencePersonnel } from "@/components/report-builder/EvidencePersonnel";
 import { PersonnelEntry } from "@/types/personnel";
 import { computeDashboardMetrics } from "@/lib/inventory/dashboardCalculations";
+import { buildReportNarrative, PreReportMetrics } from "@/lib/report/insightEngine";
+import {
+  ReportSection, CoverPageData, EditableContent, UploadedImage, ApprovalState,
+  DEFAULT_COVER, DEFAULT_CONTENT, mergeWithDefaultSections
+} from "@/types/preReport";
+import { ExecutiveReportDocument } from "@/components/pre-report/ExecutiveReportDocument";
 
 interface Report {
   title: string;
@@ -49,6 +55,13 @@ interface Report {
     netVariance: number;
     totalErpValue?: number;
     totalPhysicalValue?: number;
+  };
+  preReportConfig?: {
+    sections: ReportSection[];
+    cover: CoverPageData;
+    content: EditableContent;
+    images: UploadedImage[];
+    approval: ApprovalState;
   };
 }
 
@@ -231,9 +244,8 @@ export default function ReportBuilder() {
     );
   }
 
-  // Run dynamic metrics calculation
-  const metrics = (() => {
-    const formattedRows = items.map(item => {
+  // Format raw items once; reused by metrics and the narrative engine
+  const formattedRows = items.map(item => {
       const erpQty = item.erpQty !== undefined ? item.erpQty : 0;
       const physicalQty = item.physicalQty !== undefined ? item.physicalQty : 0;
       const differenceQty = physicalQty - erpQty;
@@ -262,61 +274,59 @@ export default function ReportBuilder() {
         validationWarnings: item.validationWarnings || []
       };
     });
-    return computeDashboardMetrics(formattedRows, agingRecords);
-  })();
 
-  const matchRateVal = items.length > 0
-    ? (items.filter(item => {
-        const erpQty = item.erpQty !== undefined ? item.erpQty : 0;
-        const physicalQty = item.physicalQty !== undefined ? item.physicalQty : 0;
-        return erpQty === physicalQty;
-      }).length / items.length) * 100
-    : 100;
+  // Run dynamic metrics calculation
+  const metrics = computeDashboardMetrics(formattedRows, agingRecords);
 
-  const totalPdfPages = personnelList.length > 0 ? 5 : 4;
+  const matchedItemsCount = items.filter(item => {
+    const erpQty = item.erpQty !== undefined ? item.erpQty : 0;
+    const physicalQty = item.physicalQty !== undefined ? item.physicalQty : 0;
+    return erpQty === physicalQty;
+  }).length;
 
-  // Render SVG elements for PDF templates
-  const renderPdfHealthScoreGauge = (score: number) => {
-    const r = 35;
-    const circ = Math.PI * r;
-    const strokeDashoffset = circ - (Math.min(100, Math.max(0, score)) / 100) * circ;
-    let strokeColor = "#ef4444";
-    if (score >= 95) strokeColor = "#10b981";
-    else if (score >= 85) strokeColor = "#6366f1";
-    else if (score >= 70) strokeColor = "#f59e0b";
+  const matchRateVal = items.length > 0 ? (matchedItemsCount / items.length) * 100 : 100;
 
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px", backgroundColor: "#f8fafc" }}>
-        <div style={{ position: "relative", width: "100px", height: "55px", display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden" }}>
-          <svg style={{ width: "100px", height: "100px", position: "absolute", bottom: "-45px" }} viewBox="0 0 100 100">
-            <path d="M 15 65 A 35 35 0 0 1 85 65" fill="none" stroke="#e2e8f0" strokeWidth="6" strokeLinecap="round" />
-            <path d="M 15 65 A 35 35 0 0 1 85 65" fill="none" stroke={strokeColor} strokeWidth="6" strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={strokeDashoffset} />
-          </svg>
-          <span style={{ fontSize: "18px", fontWeight: "bold", color: "#1e293b", zIndex: 10 }}>{score}</span>
-        </div>
-        <span style={{ fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", color: "#64748b", marginTop: "4px" }}>Inventory Health Index</span>
-      </div>
-    );
+  // Extended metrics shape shared with the pre-report preview
+  const extendedMetrics: PreReportMetrics = {
+    ...metrics,
+    totalItems: metrics.totalLines,
+    matchRate: matchRateVal,
+    matchedItems: matchedItemsCount,
+    mismatchedItems: items.length - matchedItemsCount,
+    totalRiskValue: metrics.totalFinancialRisk,
+    healthScore: metrics.inventoryHealthScore,
+    netVariance: metrics.varianceValue,
   };
 
-  const renderPdfAccuracyDonut = (matchRate: number) => {
-    const radius = 22;
-    const circ = 2 * Math.PI * radius;
-    const offset = circ - (matchRate / 100) * circ;
-
-    return (
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: "1px solid #e2e8f0", borderRadius: "8px", padding: "12px", backgroundColor: "#f8fafc" }}>
-        <div style={{ position: "relative", width: "60px", height: "60px", display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <svg style={{ width: "60px", height: "60px", transform: "rotate(-90deg)" }}>
-            <circle cx="30" cy="30" r={radius} stroke="#e2e8f0" strokeWidth="4.5" fill="transparent" />
-            <circle cx="30" cy="30" r={radius} stroke="#6366f1" strokeWidth="4.5" fill="transparent" strokeDasharray={circ} strokeDashoffset={offset} strokeLinecap="round" />
-          </svg>
-          <span style={{ position: "absolute", fontSize: "11px", fontWeight: "bold", color: "#1e293b" }}>{matchRate.toFixed(1)}%</span>
-        </div>
-        <span style={{ fontSize: "8px", fontWeight: "bold", textTransform: "uppercase", color: "#64748b", marginTop: "4px" }}>Accuracy Match Rate</span>
-      </div>
-    );
+  // Resolve the pre-report configuration saved at step 4 (with fallbacks
+  // for reports that never visited the pre-report stage).
+  const preConfig = report?.preReportConfig;
+  const pdfSections = mergeWithDefaultSections(preConfig?.sections);
+  const pdfCover: CoverPageData = preConfig?.cover ?? {
+    ...DEFAULT_COVER,
+    reportTitle: report?.title || "Inventory Report",
+    clientName: report?.warehouseName || report?.location || "",
+    reportingPeriod: `${report?.quarter || ""} ${report?.year || ""}`.trim(),
+    preparedBy: report?.preparedBy || "",
+    checkedBy: report?.checkedBy || "",
+    approvedBy: report?.approvedBy || "",
   };
+  const pdfContent: EditableContent = preConfig?.content ?? DEFAULT_CONTENT;
+  const pdfImages: UploadedImage[] = preConfig?.images ?? [];
+
+  // Generated narrative (insights, risks, recommendations) — presentation only
+  const narrative = buildReportNarrative({
+    quarter: report?.quarter || "",
+    year: report?.year || "",
+    clientName: pdfCover.clientName || "",
+    location: report?.location || "",
+    metrics: extendedMetrics,
+    rows: formattedRows,
+  });
+
+  const enabledSectionCount = pdfSections.filter(s => s.enabled).length;
+  const totalPdfPages = enabledSectionCount + (personnelList.length > 0 ? 1 : 0);
+
 
 
 
@@ -412,44 +422,13 @@ export default function ReportBuilder() {
                 <div className="flex items-center gap-3">
                   <CheckSquare className="h-4 w-4 text-indigo-400" />
                   <div>
-                    <p className="font-semibold text-slate-200">Cover Page & Metadata</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Title, Location: {report?.location || "Not configured"}</p>
+                    <p className="font-semibold text-slate-200">Executive Narrative Report</p>
+                    <p className="text-[10px] text-slate-500 mt-0.5">
+                      {enabledSectionCount} sections configured in the Pre-Report stage — cover, executive summary, financial and organizational analysis, risks, opportunities, recommendations, and conclusion
+                    </p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Included (Page 1)</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-950/80 border border-slate-900 text-xs">
-                <div className="flex items-center gap-3">
-                  <CheckSquare className="h-4 w-4 text-indigo-400" />
-                  <div>
-                    <p className="font-semibold text-slate-200">Executive Summary & Audit Opinion</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Financial KPIs, Health & Accuracy Rings, Auditor Verdict</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Included (Page 2)</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-950/80 border border-slate-900 text-xs">
-                <div className="flex items-center gap-3">
-                  <CheckSquare className="h-4 w-4 text-indigo-400" />
-                  <div>
-                    <p className="font-semibold text-slate-200">Operational Divisions Breakdown</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Variance breakdown and reconciliation statistics by business division</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Included (Page 3)</span>
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 rounded-lg bg-slate-950/80 border border-slate-900 text-xs">
-                <div className="flex items-center gap-3">
-                  <CheckSquare className="h-4 w-4 text-indigo-400" />
-                  <div>
-                    <p className="font-semibold text-slate-200">Top 10 High-Risk Items & Sign-Offs</p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">Variance values ledger sheet and auditor sign-off lines</p>
-                  </div>
-                </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase">Included (Page 4)</span>
+                <span className="text-[10px] font-bold text-slate-500 uppercase">Pages 1–{enabledSectionCount}</span>
               </div>
 
               {personnelList.length > 0 && (
@@ -461,7 +440,7 @@ export default function ReportBuilder() {
                       <p className="text-[10px] text-indigo-400/80 mt-0.5">{personnelList.length} field workers listed with details & remarks</p>
                     </div>
                   </div>
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase">Appended (Page 5)</span>
+                  <span className="text-[10px] font-bold text-indigo-400 uppercase">Appended (Page {totalPdfPages})</span>
                 </div>
               )}
             </div>
@@ -565,394 +544,17 @@ export default function ReportBuilder() {
             color: "#0f172a",
           }}
         >
-          {/* PAGE 1: COVER PAGE */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              padding: "70px 80px 70px 80px",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              backgroundColor: "#ffffff",
-              position: "relative",
-              border: "1px solid #e2e8f0"
-            }}
-          >
-            {/* Top Bar Accent */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "8px", backgroundColor: "#6366f1" }}></div>
-
-            {/* Header Logos / Brand */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div style={{ width: "28px", height: "28px", borderRadius: "6px", backgroundColor: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <span style={{ color: "#ffffff", fontWeight: "bold", fontSize: "14px" }}>I</span>
-                </div>
-                <span style={{ fontSize: "12px", fontWeight: "bold", letterSpacing: "1px", color: "#475569" }}>INVENTORY PORTAL</span>
-              </div>
-              <span style={{ fontSize: "10px", fontWeight: "bold", color: "#94a3b8" }}>OFFICIAL AUDIT REPORT</span>
-            </div>
-
-            {/* Title Area */}
-            <div style={{ marginTop: "100px", marginBottom: "60px" }}>
-              <span style={{ fontSize: "12px", fontWeight: "bold", color: "#6366f1", textTransform: "uppercase", letterSpacing: "2px" }}>
-                {report.quarter || "Q4"} {report.year || new Date().getFullYear()} RECONCILIATION CYCLE
-              </span>
-              <h1 style={{ fontSize: "36px", fontWeight: 850, lineHeight: 1.2, color: "#0f172a", marginTop: "15px", marginBottom: "25px" }}>
-                {report.title || "Quarterly Inventory Reconciliation"}
-              </h1>
-              <div style={{ width: "60px", height: "4px", backgroundColor: "#6366f1" }}></div>
-            </div>
-
-            {/* Audit Information Table */}
-            <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: "11px", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "1px", color: "#64748b", marginBottom: "15px" }}>
-                Audit Location & Metadata
-              </h3>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "25px", borderTop: "1px solid #f1f5f9", paddingTop: "20px" }}>
-                <div>
-                  <span style={{ fontSize: "10px", color: "#94a3b8", display: "block" }}>FACILITY LOCATION</span>
-                  <span style={{ fontSize: "13px", fontWeight: "bold", color: "#334155", marginTop: "4px", display: "block" }}>{report.location || "Not available"}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: "10px", color: "#94a3b8", display: "block" }}>WAREHOUSE NAME</span>
-                  <span style={{ fontSize: "13px", fontWeight: "bold", color: "#334155", marginTop: "4px", display: "block" }}>{report.warehouseName || "Not available"}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: "10px", color: "#94a3b8", display: "block" }}>COMPILATION DATE</span>
-                  <span style={{ fontSize: "13px", fontWeight: "bold", color: "#334155", marginTop: "4px", display: "block" }}>{new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</span>
-                </div>
-                <div>
-                  <span style={{ fontSize: "10px", color: "#94a3b8", display: "block" }}>CYCLE STATUS</span>
-                  <span style={{ fontSize: "13px", fontWeight: "bold", color: "#6366f1", marginTop: "4px", display: "block", textTransform: "uppercase" }}>{report.status || "Not available"}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Cover Footer */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>CONFIDENTIAL — INVENTORY SYSTEM</span>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page 1 of {totalPdfPages}</span>
-            </div>
-          </div>
-
-          {/* PAGE 2: EXECUTIVE SUMMARY & AUDIT OPINIONS */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              padding: "70px 80px 70px 80px",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              backgroundColor: "#ffffff",
-              position: "relative",
-              border: "1px solid #e2e8f0"
-            }}
-          >
-            {/* Top Accent */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "8px", backgroundColor: "#6366f1" }}></div>
-
-            <div>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "15px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "bold", color: "#64748b" }}>INVENTORY RECONCILIATION REPORT</span>
-                <span style={{ fontSize: "10px", color: "#94a3b8" }}>{report.quarter} {report.year} Cycle</span>
-              </div>
-
-              {/* Title */}
-              <div style={{ marginTop: "30px" }}>
-                <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>1. Executive Summary & KPIs</h2>
-                <p style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>
-                  Physical counts asset values summary, coverage statistics, and compliance indices.
-                </p>
-              </div>
-
-              {/* KPI Cards Grid (3x2 layout for better space utilization) */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px", marginTop: "20px" }}>
-                
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", backgroundColor: "#f8fafc" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Total Inventory Value</span>
-                  <span style={{ fontSize: "14px", fontWeight: "bold", color: "#0f172a", display: "block", marginTop: "4px" }}>
-                    SAR {metrics.totalInventoryValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", backgroundColor: "#f8fafc" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Verified Asset Value</span>
-                  <span style={{ fontSize: "14px", fontWeight: "bold", color: "#10b981", display: "block", marginTop: "4px" }}>
-                    SAR {metrics.verifiedValue.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", backgroundColor: "#f8fafc" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Total Financial Risk</span>
-                  <span style={{ fontSize: "14px", fontWeight: "bold", color: "#ef4444", display: "block", marginTop: "4px" }}>
-                    SAR {metrics.totalFinancialRisk.toLocaleString("en-US", { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", backgroundColor: "#f8fafc" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Total Count Lines</span>
-                  <span style={{ fontSize: "14px", fontWeight: "bold", color: "#334155", display: "block", marginTop: "4px" }}>
-                    {metrics.totalLines.toLocaleString()} Lines
-                  </span>
-                </div>
-
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", backgroundColor: "#f8fafc" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Total Quantity Verified</span>
-                  <span style={{ fontSize: "14px", fontWeight: "bold", color: "#334155", display: "block", marginTop: "4px" }}>
-                    {metrics.verifiedQuantity.toLocaleString()} Units
-                  </span>
-                </div>
-
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "10px", backgroundColor: "#f8fafc" }}>
-                  <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase" }}>Accuracy Match Rate</span>
-                  <span style={{ fontSize: "14px", fontWeight: "bold", color: "#7c3aed", display: "block", marginTop: "4px" }}>
-                    {matchRateVal.toFixed(1)}%
-                  </span>
-                </div>
-
-              </div>
-
-              {/* Net Variance & Gauges Row */}
-              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr 1fr", gap: "15px", marginTop: "20px" }}>
-                {/* Net Variance */}
-                <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "15px", backgroundColor: "#f1f5f9", display: "flex", flexDirection: "column", justifyContent: "center" }}>
-                  <span style={{ fontSize: "9px", color: "#475569", fontWeight: "bold", textTransform: "uppercase" }}>Net Reconciliation Variance</span>
-                  <span style={{ fontSize: "18px", fontWeight: "bold", color: metrics.varianceValue < 0 ? "#ef4444" : "#10b981", marginTop: "5px" }}>
-                    {metrics.varianceValue < 0 ? "-" : metrics.varianceValue > 0 ? "+" : ""}SAR {Math.abs(metrics.varianceValue).toLocaleString()}
-                  </span>
-                  <span style={{ fontSize: "8px", color: "#64748b", marginTop: "4px" }}>
-                    Total Shortages: SAR {metrics.totalShortageValue.toLocaleString()} | Excesses: SAR {metrics.totalExcessValue.toLocaleString()}
-                  </span>
-                </div>
-
-                {renderPdfHealthScoreGauge(metrics.inventoryHealthScore)}
-                {renderPdfAccuracyDonut(matchRateVal)}
-              </div>
-
-              {/* External Audit Opinion Card */}
-              <div style={{ border: "1px solid #e2e8f0", borderRadius: "8px", padding: "15px", marginTop: "20px", backgroundColor: "#fdfdfd" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span style={{ fontSize: "9px", padding: "2px 6px", borderRadius: "4px", backgroundColor: "#6366f1/10", color: "#6366f1", fontWeight: "bold" }}>AUDIT COMPLIANCE</span>
-                  <h4 style={{ fontSize: "11px", fontWeight: "bold", color: "#1e293b", margin: 0 }}>Framework Audit Conclusion Verdict</h4>
-                </div>
-                <p style={{ fontSize: "11px", color: "#475569", lineHeight: 1.5, marginTop: "8px" }}>
-                  Based on count verification parameters, the inventory physical counts yield a status of: <strong>{metrics.auditConclusion}</strong>. 
-                  Auditing sample reached <strong>{metrics.sampleCount}</strong> items with a verified coverage rate of <strong>{metrics.auditCoverageRate}%</strong>. 
-                  The overall score of <strong>{metrics.inventoryHealthScore}</strong> signifies a <strong>{metrics.inventoryHealthStatus}</strong> grade.
-                </p>
-              </div>
-
-            </div>
-
-            {/* Footer */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>CONFIDENTIAL — INVENTORY SYSTEM</span>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page 2 of {totalPdfPages}</span>
-            </div>
-          </div>
-
-          {/* PAGE 3: OPERATIONS BREAKDOWN */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              padding: "70px 80px 70px 80px",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              backgroundColor: "#ffffff",
-              position: "relative",
-              border: "1px solid #e2e8f0"
-            }}
-          >
-            {/* Top Accent */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "8px", backgroundColor: "#6366f1" }}></div>
-
-            <div>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "15px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "bold", color: "#64748b" }}>INVENTORY RECONCILIATION REPORT</span>
-                <span style={{ fontSize: "10px", color: "#94a3b8" }}>{report.quarter} {report.year} Cycle</span>
-              </div>
-
-              {/* Title */}
-              <div style={{ marginTop: "30px" }}>
-                <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>2. Operational Divisions Breakdown</h2>
-                <p style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>
-                  Variance breakdown and reconciliation statistics by business division.
-                </p>
-              </div>
-
-              {/* Division Breakdown Table */}
-              <div style={{ marginTop: "20px" }}>
-                <h3 style={{ fontSize: "10px", fontWeight: "bold", textTransform: "uppercase", color: "#475569", marginBottom: "8px" }}>Division Reconciliation Statistics</h3>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #cbd5e1", color: "#475569", fontWeight: "bold" }}>
-                      <th style={{ padding: "6px", textAlign: "left" }}>DIVISION</th>
-                      <th style={{ padding: "6px", textAlign: "center" }}>ITEMS</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>ERP VALUE (SAR)</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>VERIFIED VALUE (SAR)</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>COVERAGE RATE</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>NET VARIANCE</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metrics.divisions.map((div, idx) => (
-                      <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "6px", fontWeight: "bold" }}>{div.division}</td>
-                        <td style={{ padding: "6px", textAlign: "center" }}>{div.itemCount}</td>
-                        <td style={{ padding: "6px", textAlign: "right" }}>{div.erpValue.toLocaleString()}</td>
-                        <td style={{ padding: "6px", textAlign: "right" }}>{div.verifiedValue.toLocaleString()}</td>
-                        <td style={{ padding: "6px", textAlign: "right", fontWeight: "bold", color: div.coverageRate >= 95 ? "#10b981" : "#f59e0b" }}>{div.coverageRate}%</td>
-                        <td style={{ padding: "6px", textAlign: "right", fontWeight: "bold", color: div.varianceValue < 0 ? "#ef4444" : "#10b981" }}>
-                          {div.varianceValue < 0 ? "-" : div.varianceValue > 0 ? "+" : ""}SAR {Math.abs(div.varianceValue).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-            </div>
-
-            {/* Footer */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>CONFIDENTIAL — INVENTORY SYSTEM</span>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page 3 of {totalPdfPages}</span>
-            </div>
-          </div>
-
-          {/* PAGE 4: DISCREPANCIES TABLE & SIGNATURES */}
-          <div
-            style={{
-              width: "794px",
-              height: "1123px",
-              padding: "70px 80px 70px 80px",
-              boxSizing: "border-box",
-              display: "flex",
-              flexDirection: "column",
-              justifyContent: "space-between",
-              backgroundColor: "#ffffff",
-              position: "relative",
-              border: "1px solid #e2e8f0"
-            }}
-          >
-            {/* Top Accent */}
-            <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "8px", backgroundColor: "#6366f1" }}></div>
-
-            <div>
-              {/* Header */}
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "15px" }}>
-                <span style={{ fontSize: "10px", fontWeight: "bold", color: "#64748b" }}>INVENTORY RECONCILIATION REPORT</span>
-                <span style={{ fontSize: "10px", color: "#94a3b8" }}>{report.quarter} {report.year} Cycle</span>
-              </div>
-
-              {/* Discrepancies Section */}
-              <div style={{ marginTop: "30px" }}>
-                <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>3. Highest Risk Discrepancies Ledger</h2>
-                <p style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>
-                  Inventory items sorted by absolute variance value, requiring immediate operational audit.
-                </p>
-              </div>
-
-              {/* Table */}
-              <div style={{ marginTop: "20px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "9px", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #cbd5e1", color: "#475569", fontWeight: "bold" }}>
-                      <th style={{ padding: "6px" }}>ITEM CODE</th>
-                      <th style={{ padding: "6px" }}>DESCRIPTION</th>
-                      <th style={{ padding: "6px" }}>SUPPLIER</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>ERP QTY</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>PHYS QTY</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>DIFF</th>
-                      <th style={{ padding: "6px", textAlign: "right" }}>VARIANCE VALUE</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ color: "#334155" }}>
-                    {metrics.highestRiskItems.length > 0 ? (
-                      metrics.highestRiskItems
-                        .slice(0, 10)
-                        .map((item, idx) => {
-                          const supplier = item.supplierName || item.detectedSupplierName || "Others";
-                          return (
-                            <tr key={idx} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                              <td style={{ padding: "6px", fontWeight: "bold", fontFamily: "monospace" }}>{item.itemCode || "N/A"}</td>
-                              <td style={{ padding: "6px", maxWidth: "150px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.description || "N/A"}</td>
-                              <td style={{ padding: "6px" }}>{supplier}</td>
-                              <td style={{ padding: "6px", textAlign: "right", fontFamily: "monospace" }}>{(item.systemOnHand ?? 0).toLocaleString()}</td>
-                              <td style={{ padding: "6px", textAlign: "right", fontFamily: "monospace" }}>{(item.physicalCount ?? 0).toLocaleString()}</td>
-                              <td style={{ padding: "6px", textAlign: "right", fontFamily: "monospace", color: item.differenceQty < 0 ? "#ef4444" : "#10b981", fontWeight: "bold" }}>
-                                {item.differenceQty > 0 ? "+" : ""}{item.differenceQty.toLocaleString()}
-                              </td>
-                              <td style={{ padding: "6px", textAlign: "right", fontFamily: "monospace", color: item.varianceValue < 0 ? "#ef4444" : "#10b981", fontWeight: "bold" }}>
-                                {item.varianceValue < 0 ? "-" : item.varianceValue > 0 ? "+" : ""}SAR {Math.abs(item.varianceValue).toLocaleString()}
-                              </td>
-                            </tr>
-                          );
-                        })
-                    ) : (
-                      <tr>
-                        <td colSpan={7} style={{ padding: "20px", textAlign: "center", color: "#94a3b8" }}>
-                          No discrepancy records available for this report period.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Signatures block */}
-              <div style={{ marginTop: "50px" }}>
-                <h3 style={{ fontSize: "11px", fontWeight: "bold", color: "#0f172a", borderBottom: "1px solid #cbd5e1", paddingBottom: "6px", textTransform: "uppercase" }}>
-                  Reconciliation Sign-Off Signatories
-                </h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "20px", marginTop: "20px" }}>
-                  
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "12px", backgroundColor: "#f8fafc" }}>
-                    <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase", display: "block" }}>PREPARED BY</span>
-                    <span style={{ fontSize: "10px", fontWeight: "bold", color: "#334155", display: "block", marginTop: "4px" }}>
-                      {report.preparedBy || "Not available"}
-                    </span>
-                    <div style={{ borderBottom: "1px dashed #94a3b8", height: "35px", marginTop: "12px" }}></div>
-                    <span style={{ fontSize: "7.5px", color: "#94a3b8", display: "block", marginTop: "4px" }}>Signature & Date</span>
-                  </div>
-
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "12px", backgroundColor: "#f8fafc" }}>
-                    <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase", display: "block" }}>CHECKED BY</span>
-                    <span style={{ fontSize: "10px", fontWeight: "bold", color: "#334155", display: "block", marginTop: "4px" }}>
-                      {report.checkedBy || "Not available"}
-                    </span>
-                    <div style={{ borderBottom: "1px dashed #94a3b8", height: "35px", marginTop: "12px" }}></div>
-                    <span style={{ fontSize: "7.5px", color: "#94a3b8", display: "block", marginTop: "4px" }}>Signature & Date</span>
-                  </div>
-
-                  <div style={{ border: "1px solid #e2e8f0", borderRadius: "6px", padding: "12px", backgroundColor: "#f8fafc" }}>
-                    <span style={{ fontSize: "8px", color: "#64748b", fontWeight: "bold", textTransform: "uppercase", display: "block" }}>APPROVED BY</span>
-                    <span style={{ fontSize: "10px", fontWeight: "bold", color: "#334155", display: "block", marginTop: "4px" }}>
-                      {report.approvedBy || "Not available"}
-                    </span>
-                    <div style={{ borderBottom: "1px dashed #94a3b8", height: "35px", marginTop: "12px" }}></div>
-                    <span style={{ fontSize: "7.5px", color: "#94a3b8", display: "block", marginTop: "4px" }}>Signature & Date</span>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            {/* Footer */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>CONFIDENTIAL — INVENTORY SYSTEM</span>
-              <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page 4 of {totalPdfPages}</span>
-            </div>
-          </div>
+          {/* Executive narrative report pages (shared with Pre-Report preview) */}
+          <ExecutiveReportDocument
+            sections={pdfSections}
+            cover={pdfCover}
+            content={pdfContent}
+            images={pdfImages}
+            metrics={extendedMetrics}
+            narrative={narrative}
+            reportMeta={{ quarter: report.quarter, year: report.year, location: report.location }}
+            totalPagesOverride={totalPdfPages}
+          />
 
           {/* PAGE 5: EVIDENCE & ON-SITE PERSONNEL LEDGER (Rendered conditionally) */}
           {personnelList.length > 0 && (
@@ -982,7 +584,7 @@ export default function ReportBuilder() {
 
                 {/* Title */}
                 <div style={{ marginTop: "30px" }}>
-                  <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>4. On-Site Audit Workers & Visual Evidence</h2>
+                  <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>Appendix — On-Site Audit Workers & Visual Evidence</h2>
                   <p style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>
                     Registered evidence catalog and on-site audit team execution details.
                   </p>
@@ -1054,7 +656,7 @@ export default function ReportBuilder() {
               {/* Footer */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
                 <span style={{ fontSize: "10px", color: "#94a3b8" }}>CONFIDENTIAL — INVENTORY SYSTEM</span>
-                <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page 5 of 5</span>
+                <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page {totalPdfPages} of {totalPdfPages}</span>
               </div>
             </div>
           )}

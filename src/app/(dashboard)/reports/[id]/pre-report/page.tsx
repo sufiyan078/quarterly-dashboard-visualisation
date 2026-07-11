@@ -1,9 +1,9 @@
-import ReportPeriodDetails from "./page.client";
+import PreReportPage from "./page.client";
 
 export function generateStaticParams() {
   return [{ id: "placeholder" }];
 }
 
 export default function Page() {
-  return <ReportPeriodDetails />;
+  return <PreReportPage />;
 }

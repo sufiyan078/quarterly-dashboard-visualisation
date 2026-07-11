@@ -58,6 +58,7 @@ export interface CounterPerformance {
   verifiedValue: number;
   productivityRate: number;
   accuracyRate: number;
+  matchedCount: number;
 }
 
 export interface DashboardMetrics {
@@ -138,7 +139,7 @@ export function computeDashboardMetrics(
     totalFinancialRisk += row.absoluteVarianceValue;
 
     if (row.varianceValue < 0) {
-      totalShortageValue += Math.abs(row.varianceValue);
+      totalShortageValue += row.varianceValue; // negative value
     } else {
       totalExcessValue += row.varianceValue;
     }
@@ -263,7 +264,7 @@ export function computeDashboardMetrics(
       absoluteVarianceValue: parseFloat(suppAbsVarianceValue.toFixed(2)),
       coverageRate: suppErpValue > 0 ? parseFloat(((suppVerifiedValue / suppErpValue) * 100).toFixed(2)) : 100,
     };
-  }).sort((a, b) => b.erpValue - a.erpValue);
+  }).sort((a, b) => b.absoluteVarianceValue - a.absoluteVarianceValue);
 
   // 4. Aging Calculations
   let range1_2yr = 0;
@@ -331,6 +332,7 @@ export function computeDashboardMetrics(
       verifiedValue: parseFloat(cVerifiedValue.toFixed(2)),
       productivityRate: totalLines > 0 ? parseFloat(((rows.length / totalLines) * 100).toFixed(2)) : 0,
       accuracyRate: rows.length > 0 ? parseFloat(((cMatched / rows.length) * 100).toFixed(2)) : 100,
+      matchedCount: cMatched,
     };
   }).sort((a, b) => b.itemsCounted - a.itemsCounted);
 

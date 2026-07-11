@@ -149,10 +149,10 @@ export function calculateInventorySummary(
       mismatchedItems++;
       if (row.differenceQty < 0) {
         shortageItemsCount++;
-        totalShortageValue += row.absoluteVarianceValue;
+        totalShortageValue += row.varianceValue; // negative value
       } else {
         excessItemsCount++;
-        totalExcessValue += row.varianceValue;
+        totalExcessValue += row.varianceValue; // positive value
       }
     }
   }
@@ -161,7 +161,7 @@ export function calculateInventorySummary(
   const mismatchPercentage = totalItems > 0 ? (mismatchedItems / totalItems) * 100 : 0;
   const shortagePercentage = totalItems > 0 ? (shortageItemsCount / totalItems) * 100 : 0;
   const excessPercentage = totalItems > 0 ? (excessItemsCount / totalItems) * 100 : 0;
-  const netVariance = totalExcessValue - totalShortageValue;
+  const netVariance = totalExcessValue + totalShortageValue;
 
   return {
     totalItems,

@@ -1267,3 +1267,60 @@ div.rounded-2xl {
     min-width: 44px;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════
+   PDF REPORT PAGE PREVIEW & PRINT STANDARDIZATION (THEME ISOLATION)
+   ════════════════════════════════════════════════════════════════ */
+.pdf-report-page,
+[data-theme="dark"] .pdf-report-page,
+[data-theme="light"] .pdf-report-page {
+  background-color: #ffffff !important;
+  color: #334155 !important;
+  font-family: var(--ds-font-family) !important;
+}
+
+/* Enforce standard high-contrast text colors on white PDF background */
+.pdf-report-page h1, [data-theme="dark"] .pdf-report-page h1, [data-theme="light"] .pdf-report-page h1 { color: #0f172a !important; }
+.pdf-report-page h2, [data-theme="dark"] .pdf-report-page h2, [data-theme="light"] .pdf-report-page h2 { color: #1e293b !important; }
+.pdf-report-page h3, [data-theme="dark"] .pdf-report-page h3, [data-theme="light"] .pdf-report-page h3 { color: #334155 !important; }
+.pdf-report-page h4, [data-theme="dark"] .pdf-report-page h4, [data-theme="light"] .pdf-report-page h4 { color: #475569 !important; }
+.pdf-report-page p, [data-theme="dark"] .pdf-report-page p, [data-theme="light"] .pdf-report-page p { color: #334155 !important; }
+.pdf-report-page span, [data-theme="dark"] .pdf-report-page span, [data-theme="light"] .pdf-report-page span { color: inherit; }
+.pdf-report-page div, [data-theme="dark"] .pdf-report-page div, [data-theme="light"] .pdf-report-page div { color: inherit; }
+.pdf-report-page td, [data-theme="dark"] .pdf-report-page td, [data-theme="light"] .pdf-report-page td { color: #334155 !important; }
+.pdf-report-page th, [data-theme="dark"] .pdf-report-page th, [data-theme="light"] .pdf-report-page th { color: #475569 !important; }
+
+/* Override slate utility colors for elements inside the PDF report */
+.pdf-report-page .text-slate-900, [data-theme="dark"] .pdf-report-page .text-slate-900, [data-theme="light"] .pdf-report-page .text-slate-900 { color: #0f172a !important; }
+.pdf-report-page .text-slate-800, [data-theme="dark"] .pdf-report-page .text-slate-800, [data-theme="light"] .pdf-report-page .text-slate-800 { color: #1e293b !important; }
+.pdf-report-page .text-slate-700, [data-theme="dark"] .pdf-report-page .text-slate-700, [data-theme="light"] .pdf-report-page .text-slate-700 { color: #334155 !important; }
+.pdf-report-page .text-slate-600, [data-theme="dark"] .pdf-report-page .text-slate-600, [data-theme="light"] .pdf-report-page .text-slate-600 { color: #475569 !important; }
+.pdf-report-page .text-slate-500, [data-theme="dark"] .pdf-report-page .text-slate-500, [data-theme="light"] .pdf-report-page .text-slate-500 { color: #64748b !important; }
+.pdf-report-page .text-slate-400, [data-theme="dark"] .pdf-report-page .text-slate-400, [data-theme="light"] .pdf-report-page .text-slate-400 { color: #94a3b8 !important; }
+.pdf-report-page .text-slate-300, [data-theme="dark"] .pdf-report-page .text-slate-300, [data-theme="light"] .pdf-report-page .text-slate-300 { color: #cbd5e1 !important; }
+.pdf-report-page .text-slate-200, [data-theme="dark"] .pdf-report-page .text-slate-200, [data-theme="light"] .pdf-report-page .text-slate-200 { color: #e2e8f0 !important; }
+
+/* Enforce borders */
+.pdf-report-page .border-slate-100, [data-theme="dark"] .pdf-report-page .border-slate-100, [data-theme="light"] .pdf-report-page .border-slate-100 { border-color: #f1f5f9 !important; }
+.pdf-report-page .border-slate-200, [data-theme="dark"] .pdf-report-page .border-slate-200, [data-theme="light"] .pdf-report-page .border-slate-200 { border-color: #e2e8f0 !important; }
+.pdf-report-page .border-slate-300, [data-theme="dark"] .pdf-report-page .border-slate-300, [data-theme="light"] .pdf-report-page .border-slate-300 { border-color: #cbd5e1 !important; }
+.pdf-report-page .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="dark"] .pdf-report-page .divide-slate-100 > :not([hidden]) ~ :not([hidden]),
+[data-theme="light"] .pdf-report-page .divide-slate-100 > :not([hidden]) ~ :not([hidden]) {
+  border-color: #f1f5f9 !important;
+}
+
+/* Enforce backgrounds */
+.pdf-report-page .bg-slate-50, [data-theme="dark"] .pdf-report-page .bg-slate-50, [data-theme="light"] .pdf-report-page .bg-slate-50 { background-color: #f8fafc !important; }
+.pdf-report-page .bg-slate-100, [data-theme="dark"] .pdf-report-page .bg-slate-100, [data-theme="light"] .pdf-report-page .bg-slate-100 { background-color: #f1f5f9 !important; }
+.pdf-report-page .bg-slate-50\/50, [data-theme="dark"] .pdf-report-page .bg-slate-50\/50, [data-theme="light"] .pdf-report-page .bg-slate-50\/50 { background-color: rgba(248, 250, 252, 0.5) !important; }
+.pdf-report-page .bg-white, [data-theme="dark"] .pdf-report-page .bg-white, [data-theme="light"] .pdf-report-page .bg-white { background-color: #ffffff !important; }
+
+/* Enforce indicator/accent text colors */
+.pdf-report-page .text-emerald-600, [data-theme="dark"] .pdf-report-page .text-emerald-600, [data-theme="light"] .pdf-report-page .text-emerald-600 { color: #059669 !important; }
+.pdf-report-page .text-red-500, [data-theme="dark"] .pdf-report-page .text-red-500, [data-theme="light"] .pdf-report-page .text-red-500 { color: #ef4444 !important; }
+.pdf-report-page .text-red-600, [data-theme="dark"] .pdf-report-page .text-red-600, [data-theme="light"] .pdf-report-page .text-red-600 { color: #dc2626 !important; }
+.pdf-report-page .text-indigo-600, [data-theme="dark"] .pdf-report-page .text-indigo-600, [data-theme="light"] .pdf-report-page .text-indigo-600 { color: #4f46e5 !important; }
+.pdf-report-page .bg-indigo-50, [data-theme="dark"] .pdf-report-page .bg-indigo-50, [data-theme="light"] .pdf-report-page .bg-indigo-50 { background-color: #e0e7ff !important; }
+.pdf-report-page .border-l-indigo-200, [data-theme="dark"] .pdf-report-page .border-l-indigo-200, [data-theme="light"] .pdf-report-page .border-l-indigo-200 { border-left-color: #c7d2fe !important; }
+

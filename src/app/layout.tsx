@@ -31,8 +31,13 @@ export default function RootLayout({
       lang="en"
       data-theme="dark"
       className={`${inter.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans" style={{ background: 'var(--th-app-bg)', color: 'var(--th-text-body)' }}>
+      <body
+        className="min-h-full flex flex-col font-sans"
+        style={{ background: 'var(--th-app-bg)', color: 'var(--th-text-body)' }}
+        suppressHydrationWarning
+      >
         <ThemeProvider>
           <InventoryDataProvider>
             <AuthProvider>

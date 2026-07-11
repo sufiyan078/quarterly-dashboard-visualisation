@@ -14,6 +14,30 @@
     ],
     "rewrites": [
       {
+        "source": "/reports/*/upload",
+        "destination": "/reports/placeholder/upload.html"
+      },
+      {
+        "source": "/reports/*/validate",
+        "destination": "/reports/placeholder/validate.html"
+      },
+      {
+        "source": "/reports/*/dashboard",
+        "destination": "/reports/placeholder/dashboard.html"
+      },
+      {
+        "source": "/reports/*/builder",
+        "destination": "/reports/placeholder/builder.html"
+      },
+      {
+        "source": "/reports/*/pre-report",
+        "destination": "/reports/placeholder/pre-report.html"
+      },
+      {
+        "source": "/reports/*",
+        "destination": "/reports/placeholder.html"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

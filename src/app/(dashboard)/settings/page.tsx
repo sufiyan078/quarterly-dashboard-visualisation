@@ -8,7 +8,6 @@ import {
   Settings as SettingsIcon, 
   User, 
   Shield, 
-  Database,
   Calendar,
   Lock,
   CheckCircle2,
@@ -39,9 +38,6 @@ export default function Settings() {
   const [loadingUsers, setLoadingUsers] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // System parameters state
-  const [complianceThreshold, setComplianceThreshold] = useState("95%");
-  const [defaultCurrency, setDefaultCurrency] = useState("USD ($)");
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -65,7 +61,7 @@ export default function Settings() {
   }, []);
 
   return (
-    <div className="space-y-8 max-w-5xl animate-in fade-in duration-300">
+    <div className="space-y-8 w-full animate-in fade-in duration-300">
       
       {/* Header */}
       <div>
@@ -81,8 +77,8 @@ export default function Settings() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Side: System Config & Profile */}
-        <div className="lg:col-span-7 space-y-6">
-          
+        <div className="lg:col-span-5 space-y-6">
+
           {/* User Profile Card */}
           <div className="rounded-xl backdrop-blur-md p-6 space-y-5" style={{ border: '1px solid var(--th-border)', background: 'var(--th-surface)' }}>
             <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 pb-3" style={{ color: 'var(--th-text-heading)', borderBottom: '1px solid var(--th-border)' }}>
@@ -214,52 +210,12 @@ export default function Settings() {
             </div>
           </div>
 
-          {/* Compliance Parameters Config */}
-          <div className="rounded-xl backdrop-blur-md p-6 space-y-5" style={{ border: '1px solid var(--th-border)', background: 'var(--th-surface)' }}>
-            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 pb-3" style={{ color: 'var(--th-text-heading)', borderBottom: '1px solid var(--th-border)' }}>
-              <Database className="h-4 w-4 text-indigo-400" />
-              Reconciliation Parameters
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-xs font-semibold" style={{ color: 'var(--th-text-muted)' }}>
-                  Compliance Accuracy Target
-                </label>
-                <select
-                  value={complianceThreshold}
-                  onChange={(e) => setComplianceThreshold(e.target.value)}
-                  className="mt-2 block w-full rounded-lg text-xs px-3 py-2 outline-none transition-colors"
-                  style={{ background: 'var(--th-input-bg)', border: '1px solid var(--th-border)', color: 'var(--th-text-heading)' }}
-                >
-                  <option value="98%">98% accuracy (Strict)</option>
-                  <option value="95%">95% accuracy (Standard)</option>
-                  <option value="90%">90% accuracy (Relaxed)</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold" style={{ color: 'var(--th-text-muted)' }}>
-                  Currency Units
-                </label>
-                <select
-                  value={defaultCurrency}
-                  onChange={(e) => setDefaultCurrency(e.target.value)}
-                  className="mt-2 block w-full rounded-lg text-xs px-3 py-2 outline-none transition-colors"
-                  style={{ background: 'var(--th-input-bg)', border: '1px solid var(--th-border)', color: 'var(--th-text-heading)' }}
-                >
-                  <option value="USD ($)">USD ($) - US Dollar</option>
-                  <option value="AED (AED)">AED (AED) - UAE Dirham</option>
-                  <option value="EUR (€)">EUR (€) - Euro</option>
-                </select>
-              </div>
-            </div>
-          </div>
 
         </div>
 
-        {/* Right Side: Registered User Accounts list */}
-        <div className="lg:col-span-5 space-y-6">
+        {/* Middle Side: Registered User Accounts list */}
+        <div className="lg:col-span-4 space-y-6">
+          {/* Registered Portals Card */}
           <div className="rounded-xl p-6 flex flex-col h-full min-h-[350px]" style={{ border: '1px solid var(--th-border)', background: 'var(--th-surface)' }}>
             <div>
               <h3 className="text-sm font-bold uppercase tracking-wider pb-3 flex items-center gap-2" style={{ color: 'var(--th-text-heading)', borderBottom: '1px solid var(--th-border)' }}>
@@ -321,7 +277,10 @@ export default function Settings() {
               )}
             </div>
           </div>
+        </div>
 
+        {/* Right Side: System Information */}
+        <div className="lg:col-span-3 space-y-6">
           {/* System Information Card */}
           <div className="rounded-xl backdrop-blur-md p-6 space-y-4" style={{ border: '1px solid var(--th-border)', background: 'var(--th-surface)' }}>
             <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 pb-3" style={{ color: 'var(--th-text-heading)', borderBottom: '1px solid var(--th-border)' }}>

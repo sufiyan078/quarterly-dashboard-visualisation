@@ -43,3 +43,6 @@ next-env.d.ts
 # version backups
 /versions/
 
+# firebase
+/.firebase/
+

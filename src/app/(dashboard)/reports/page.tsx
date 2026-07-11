@@ -205,7 +205,7 @@ export default function ReportPeriods() {
           <div className="mt-6">
             <Link
               href="/reports/create"
-              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 px-4 py-2 text-xs font-bold text-indigo-400 transition-colors"
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 px-8 py-2 text-xs font-bold text-indigo-400 transition-colors"
             >
               <PlusCircle className="h-4 w-4" />
               Create your first period

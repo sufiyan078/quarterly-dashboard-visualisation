@@ -6,6 +6,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.10.3] - 2026-07-12
+### Added
+- **Dynamic Route Fallback Hook**: Added a custom `useReportId` hook to resolve production URL parsing issues resulting from Next.js static HTML export constraints on wildcard rewrites.
+
+### Files Modified
+- `src/lib/useReportId.ts`
+- `src/app/(dashboard)/reports/[id]/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/upload/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/dashboard/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/builder/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/pre-report/page.client.tsx`
+
+### Reason
+- Fix the dynamic routing bug where useParams() returned "placeholder" in production.
+
+---
+
 ## [0.10.2] - 2026-07-12
 ### Modified
 - **Chunking Logic**: Adjusted chunking size logic for Firestore writes to save/diagnose in chunks of 1500 rows when the dataset is 2000+ rows, and save immediately as a single document write when the dataset has less than 1500 rows.

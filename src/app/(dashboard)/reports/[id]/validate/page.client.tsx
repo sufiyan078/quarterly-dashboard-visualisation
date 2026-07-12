@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db, doc, getDoc, updateDoc, writeBatch, collection, setDoc } from "@/lib/firebase";
 import { useInventoryData } from "@/context/InventoryDataContext";
@@ -9,6 +9,7 @@ import { ParsedInventoryRow, IgnoredInventoryRow, NeedsReviewInventoryRow, Sheet
 import { profileInventoryData } from "@/lib/inventory/dataProfiler";
 import { getHighestStep } from "@/lib/workflow";
 import { computeRowMetrics, calculateInventorySummary } from "@/lib/inventory/calculations";
+import { useReportId } from "@/lib/useReportId";
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -42,8 +43,7 @@ interface Report {
 
 export default function DataValidation() {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id as string;
+  const id = useReportId();
   const { parsedResult } = useInventoryData();
 
   const [report, setReport] = useState<Report | null>(null);

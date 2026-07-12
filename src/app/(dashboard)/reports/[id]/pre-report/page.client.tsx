@@ -2,7 +2,8 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useReportId } from "@/lib/useReportId";
 import { db, doc, getDoc, updateDoc, collection, getDocs } from "@/lib/firebase";
 import { getHighestStep } from "@/lib/workflow";
 import {
@@ -45,8 +46,7 @@ interface Report {
 
 export default function PreReportPage() {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id as string;
+  const id = useReportId();
 
   // Data State
   const [report, setReport] = useState<Report | null>(null);

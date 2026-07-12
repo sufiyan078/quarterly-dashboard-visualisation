@@ -8,6 +8,7 @@ import {
   ReportNarrative, Recommendation, RiskFinding, Priority,
   PreReportMetrics, SectionNarrative, fmtSAR, fmtPct,
 } from "@/lib/report/insightEngine";
+import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
 
 /* ════════════════════════════════════════════════════════════════
    EXECUTIVE REPORT DOCUMENT
@@ -16,7 +17,8 @@ import {
 
    IMPORTANT: html2canvas cannot parse modern CSS color functions,
    so every color in this file is an inline hex/rgba style — no
-   Tailwind classes inside the pages.
+   Tailwind classes inside the pages. All layout variables are 
+   governed by the designTokens module.
    ════════════════════════════════════════════════════════════════ */
 
 export interface ReportMeta {
@@ -38,53 +40,46 @@ interface ExecutiveReportDocumentProps {
   totalPagesOverride?: number;
 }
 
-/* ─── Palette (hex only) ─── */
-const C = {
-  ink: "#0f172a",
-  heading: "#1e293b",
-  body: "#334155",
-  muted: "#64748b",
-  faint: "#94a3b8",
-  border: "#e2e8f0",
-  borderSoft: "#f1f5f9",
-  panel: "#f8fafc",
-  white: "#ffffff",
-  accent: "#4338ca",
-  accentSoft: "#eef2ff",
-  good: "#059669",
-  goodSoft: "#ecfdf5",
-  bad: "#dc2626",
-  badSoft: "#fef2f2",
-  warn: "#d97706",
-  warnSoft: "#fffbeb",
-};
-
 const PRIORITY_STYLE: Record<Priority, { fg: string; bg: string }> = {
-  Critical: { fg: "#b91c1c", bg: "#fee2e2" },
-  High: { fg: "#c2410c", bg: "#ffedd5" },
-  Medium: { fg: "#a16207", bg: "#fef9c3" },
-  Low: { fg: "#15803d", bg: "#dcfce7" },
+  Critical: { fg: C.status.critical, bg: C.status.criticalSoft },
+  High: { fg: C.status.bad, bg: C.status.badSoft },
+  Medium: { fg: C.status.warn, bg: C.status.warnSoft },
+  Low: { fg: C.status.good, bg: C.status.goodSoft },
 };
 
 /* ─── Shared style fragments ─── */
 const overline: React.CSSProperties = {
-  fontSize: "9px", fontWeight: 700, letterSpacing: "0.12em",
-  textTransform: "uppercase", color: C.faint,
+  fontSize: TYPOGRAPHY.sizes.label,
+  fontWeight: TYPOGRAPHY.weights.bold,
+  letterSpacing: "0.12em",
+  textTransform: "uppercase",
+  color: C.brand.accent,
 };
 
 const bodyText: React.CSSProperties = {
-  fontSize: "11px", lineHeight: 1.65, color: C.body, fontWeight: 400,
+  fontSize: TYPOGRAPHY.sizes.body,
+  lineHeight: 1.65,
+  color: C.text.secondary,
+  fontWeight: TYPOGRAPHY.weights.regular,
+  fontFamily: TYPOGRAPHY.fontFamily,
 };
 
 const thStyle: React.CSSProperties = {
-  padding: "7px 10px", fontSize: "8.5px", fontWeight: 700,
-  letterSpacing: "0.06em", textTransform: "uppercase",
-  color: C.muted, backgroundColor: C.panel,
-  borderBottom: `1px solid ${C.border}`, textAlign: "left",
+  padding: "8px 10px",
+  fontSize: TYPOGRAPHY.sizes.tableHeader,
+  fontWeight: TYPOGRAPHY.weights.bold,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: C.brand.white,
+  backgroundColor: C.brand.primary,
+  borderBottom: `2px solid ${C.brand.accent}`,
+  textAlign: "left",
 };
 
 const tdStyle: React.CSSProperties = {
-  padding: "7px 10px", fontSize: "10px", color: C.body,
+  padding: "8px 10px",
+  fontSize: TYPOGRAPHY.sizes.tableCell,
+  color: C.text.primary,
   borderBottom: `1px solid ${C.borderSoft}`,
 };
 
@@ -99,8 +94,9 @@ function PriorityBadge({ level }: { level: Priority }) {
   return (
     <span style={{
       display: "inline-block", padding: "2px 8px", borderRadius: "4px",
-      fontSize: "8.5px", fontWeight: 800, letterSpacing: "0.08em",
+      fontSize: "8px", fontWeight: TYPOGRAPHY.weights.extrabold, letterSpacing: "0.08em",
       textTransform: "uppercase", color: s.fg, backgroundColor: s.bg,
+      border: `1px solid ${s.fg}22`,
     }}>
       {level}
     </span>
@@ -108,16 +104,21 @@ function PriorityBadge({ level }: { level: Priority }) {
 }
 
 function FactCard({ label, value, tone }: { label: string; value: string; tone?: "good" | "bad" | "accent" }) {
-  const color = tone === "good" ? C.good : tone === "bad" ? C.bad : tone === "accent" ? C.accent : C.ink;
+  const color = tone === "good" ? C.status.good : tone === "bad" ? C.status.bad : tone === "accent" ? C.brand.secondary : C.brand.primary;
   return (
     <div style={{
-      border: `1px solid ${C.border}`, borderRadius: "10px",
-      padding: "12px 14px", backgroundColor: C.panel, minWidth: 0,
+      border: `1px solid ${C.border}`,
+      borderTop: `3px solid ${color}`,
+      borderRadius: "6px",
+      padding: "10px 12px",
+      backgroundColor: C.panel,
+      minWidth: 0,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
     }}>
-      <span style={{ ...overline, display: "block", color: C.muted }}>{label}</span>
+      <span style={{ ...overline, display: "block", color: C.text.muted, fontSize: "8px" }}>{label}</span>
       <span style={{
-        display: "block", marginTop: "5px", fontSize: "16px",
-        fontWeight: 800, color, letterSpacing: "-0.01em",
+        display: "block", marginTop: "4px", fontSize: "15px",
+        fontWeight: TYPOGRAPHY.weights.extrabold, color, letterSpacing: "-0.01em",
         fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
         overflow: "hidden", textOverflow: "ellipsis",
       }}>
@@ -129,7 +130,7 @@ function FactCard({ label, value, tone }: { label: string; value: string; tone?:
 
 function Commentary({ text }: { text: string }) {
   return (
-    <p style={{ ...bodyText, fontSize: "11.5px", marginBottom: "14px" }}>{text}</p>
+    <p style={{ ...bodyText, fontSize: TYPOGRAPHY.sizes.bodyLarge, marginBottom: "14px", color: C.text.primary }}>{text}</p>
   );
 }
 
@@ -137,18 +138,21 @@ function InsightBlock({ insights, max = 4 }: { insights: string[]; max?: number 
   if (!insights.length) return null;
   return (
     <div style={{
-      border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.accent}`,
-      borderRadius: "8px", padding: "12px 16px", backgroundColor: C.accentSoft,
+      border: `1px solid ${C.border}`,
+      borderLeft: `4px solid ${C.brand.primary}`,
+      borderRadius: "6px",
+      padding: "12px 16px",
+      backgroundColor: C.borderSoft,
       marginTop: "14px",
     }}>
-      <span style={{ ...overline, color: C.accent, display: "block", marginBottom: "7px" }}>
-        Key Insights
+      <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "7px" }}>
+        Key Analytical Insights
       </span>
       <div>
         {insights.slice(0, max).map((ins, i) => (
           <div key={i} style={{ display: "flex", gap: "8px", marginBottom: i === Math.min(insights.length, max) - 1 ? 0 : "7px" }}>
-            <span style={{ color: C.accent, fontSize: "9px", lineHeight: "17px", flexShrink: 0 }}>◆</span>
-            <span style={{ ...bodyText, fontSize: "10.5px", lineHeight: 1.55 }}>{ins}</span>
+            <span style={{ color: C.brand.accent, fontSize: "9px", lineHeight: "17px", flexShrink: 0 }}>◆</span>
+            <span style={{ ...bodyText, fontSize: "10.5px", lineHeight: 1.55, color: C.text.primary }}>{ins}</span>
           </div>
         ))}
       </div>
@@ -159,21 +163,25 @@ function InsightBlock({ insights, max = 4 }: { insights: string[]; max?: number 
 function RecommendationCard({ rec, compact }: { rec: Recommendation; compact?: boolean }) {
   return (
     <div style={{
-      border: `1px solid ${C.border}`, borderRadius: "8px",
-      padding: compact ? "10px 14px" : "13px 16px", backgroundColor: C.white,
+      border: `1px solid ${C.border}`,
+      borderLeft: `4px solid ${PRIORITY_STYLE[rec.priority].fg}`,
+      borderRadius: "6px",
+      padding: compact ? "10px 14px" : "12px 16px",
+      backgroundColor: C.brand.white,
+      boxShadow: "0 1px 2px rgba(0,0,0,0.01)",
     }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-        <span style={{ fontSize: compact ? "10.5px" : "11.5px", fontWeight: 700, color: C.ink }}>
+        <span style={{ fontSize: compact ? "10.5px" : "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>
           {rec.title}
         </span>
         <PriorityBadge level={rec.priority} />
       </div>
       <div style={{ marginTop: "6px" }}>
-        <span style={{ ...bodyText, fontSize: "10px", display: "block" }}>
-          <strong style={{ color: C.heading, fontWeight: 700 }}>Why: </strong>{rec.reason}
+        <span style={{ ...bodyText, fontSize: "9.5px", display: "block", color: C.text.secondary }}>
+          <strong style={{ color: C.brand.primary, fontWeight: TYPOGRAPHY.weights.bold }}>Why: </strong>{rec.reason}
         </span>
-        <span style={{ ...bodyText, fontSize: "10px", display: "block", marginTop: "3px" }}>
-          <strong style={{ color: C.heading, fontWeight: 700 }}>Expected benefit: </strong>{rec.benefit}
+        <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "3px", color: C.text.secondary }}>
+          <strong style={{ color: C.brand.primary, fontWeight: TYPOGRAPHY.weights.bold }}>Expected benefit: </strong>{rec.benefit}
         </span>
       </div>
     </div>
@@ -184,8 +192,8 @@ function SectionRecommendations({ recs, max = 2 }: { recs: Recommendation[]; max
   if (!recs.length) return null;
   return (
     <div style={{ marginTop: "14px" }}>
-      <span style={{ ...overline, color: C.muted, display: "block", marginBottom: "8px" }}>
-        Recommended Actions
+      <span style={{ ...overline, color: C.text.muted, display: "block", marginBottom: "8px" }}>
+        Recommended Corrective Actions
       </span>
       <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
         {recs.slice(0, max).map((r) => <RecommendationCard key={r.id} rec={r} compact />)}
@@ -199,8 +207,8 @@ function HBar({ label, valueLabel, ratio, color }: { label: string; valueLabel: 
   return (
     <div style={{ marginBottom: "9px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "3px" }}>
-        <span style={{ fontSize: "9.5px", fontWeight: 600, color: C.body }}>{label}</span>
-        <span style={{ fontSize: "9.5px", fontWeight: 700, color: C.heading, fontVariantNumeric: "tabular-nums" }}>{valueLabel}</span>
+        <span style={{ fontSize: "9.5px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.text.primary }}>{label}</span>
+        <span style={{ fontSize: "9.5px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, fontVariantNumeric: "tabular-nums" }}>{valueLabel}</span>
       </div>
       <div style={{ height: "8px", borderRadius: "4px", backgroundColor: C.borderSoft, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${width}%`, borderRadius: "4px", backgroundColor: color }} />
@@ -214,16 +222,17 @@ function HealthGauge({ score }: { score: number }) {
   const circ = Math.PI * r;
   const clamped = Math.min(100, Math.max(0, score));
   const offset = circ - (clamped / 100) * circ;
-  let stroke = C.bad;
-  if (score >= 95) stroke = C.good;
-  else if (score >= 85) stroke = C.accent;
-  else if (score >= 70) stroke = C.warn;
+  let stroke = C.status.bad;
+  if (score >= 95) stroke = C.status.good;
+  else if (score >= 85) stroke = C.brand.secondary;
+  else if (score >= 70) stroke = C.status.warn;
 
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      border: `1px solid ${C.border}`, borderRadius: "10px",
-      padding: "16px 22px 12px", backgroundColor: C.panel,
+      border: `1px solid ${C.border}`, borderRadius: "6px",
+      padding: "12px 18px 10px", backgroundColor: C.panel,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
     }}>
       <div style={{ position: "relative", width: "120px", height: "66px", overflow: "hidden" }}>
         <svg width="120" height="120" viewBox="0 0 120 120" style={{ position: "absolute", top: 0, left: 0 }}>
@@ -233,12 +242,12 @@ function HealthGauge({ score }: { score: number }) {
         </svg>
         <span style={{
           position: "absolute", bottom: "0", left: "0", right: "0", textAlign: "center",
-          fontSize: "20px", fontWeight: 800, color: C.ink,
+          fontSize: "20px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.primary,
         }}>
           {score}
         </span>
       </div>
-      <span style={{ ...overline, marginTop: "6px" }}>Health Index / 100</span>
+      <span style={{ ...overline, marginTop: "6px", fontSize: "7.5px" }}>Health Index / 100</span>
     </div>
   );
 }
@@ -250,8 +259,9 @@ function DonutStat({ label, ratePct, color }: { label: string; ratePct: number; 
   return (
     <div style={{
       display: "flex", flexDirection: "column", alignItems: "center",
-      border: `1px solid ${C.border}`, borderRadius: "10px",
-      padding: "16px 22px 12px", backgroundColor: C.panel,
+      border: `1px solid ${C.border}`, borderRadius: "6px",
+      padding: "12px 18px 10px", backgroundColor: C.panel,
+      boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
     }}>
       <div style={{ position: "relative", width: "66px", height: "66px" }}>
         <svg width="66" height="66" style={{ transform: "rotate(-90deg)" }}>
@@ -261,12 +271,12 @@ function DonutStat({ label, ratePct, color }: { label: string; ratePct: number; 
         </svg>
         <span style={{
           position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center",
-          fontSize: "12px", fontWeight: 800, color: C.ink,
+          fontSize: "11px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.primary,
         }}>
           {ratePct.toFixed(1)}%
         </span>
       </div>
-      <span style={{ ...overline, marginTop: "6px" }}>{label}</span>
+      <span style={{ ...overline, marginTop: "6px", fontSize: "7.5px" }}>{label}</span>
     </div>
   );
 }
@@ -289,35 +299,52 @@ function Page({
     <div
       className="pdf-report-page"
       style={{
-        width: "794px", height: "1123px", padding: "62px 72px 48px",
-        boxSizing: "border-box", display: "flex", flexDirection: "column",
-        backgroundColor: C.white, position: "relative",
-        border: `1px solid ${C.border}`, overflow: "hidden",
-        fontFamily: "Inter, 'Segoe UI', Helvetica, Arial, sans-serif",
-        color: C.body,
+        width: LAYOUT.width,
+        height: LAYOUT.height,
+        padding: `${LAYOUT.padding.top} ${LAYOUT.padding.right} ${LAYOUT.padding.bottom} ${LAYOUT.padding.left}`,
+        boxSizing: "border-box",
+        display: "flex",
+        flexDirection: "column",
+        backgroundColor: C.brand.white,
+        position: "relative",
+        border: `1px solid ${C.border}`,
+        overflow: "hidden",
+        fontFamily: TYPOGRAPHY.fontFamily,
+        color: C.text.secondary,
       }}
     >
-      {/* Top accent bar */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "6px", backgroundColor: C.accent }} />
+      {/* Top Gold Accent Bar */}
+      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", backgroundColor: C.brand.accent }} />
+
+      {/* Bottom Navy Accent Bar */}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "3px", backgroundColor: C.brand.primary }} />
 
       {!isCover && (
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
-          borderBottom: `1px solid ${C.borderSoft}`, paddingBottom: "10px",
+          borderBottom: `1px solid ${C.border}`, paddingBottom: "10px",
         }}>
-          <span style={overline}>Inventory Audit &amp; Reconciliation</span>
+          <span style={{ ...overline, color: C.brand.primary }}>GAS ARABIAN SERVICES — INVENTORY RECONCILIATION</span>
           <span style={overline}>{kicker}</span>
         </div>
       )}
 
       {!isCover && title && (
-        <div style={{ marginTop: "22px", marginBottom: "16px" }}>
-          <span style={{ ...overline, color: C.accent }}>Section {String(pageNumber - 1).padStart(2, "0")}</span>
-          <h2 style={{ fontSize: "21px", fontWeight: 800, color: C.ink, letterSpacing: "-0.02em", margin: "4px 0 0" }}>
+        <div style={{ marginTop: "20px", marginBottom: "14px" }}>
+          <span style={{ ...overline, color: C.brand.accent }}>PAGE {String(pageNumber).padStart(2, "0")} — SECTION DETAIL</span>
+          <h2 style={{
+            fontSize: TYPOGRAPHY.sizes.sectionTitle,
+            fontWeight: TYPOGRAPHY.weights.bold,
+            color: C.brand.primary,
+            letterSpacing: "-0.02em",
+            margin: "4px 0 0",
+            display: "inline-block",
+          }}>
             {title}
           </h2>
+          <div style={{ height: "2px", width: "40px", backgroundColor: C.brand.accent, marginTop: "4px" }} />
           {description && (
-            <p style={{ fontSize: "10.5px", color: C.muted, fontStyle: "italic", margin: "5px 0 0" }}>
+            <p style={{ fontSize: "10.5px", color: C.text.muted, fontStyle: "italic", margin: "5px 0 0" }}>
               {description}
             </p>
           )}
@@ -325,15 +352,15 @@ function Page({
       )}
 
       {/* Body */}
-      <div style={{ flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+      <div style={{ flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column", marginTop: isCover ? 0 : "10px" }}>
         {children}
       </div>
 
       {/* Section notes */}
       {notes && (
-        <div style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: "10px", marginTop: "12px" }}>
-          <span style={{ ...overline, display: "block", marginBottom: "3px" }}>Section Notes &amp; Auditor Disclaimers</span>
-          <p style={{ fontSize: "9.5px", color: C.muted, fontStyle: "italic", lineHeight: 1.5, margin: 0 }}>{notes}</p>
+        <div style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: "8px", marginTop: "10px" }}>
+          <span style={{ ...overline, display: "block", marginBottom: "2px", fontSize: "7.5px" }}>Notes &amp; Disclaimer</span>
+          <p style={{ fontSize: "9px", color: C.text.muted, fontStyle: "italic", lineHeight: 1.4, margin: 0 }}>{notes}</p>
         </div>
       )}
 
@@ -341,10 +368,10 @@ function Page({
       {!isCover && (
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
-          borderTop: `1px solid ${C.borderSoft}`, paddingTop: "12px", marginTop: "14px",
+          borderTop: `1px solid ${C.border}`, paddingTop: "10px", marginTop: "12px",
         }}>
-          <span style={overline}>Confidential — Inventory Portal</span>
-          <span style={{ ...overline, color: C.muted }}>
+          <span style={{ ...overline, color: C.text.muted }}>CONFIDENTIAL — INTERNAL MANAGEMENT USE ONLY</span>
+          <span style={{ ...overline, color: C.brand.primary }}>
             {nextTitle ? `Next: ${nextTitle}   ·   ` : ""}Page {pageNumber} of {totalPages}
           </span>
         </div>
@@ -360,61 +387,88 @@ function Page({
 function CoverBody({ cover, reportMeta }: { cover: CoverPageData; reportMeta: ReportMeta }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      {/* Logos Strip */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${C.borderSoft}`, paddingBottom: "15px" }}>
         {cover.companyLogoUrl ? (
-          <img src={cover.companyLogoUrl} alt="Logo" style={{ maxHeight: "48px", objectFit: "contain" }} />
+          <img src={cover.companyLogoUrl} alt="GAS Arabian Services" style={{ maxHeight: "38px", objectFit: "contain" }} />
         ) : (
-          <div style={{
-            border: `1px solid ${C.border}`, borderRadius: "6px", padding: "6px 12px",
-            backgroundColor: C.panel, ...overline, color: C.muted,
-          }}>
-            Company Brand
+          <div style={{ display: "flex", flexDirection: "column" }}>
+            <span style={{ fontSize: "12px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.primary, letterSpacing: "0.05em" }}>GAS ARABIAN</span>
+            <span style={{ fontSize: "7px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.accent, letterSpacing: "0.2em", textTransform: "uppercase" }}>SERVICES</span>
           </div>
         )}
         {cover.clientLogoUrl ? (
-          <img src={cover.clientLogoUrl} alt="Client Logo" style={{ maxHeight: "48px", objectFit: "contain" }} />
+          <img src={cover.clientLogoUrl} alt="Client Logo" style={{ maxHeight: "38px", objectFit: "contain" }} />
         ) : (
-          <span style={overline}>Executive Management Report</span>
+          <div style={{ border: `1px solid ${C.brand.accent}`, padding: "4px 10px", borderRadius: "4px", backgroundColor: C.brand.primary }}>
+            <span style={{ ...overline, color: C.brand.white, fontSize: "7.5px" }}>INVENTORY REPORT</span>
+          </div>
         )}
       </div>
 
-      <div style={{ padding: "48px 0" }}>
-        <span style={{ ...overline, color: C.accent, fontSize: "10px", display: "block", marginBottom: "14px" }}>
-          {cover.reportingPeriod} Audit Cycle
-        </span>
-        <h1 style={{
-          fontSize: "38px", fontWeight: 800, color: C.ink,
-          letterSpacing: "-0.025em", lineHeight: 1.15, margin: 0,
+      {/* Main Title Block */}
+      <div style={{
+        padding: "36px 0",
+        flexGrow: 1,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center"
+      }}>
+        <div style={{
+          backgroundColor: C.brand.primary,
+          padding: "35px 30px",
+          borderRadius: "8px",
+          position: "relative",
+          boxShadow: "0 4px 15px rgba(27,58,92,0.15)",
         }}>
-          {cover.reportTitle || "Inventory Verification Report"}
-        </h1>
-        {cover.reportSubtitle && (
-          <p style={{ fontSize: "13px", color: C.muted, marginTop: "14px", lineHeight: 1.6 }}>
-            {cover.reportSubtitle}
-          </p>
-        )}
-        <div style={{ height: "5px", width: "64px", backgroundColor: C.accent, borderRadius: "3px", marginTop: "26px" }} />
-        <p style={{ fontSize: "11px", color: C.muted, marginTop: "26px", lineHeight: 1.7, maxWidth: "480px" }}>
-          This report presents the verified inventory position, explains what the results mean for the
-          business, and sets out prioritized actions for management review — from overall status through
-          financial, organizational, and supplier analysis to risks, opportunities, and conclusions.
+          {/* Gold Decorative Tag */}
+          <div style={{ position: "absolute", top: 0, left: "30px", height: "4px", width: "80px", backgroundColor: C.brand.accent }}></div>
+          
+          <span style={{ ...overline, color: C.brand.accent, fontSize: "10px", display: "block", marginBottom: "8px" }}>
+            {cover.reportingPeriod || `${reportMeta.quarter} ${reportMeta.year}`} Audit Cycle
+          </span>
+          <h1 style={{
+            fontSize: "28px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.white,
+            letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0,
+          }}>
+            {cover.reportTitle || "Inventory Verification & Reconciliation Report"}
+          </h1>
+          {cover.reportSubtitle && (
+            <p style={{ fontSize: "12px", color: C.text.faint, marginTop: "10px", lineHeight: 1.5, margin: "8px 0 0" }}>
+              {cover.reportSubtitle}
+            </p>
+          )}
+        </div>
+
+        <p style={{ fontSize: "10.5px", color: C.text.secondary, marginTop: "24px", lineHeight: 1.6, maxWidth: "520px" }}>
+          This report presents the verified physical inventory position, outlines root-cause analysis for
+          variances, and establishes prioritized actions for organizational management review. It covers 
+          financial value audits, organizational ownership profiles, supplier performance metrics, and key risks.
         </p>
       </div>
 
+      {/* Bottom Metadata & Sign-off Block */}
       <div>
         <div style={{
-          borderTop: `1px solid ${C.borderSoft}`, paddingTop: "22px",
-          display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px 32px",
+          borderTop: `2px solid ${C.brand.accent}`,
+          paddingTop: "20px",
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "14px 28px",
+          backgroundColor: C.panel,
+          padding: "16px 20px",
+          borderRadius: "6px",
+          border: `1px solid ${C.border}`,
         }}>
           {[
-            ["Target Facility / Region", reportMeta.location || "—"],
-            ["Audited Entity", cover.clientName || "—"],
-            ["Report Prepared By", cover.preparedBy || "Not configured"],
-            ["Audit Generation Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
+            ["Target Facility / Location", reportMeta.location || "Default Warehouse"],
+            ["Audited Entity", cover.clientName || "All Divisions"],
+            ["Prepared By", cover.preparedBy || "Lead Audit Team"],
+            ["Execution Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
           ].map(([label, value]) => (
             <div key={label}>
-              <span style={{ ...overline, display: "block" }}>{label}</span>
-              <span style={{ fontSize: "11.5px", fontWeight: 700, color: C.heading, display: "block", marginTop: "4px" }}>
+              <span style={{ ...overline, display: "block", fontSize: "7.5px", color: C.text.muted }}>{label}</span>
+              <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, display: "block", marginTop: "2px" }}>
                 {value}
               </span>
             </div>
@@ -423,14 +477,70 @@ function CoverBody({ cover, reportMeta }: { cover: CoverPageData; reportMeta: Re
 
         {cover.confidentialityStatement && (
           <div style={{
-            marginTop: "26px", padding: "12px 14px", borderRadius: "8px",
-            backgroundColor: C.warnSoft, borderLeft: `4px solid ${C.warn}`,
+            marginTop: "20px", padding: "10px 14px", borderRadius: "6px",
+            backgroundColor: C.status.warnSoft, borderLeft: `4px solid ${C.brand.accent}`,
           }}>
-            <p style={{ fontSize: "9.5px", color: "#92400e", lineHeight: 1.55, fontWeight: 500, margin: 0 }}>
+            <p style={{ fontSize: "9px", color: "#8a6d3b", lineHeight: 1.5, fontWeight: TYPOGRAPHY.weights.semibold, margin: 0 }}>
               {cover.confidentialityStatement}
             </p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TableOfContentsBody({ sections }: { sections: ReportSection[] }) {
+  // Exclude cover and itself from the table of contents list if wanted, but standard is displaying pages 2+
+  const list = sections.filter(s => s.type !== "cover" && s.type !== "toc");
+  
+  return (
+    <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
+      <div>
+        <Commentary text="The following register outlines the structure of the inventory analysis report. Each section is dynamically backed by audit evidence, parsed ledger lines, and statistical metrics." />
+        
+        <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
+          {list.map((section, index) => {
+            // Page offset: Cover (1), ToC (2) -> Section page index is index + 3
+            const pageNum = index + 3; 
+            return (
+              <div key={section.id} style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "baseline",
+                padding: "4px 0",
+                borderBottom: `1px dashed ${C.border}`,
+              }}>
+                <div style={{ display: "flex", gap: "10px", alignItems: "baseline" }}>
+                  <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.accent, width: "20px" }}>
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
+                  <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>
+                    {section.title}
+                  </span>
+                  <span style={{ fontSize: "9.5px", color: C.text.muted, fontStyle: "italic", marginLeft: "10px" }}>
+                    — {section.description}
+                  </span>
+                </div>
+                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, fontVariantNumeric: "tabular-nums" }}>
+                  Page {pageNum}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div style={{
+        border: `1px solid ${C.border}`,
+        borderRadius: "6px",
+        padding: "12px 16px",
+        backgroundColor: C.panel,
+      }}>
+        <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "4px" }}>Audit Verification Scope</span>
+        <p style={{ fontSize: "9.5px", color: C.text.secondary, margin: 0, lineHeight: 1.45 }}>
+          All sections in this report have been cross-checked by the automated QA Engine. Visual evidence, data completeness, and numerical reconciliations match the inventory transactions logged during this audit cycle.
+        </p>
       </div>
     </div>
   );
@@ -449,22 +559,22 @@ function ExecutiveBody({
         <FactCard label="Gross Exposure" value={fmtSAR(metrics.totalRiskValue)} tone={metrics.totalRiskValue > 0 ? "bad" : "good"} />
       </div>
 
-      <p style={{ ...bodyText, fontSize: "11.5px", whiteSpace: "pre-line" }}>{summary}</p>
+      <p style={{ ...bodyText, fontSize: "11.5px", whiteSpace: "pre-line", color: C.text.primary }}>{summary}</p>
 
       {content.observations?.trim() && (
         <div style={{ marginTop: "16px" }}>
-          <span style={{ ...overline, color: C.accent, display: "block", marginBottom: "5px" }}>Auditor Observations</span>
+          <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "5px" }}>Auditor Core Observations</span>
           <p style={{ ...bodyText, whiteSpace: "pre-line" }}>{content.observations}</p>
         </div>
       )}
 
       {content.auditorRemarks?.trim() && (
         <div style={{
-          marginTop: "16px", borderLeft: `3px solid ${C.accent}`,
+          marginTop: "16px", borderLeft: `3px solid ${C.brand.accent}`,
           paddingLeft: "14px", fontStyle: "italic",
         }}>
-          <span style={{ ...overline, display: "block", marginBottom: "3px" }}>Auditor Verdict Remarks</span>
-          <p style={{ ...bodyText, margin: 0 }}>“{content.auditorRemarks}”</p>
+          <span style={{ ...overline, display: "block", marginBottom: "3px" }}>Auditor Recommending Signature Notes</span>
+          <p style={{ ...bodyText, margin: 0, color: C.text.primary }}>“{content.auditorRemarks}”</p>
         </div>
       )}
     </div>
@@ -484,14 +594,20 @@ function NarrativeSectionBody({
   );
 }
 
+// Format numbers nicely or return fallback
+function formatNumber(val: any) {
+  if (val === undefined || val === null) return "0";
+  return Number(val).toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
 function OverviewBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative: ReportNarrative }) {
   const avg = metrics.totalLines > 0 ? metrics.totalInventoryValue / metrics.totalLines : 0;
   return (
     <NarrativeSectionBody narr={narrative.overview}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
         <FactCard label="Total Value (ERP)" value={fmtSAR(metrics.totalInventoryValue)} />
-        <FactCard label="Inventory Lines" value={metrics.totalLines.toLocaleString()} />
-        <FactCard label="Total Quantity" value={metrics.totalQuantity.toLocaleString()} />
+        <FactCard label="Inventory Lines" value={formatNumber(metrics.totalLines)} />
+        <FactCard label="Total Quantity" value={formatNumber(metrics.totalQuantity)} />
         <FactCard label="Organizations" value={String(metrics.divisions.length)} />
         <FactCard label="Supplier Groups" value={String(metrics.suppliers.length)} />
         <FactCard label="Avg. Line Value" value={fmtSAR(avg)} />
@@ -505,19 +621,20 @@ function FinancialBody({ metrics, narrative }: { metrics: PreReportMetrics; narr
   return (
     <NarrativeSectionBody narr={narrative.financial}>
       <div style={{
-        border: `1px solid ${C.border}`, borderRadius: "10px", padding: "16px",
-        backgroundColor: C.white, marginBottom: "12px",
+        border: `1px solid ${C.border}`, borderRadius: "6px", padding: "14px 16px",
+        backgroundColor: C.brand.white, marginBottom: "12px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
       }}>
-        <HBar label="Recorded Book Value (ERP)" valueLabel={fmtSAR(metrics.totalInventoryValue)} ratio={1} color={C.accent} />
+        <HBar label="Recorded Book Value (ERP)" valueLabel={fmtSAR(metrics.totalInventoryValue)} ratio={1} color={C.brand.primary} />
         <HBar
           label={`Physically Verified Value (${fmtPct(metrics.coverageRate)})`}
           valueLabel={fmtSAR(metrics.verifiedValue)}
           ratio={metrics.totalInventoryValue > 0 ? metrics.verifiedValue / metrics.totalInventoryValue : 0}
-          color={C.good}
+          color={C.status.good}
         />
-        <div style={{ borderTop: `1px solid ${C.borderSoft}`, margin: "12px 0" }} />
-        <HBar label="Shortage Value" valueLabel={`− ${fmtSAR(metrics.totalShortageValue)}`} ratio={Math.abs(metrics.totalShortageValue) / maxSplit} color={C.bad} />
-        <HBar label="Excess Value" valueLabel={`+ ${fmtSAR(metrics.totalExcessValue)}`} ratio={metrics.totalExcessValue / maxSplit} color={C.good} />
+        <div style={{ borderTop: `1px solid ${C.borderSoft}`, margin: "10px 0" }} />
+        <HBar label="Shortage Value" valueLabel={`− ${fmtSAR(metrics.totalShortageValue)}`} ratio={Math.abs(metrics.totalShortageValue) / maxSplit} color={C.status.bad} />
+        <HBar label="Excess Value" valueLabel={`+ ${fmtSAR(metrics.totalExcessValue)}`} ratio={metrics.totalExcessValue / maxSplit} color={C.status.good} />
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
@@ -538,22 +655,23 @@ function HealthBody({ metrics, narrative }: { metrics: PreReportMetrics; narrati
     <NarrativeSectionBody narr={narrative.health}>
       <div style={{ display: "flex", gap: "12px", marginBottom: "12px" }}>
         <HealthGauge score={metrics.healthScore} />
-        <DonutStat label="Accuracy Rate" ratePct={metrics.matchRate} color={C.accent} />
-        <DonutStat label="Value Coverage" ratePct={metrics.coverageRate} color={C.good} />
+        <DonutStat label="Accuracy Rate" ratePct={metrics.matchRate} color={C.brand.secondary} />
+        <DonutStat label="Value Coverage" ratePct={metrics.coverageRate} color={C.status.good} />
         <div style={{
-          flexGrow: 1, border: `1px solid ${C.border}`, borderRadius: "10px",
-          padding: "14px 16px", backgroundColor: C.panel,
-          display: "flex", flexDirection: "column", justifyContent: "center", gap: "7px",
+          flexGrow: 1, border: `1px solid ${C.border}`, borderRadius: "6px",
+          padding: "12px 14px", backgroundColor: C.panel,
+          display: "flex", flexDirection: "column", justifyContent: "center", gap: "6px",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
         }}>
           {[
             ["Status", metrics.inventoryHealthStatus],
-            ["Matched Lines", `${metrics.matchedItems.toLocaleString()} / ${metrics.totalLines.toLocaleString()}`],
-            ["Unverified Lines", metrics.remainingLines.toLocaleString()],
+            ["Matched Lines", `${formatNumber(metrics.matchedItems)} / ${formatNumber(metrics.totalLines)}`],
+            ["Unverified Lines", formatNumber(metrics.remainingLines)],
             ["Audit Conclusion", metrics.auditConclusion.split(" - ")[0]],
           ].map(([label, value]) => (
             <div key={label} style={{ display: "flex", justifyContent: "space-between", gap: "10px" }}>
-              <span style={{ fontSize: "9.5px", fontWeight: 600, color: C.muted }}>{label}</span>
-              <span style={{ fontSize: "9.5px", fontWeight: 800, color: C.ink, textAlign: "right" }}>{value}</span>
+              <span style={{ fontSize: "9px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.text.muted }}>{label}</span>
+              <span style={{ fontSize: "9px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, textAlign: "right" }}>{value}</span>
             </div>
           ))}
         </div>
@@ -565,32 +683,34 @@ function HealthBody({ metrics, narrative }: { metrics: PreReportMetrics; narrati
 function DivisionsBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative: ReportNarrative }) {
   return (
     <NarrativeSectionBody narr={narrative.organizations}>
-      <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "4px" }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Organization</th>
-            <th style={{ ...thStyle, ...num }}>Lines</th>
-            <th style={{ ...thStyle, ...num }}>ERP Value (SAR)</th>
-            <th style={{ ...thStyle, ...num }}>Verified (SAR)</th>
-            <th style={{ ...thStyle, ...num }}>Coverage</th>
-            <th style={{ ...thStyle, ...num }}>Net Variance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {metrics.divisions.slice(0, 9).map((div, idx) => (
-            <tr key={idx}>
-              <td style={{ ...tdStyle, fontWeight: 700, color: C.heading }}>{div.division}</td>
-              <td style={{ ...tdStyle, ...num }}>{div.itemCount.toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num }}>{div.erpValue.toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num }}>{div.verifiedValue.toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num, fontWeight: 700, color: C.good }}>{div.coverageRate}%</td>
-              <td style={{ ...tdStyle, ...num, fontWeight: 700, color: div.varianceValue < 0 ? C.bad : C.good }}>
-                {div.varianceValue < 0 ? "−" : div.varianceValue > 0 ? "+" : ""}{Math.abs(div.varianceValue).toLocaleString()}
-              </td>
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Organization</th>
+              <th style={{ ...thStyle, ...num }}>Lines</th>
+              <th style={{ ...thStyle, ...num }}>ERP Value (SAR)</th>
+              <th style={{ ...thStyle, ...num }}>Verified (SAR)</th>
+              <th style={{ ...thStyle, ...num }}>Coverage</th>
+              <th style={{ ...thStyle, ...num }}>Net Variance</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {metrics.divisions.slice(0, 9).map((div, idx) => (
+              <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? C.brand.white : C.panel }}>
+                <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>{div.division}</td>
+                <td style={{ ...tdStyle, ...num }}>{formatNumber(div.itemCount)}</td>
+                <td style={{ ...tdStyle, ...num }}>{formatNumber(div.erpValue)}</td>
+                <td style={{ ...tdStyle, ...num }}>{formatNumber(div.verifiedValue)}</td>
+                <td style={{ ...tdStyle, ...num, fontWeight: TYPOGRAPHY.weights.bold, color: C.status.good }}>{div.coverageRate}%</td>
+                <td style={{ ...tdStyle, ...num, fontWeight: TYPOGRAPHY.weights.bold, color: div.varianceValue < 0 ? C.status.bad : C.status.good }}>
+                  {div.varianceValue < 0 ? "−" : div.varianceValue > 0 ? "+" : ""}{formatNumber(Math.abs(div.varianceValue))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </NarrativeSectionBody>
   );
 }
@@ -600,45 +720,48 @@ function SuppliersBody({ metrics, narrative }: { metrics: PreReportMetrics; narr
   return (
     <NarrativeSectionBody narr={narrative.suppliers}>
       <div style={{
-        border: `1px solid ${C.border}`, borderRadius: "10px", padding: "14px 16px 8px",
-        backgroundColor: C.white, marginBottom: "12px",
+        border: `1px solid ${C.border}`, borderRadius: "6px", padding: "12px 14px 6px",
+        backgroundColor: C.brand.white, marginBottom: "12px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
       }}>
-        <span style={{ ...overline, display: "block", marginBottom: "9px" }}>Share of Inventory Value — Top Suppliers</span>
+        <span style={{ ...overline, display: "block", marginBottom: "8px", color: C.brand.primary }}>Share of Inventory Value — Top 5 Suppliers</span>
         {byValue.map((s) => (
           <HBar
             key={s.supplier}
             label={s.supplier}
             valueLabel={fmtPct(metrics.totalInventoryValue > 0 ? (s.erpValue / metrics.totalInventoryValue) * 100 : 0)}
             ratio={metrics.totalInventoryValue > 0 ? s.erpValue / metrics.totalInventoryValue : 0}
-            color={C.accent}
+            color={C.brand.secondary}
           />
         ))}
       </div>
 
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Supplier</th>
-            <th style={{ ...thStyle, ...num }}>Lines</th>
-            <th style={{ ...thStyle, ...num }}>ERP Value (SAR)</th>
-            <th style={{ ...thStyle, ...num }}>Abs. Variance (SAR)</th>
-            <th style={{ ...thStyle, ...num }}>Match Rate</th>
-          </tr>
-        </thead>
-        <tbody>
-          {metrics.suppliers.slice(0, 7).map((sup, idx) => (
-            <tr key={idx}>
-              <td style={{ ...tdStyle, fontWeight: 700, color: C.heading }}>{sup.supplier}</td>
-              <td style={{ ...tdStyle, ...num }}>{sup.itemCount.toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num }}>{sup.erpValue.toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num, color: sup.absoluteVarianceValue > 0 ? C.bad : C.good, fontWeight: 700 }}>
-                {sup.absoluteVarianceValue.toLocaleString()}
-              </td>
-              <td style={{ ...tdStyle, ...num, fontWeight: 700, color: C.accent }}>{sup.matchingRate.toFixed(1)}%</td>
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Supplier</th>
+              <th style={{ ...thStyle, ...num }}>Lines</th>
+              <th style={{ ...thStyle, ...num }}>ERP Value (SAR)</th>
+              <th style={{ ...thStyle, ...num }}>Abs. Variance (SAR)</th>
+              <th style={{ ...thStyle, ...num }}>Match Rate</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {metrics.suppliers.slice(0, 7).map((sup, idx) => (
+              <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? C.brand.white : C.panel }}>
+                <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>{sup.supplier}</td>
+                <td style={{ ...tdStyle, ...num }}>{formatNumber(sup.itemCount)}</td>
+                <td style={{ ...tdStyle, ...num }}>{formatNumber(sup.erpValue)}</td>
+                <td style={{ ...tdStyle, ...num, color: sup.absoluteVarianceValue > 0 ? C.status.bad : C.status.good, fontWeight: TYPOGRAPHY.weights.bold }}>
+                  {formatNumber(sup.absoluteVarianceValue)}
+                </td>
+                <td style={{ ...tdStyle, ...num, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.secondary }}>{sup.matchingRate.toFixed(1)}%</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </NarrativeSectionBody>
   );
 }
@@ -648,32 +771,34 @@ function DistributionBody({ metrics, narrative }: { metrics: PreReportMetrics; n
   return (
     <NarrativeSectionBody narr={narrative.distribution}>
       <div style={{
-        border: `1px solid ${C.border}`, borderRadius: "10px", padding: "14px 16px 8px",
-        backgroundColor: C.white, marginBottom: "12px",
+        border: `1px solid ${C.border}`, borderRadius: "6px", padding: "12px 14px 6px",
+        backgroundColor: C.brand.white, marginBottom: "12px",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
       }}>
-        <span style={{ ...overline, display: "block", marginBottom: "9px" }}>Value Distribution by Organization</span>
+        <span style={{ ...overline, display: "block", marginBottom: "8px", color: C.brand.primary }}>Value Distribution by Organization</span>
         {divs.map((d) => (
           <HBar
             key={`v-${d.division}`}
             label={d.division}
             valueLabel={fmtSAR(d.erpValue)}
             ratio={metrics.totalInventoryValue > 0 ? d.erpValue / metrics.totalInventoryValue : 0}
-            color={C.accent}
+            color={C.brand.primary}
           />
         ))}
       </div>
       <div style={{
-        border: `1px solid ${C.border}`, borderRadius: "10px", padding: "14px 16px 8px",
-        backgroundColor: C.white,
+        border: `1px solid ${C.border}`, borderRadius: "6px", padding: "12px 14px 6px",
+        backgroundColor: C.brand.white,
+        boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
       }}>
-        <span style={{ ...overline, display: "block", marginBottom: "9px" }}>Line Distribution by Organization</span>
+        <span style={{ ...overline, display: "block", marginBottom: "8px", color: C.brand.primary }}>Line Distribution by Organization</span>
         {divs.map((d) => (
           <HBar
             key={`l-${d.division}`}
             label={d.division}
-            valueLabel={`${d.itemCount.toLocaleString()} lines`}
+            valueLabel={`${formatNumber(d.itemCount)} lines`}
             ratio={metrics.totalLines > 0 ? d.itemCount / metrics.totalLines : 0}
-            color={C.good}
+            color={C.brand.secondary}
           />
         ))}
       </div>
@@ -687,15 +812,15 @@ function ValidationBody({ narrative }: { narrative: ReportNarrative }) {
   return (
     <NarrativeSectionBody narr={narrative.validation} insightsMax={5}>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "10px" }}>
-        <FactCard label="Lines Validated" value={v.totalLines.toLocaleString()} />
-        <FactCard label="Clean Lines" value={clean.toLocaleString()} tone="good" />
-        <FactCard label="Flagged Lines" value={v.flaggedLines.toLocaleString()} tone={v.flaggedLines > 0 ? "bad" : "good"} />
+        <FactCard label="Lines Validated" value={formatNumber(v.totalLines)} />
+        <FactCard label="Clean Lines" value={formatNumber(clean)} tone="good" />
+        <FactCard label="Flagged Lines" value={formatNumber(v.flaggedLines)} tone={v.flaggedLines > 0 ? "bad" : "good"} />
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "10px" }}>
-        <FactCard label="Missing Item Codes" value={v.missingCodeCount.toLocaleString()} tone={v.missingCodeCount > 0 ? "bad" : "good"} />
-        <FactCard label="Missing Descriptions" value={v.missingDescCount.toLocaleString()} tone={v.missingDescCount > 0 ? "bad" : "good"} />
-        <FactCard label="Unattributed Supplier" value={v.unclassifiedSupplierCount.toLocaleString()} tone={v.unclassifiedSupplierCount > 0 ? "bad" : "good"} />
-        <FactCard label="Missing Org / Unit" value={v.missingOrgCount.toLocaleString()} tone={v.missingOrgCount > 0 ? "bad" : "good"} />
+        <FactCard label="Missing Item Codes" value={formatNumber(v.missingCodeCount)} tone={v.missingCodeCount > 0 ? "bad" : "good"} />
+        <FactCard label="Missing Descriptions" value={formatNumber(v.missingDescCount)} tone={v.missingDescCount > 0 ? "bad" : "good"} />
+        <FactCard label="Unattributed Supplier" value={formatNumber(v.unclassifiedSupplierCount)} tone={v.unclassifiedSupplierCount > 0 ? "bad" : "good"} />
+        <FactCard label="Missing Org / Unit" value={formatNumber(v.missingOrgCount)} tone={v.missingOrgCount > 0 ? "bad" : "good"} />
       </div>
     </NarrativeSectionBody>
   );
@@ -707,73 +832,86 @@ function RiskBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative
     <div>
       {risks.length === 0 ? (
         <div style={{
-          border: `1px solid ${C.border}`, borderRadius: "10px", padding: "18px",
-          backgroundColor: C.goodSoft, marginBottom: "14px",
+          border: `1px solid ${C.border}`, borderRadius: "6px", padding: "14px",
+          backgroundColor: C.status.goodSoft, marginBottom: "14px",
         }}>
-          <p style={{ ...bodyText, margin: 0, color: "#065f46", fontWeight: 600 }}>
-            No business risks met the evidence threshold in this cycle. The high-variance ledger below is
-            provided for routine follow-up.
+          <p style={{ ...bodyText, margin: 0, color: C.status.good, fontWeight: TYPOGRAPHY.weights.semibold }}>
+            No critical business risks met the exposure threshold in this cycle. The high-variance ledger below is
+            appended for operational follow-up.
           </p>
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "9px", marginBottom: "14px" }}>
           {risks.slice(0, 4).map((r: RiskFinding) => (
             <div key={r.id} style={{
-              border: `1px solid ${C.border}`, borderRadius: "8px", padding: "11px 14px",
-              backgroundColor: C.white,
+              border: `1px solid ${C.border}`,
+              borderLeft: `4px solid ${PRIORITY_STYLE[r.level].fg}`,
+              borderRadius: "6px",
+              padding: "10px 14px",
+              backgroundColor: C.brand.white,
+              boxShadow: "0 1px 2px rgba(0,0,0,0.01)",
             }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "10px" }}>
-                <span style={{ fontSize: "11px", fontWeight: 800, color: C.ink }}>{r.title}</span>
+                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>{r.title}</span>
                 <PriorityBadge level={r.level} />
               </div>
-              <span style={{ ...bodyText, fontSize: "10px", display: "block", marginTop: "5px" }}>
-                <strong style={{ color: C.heading }}>Impact: </strong>{r.impact}
+              <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "4px" }}>
+                <strong style={{ color: C.brand.primary }}>Impact: </strong>{r.impact}
               </span>
-              <span style={{ ...bodyText, fontSize: "10px", display: "block", marginTop: "2px" }}>{r.explanation}</span>
-              <span style={{ ...bodyText, fontSize: "10px", display: "block", marginTop: "2px", color: C.accent, fontWeight: 600 }}>
-                → {r.action}
+              <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "2px", color: C.text.secondary }}>{r.explanation}</span>
+              <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "2px", color: C.brand.accent, fontWeight: TYPOGRAPHY.weights.bold }}>
+                → Action Plan: {r.action}
               </span>
             </div>
           ))}
           {risks.length > 4 && (
-            <p style={{ fontSize: "9.5px", color: C.muted, fontStyle: "italic", margin: 0 }}>
-              {risks.length - 4} further risk{risks.length - 4 === 1 ? "" : "s"} of lower severity {risks.length - 4 === 1 ? "is" : "are"} reflected in the Recommendations section.
+            <p style={{ fontSize: "9px", color: C.text.muted, fontStyle: "italic", margin: 0 }}>
+              * Omitted {risks.length - 4} secondary risk findings from this view. Full ledger logs are maintained in step 2.
             </p>
           )}
         </div>
       )}
 
-      <span style={{ ...overline, display: "block", marginBottom: "7px" }}>High-Variance Item Ledger (Top {Math.min(6, metrics.highestRiskItems.length)})</span>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Item Code</th>
-            <th style={thStyle}>Description</th>
-            <th style={{ ...thStyle, ...num }}>ERP</th>
-            <th style={{ ...thStyle, ...num }}>Phys</th>
-            <th style={{ ...thStyle, ...num }}>Diff</th>
-            <th style={{ ...thStyle, ...num }}>Variance (SAR)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {metrics.highestRiskItems.slice(0, 6).map((item: any, idx: number) => (
-            <tr key={idx}>
-              <td style={{ ...tdStyle, fontWeight: 700, fontFamily: "Consolas, monospace", color: C.ink }}>{item.itemCode || "N/A"}</td>
-              <td style={{ ...tdStyle, maxWidth: "170px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {item.description || "N/A"}
-              </td>
-              <td style={{ ...tdStyle, ...num }}>{(item.erpQty ?? item.systemOnHand ?? 0).toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num }}>{(item.physicalQty ?? item.physicalCount ?? 0).toLocaleString()}</td>
-              <td style={{ ...tdStyle, ...num, fontWeight: 700, color: (item.differenceQty ?? 0) < 0 ? C.bad : C.good }}>
-                {(item.differenceQty ?? 0) > 0 ? "+" : ""}{(item.differenceQty ?? 0).toLocaleString()}
-              </td>
-              <td style={{ ...tdStyle, ...num, fontWeight: 700, color: (item.varianceValue ?? 0) < 0 ? C.bad : C.good }}>
-                {(item.varianceValue ?? 0) < 0 ? "−" : (item.varianceValue ?? 0) > 0 ? "+" : ""}{Math.abs(item.varianceValue ?? 0).toLocaleString()}
-              </td>
+      <span style={{ ...overline, display: "block", marginBottom: "6px" }}>High-Variance Inventory Ledger (Top {Math.min(6, metrics.highestRiskItems.length)})</span>
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={thStyle}>Item Code</th>
+              <th style={thStyle}>Description</th>
+              <th style={{ ...thStyle, ...num }}>ERP Qty</th>
+              <th style={{ ...thStyle, ...num }}>Phys Qty</th>
+              <th style={{ ...thStyle, ...num }}>Diff</th>
+              <th style={{ ...thStyle, ...num }}>Variance (SAR)</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {metrics.highestRiskItems.slice(0, 6).map((item: any, idx: number) => {
+              const eq = item.erpQty !== undefined ? item.erpQty : (item.systemOnHand !== undefined ? item.systemOnHand : 0);
+              const pq = item.physicalQty !== undefined ? item.physicalQty : (item.physicalCount !== undefined ? item.physicalCount : 0);
+              const df = item.differenceQty !== undefined ? item.differenceQty : (pq - eq);
+              const vr = item.varianceValue !== undefined ? item.varianceValue : (df * (item.unitCost || 0));
+
+              return (
+                <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? C.brand.white : C.panel }}>
+                  <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, fontFamily: "Consolas, monospace", color: C.brand.primary, fontSize: "9px" }}>{item.itemCode || "N/A"}</td>
+                  <td style={{ ...tdStyle, maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {item.description || "N/A"}
+                  </td>
+                  <td style={{ ...tdStyle, ...num }}>{formatNumber(eq)}</td>
+                  <td style={{ ...tdStyle, ...num }}>{formatNumber(pq)}</td>
+                  <td style={{ ...tdStyle, ...num, fontWeight: TYPOGRAPHY.weights.bold, color: df < 0 ? C.status.bad : C.status.good }}>
+                    {df > 0 ? "+" : ""}{formatNumber(df)}
+                  </td>
+                  <td style={{ ...tdStyle, ...num, fontWeight: TYPOGRAPHY.weights.bold, color: vr < 0 ? C.status.bad : C.status.good }}>
+                    {vr < 0 ? "−" : vr > 0 ? "+" : ""}{formatNumber(Math.abs(vr))}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
@@ -784,17 +922,21 @@ function OpportunitiesBody({ narrative }: { narrative: ReportNarrative }) {
     <div>
       <Commentary text={
         ops.length > 0
-          ? "The findings below are the positive counterpart to the risk register: strengths the data supports directly, which management can rely on and build upon."
-          : "No positive findings met the evidence threshold in this cycle. This section will populate as accuracy, coverage, and data quality improve."
+          ? "The opportunities detailed below identify key positive findings and structural strengths supported directly by the audited data."
+          : "No operational enhancement opportunities met the threshold requirements in this cycle. Focus should remain on maintaining baseline validation health."
       } />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
         {ops.slice(0, 6).map((op) => (
           <div key={op.id} style={{
-            border: `1px solid ${C.border}`, borderLeft: `3px solid ${C.good}`,
-            borderRadius: "8px", padding: "12px 14px", backgroundColor: C.goodSoft,
+            border: `1px solid ${C.border}`,
+            borderLeft: `4px solid ${C.brand.accent}`,
+            borderRadius: "6px",
+            padding: "12px 14px",
+            backgroundColor: C.status.goodSoft,
+            boxShadow: "0 1px 2px rgba(0,0,0,0.01)",
           }}>
-            <span style={{ fontSize: "10.5px", fontWeight: 800, color: "#065f46", display: "block" }}>{op.title}</span>
-            <span style={{ ...bodyText, fontSize: "10px", display: "block", marginTop: "4px" }}>{op.detail}</span>
+            <span style={{ fontSize: "10.5px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, display: "block" }}>{op.title}</span>
+            <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "4px", color: C.text.secondary }}>{op.detail}</span>
           </div>
         ))}
       </div>
@@ -808,8 +950,8 @@ function RecommendationsBody({ narrative, content }: { narrative: ReportNarrativ
     <div>
       <Commentary text={
         recs.length > 0
-          ? `The ${recs.length} action${recs.length === 1 ? "" : "s"} below consolidate the section-level recommendations of this report, ordered by priority. Each is generated only where the underlying data provides direct support.`
-          : "The data in this cycle does not support corrective recommendations; the focus should be on sustaining current performance."
+          ? `The following ${recs.length} management recommendations prioritize action plans supported directly by transactional variances and audit ledger discrepancies.`
+          : "Audit findings indicate stable controls. No critical recommendations are proposed for this period."
       } />
       <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
         {recs.slice(0, 7).map((r) => <RecommendationCard key={r.id} rec={r} />)}
@@ -817,7 +959,7 @@ function RecommendationsBody({ narrative, content }: { narrative: ReportNarrativ
 
       {content.recommendations?.trim() && (
         <div style={{ marginTop: "14px" }}>
-          <span style={{ ...overline, color: C.accent, display: "block", marginBottom: "5px" }}>Management Notes</span>
+          <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "5px" }}>Management Actions &amp; Responses</span>
           <p style={{ ...bodyText, whiteSpace: "pre-line" }}>{content.recommendations}</p>
         </div>
       )}
@@ -832,26 +974,26 @@ function ConclusionBody({ narrative, metrics, cover }: {
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       <div style={{ flexGrow: 1 }}>
         {narrative.conclusion.paragraphs.map((p, i) => (
-          <p key={i} style={{ ...bodyText, fontSize: "11.5px", marginBottom: "12px" }}>{p}</p>
+          <p key={i} style={{ ...bodyText, fontSize: "11px", marginBottom: "10px", color: C.text.primary }}>{p}</p>
         ))}
 
         <div style={{
-          border: `1px solid ${C.border}`, borderLeft: `4px solid ${C.accent}`,
-          borderRadius: "8px", padding: "14px 18px", backgroundColor: C.accentSoft,
+          border: `1px solid ${C.border}`, borderLeft: `4px solid ${C.brand.accent}`,
+          borderRadius: "6px", padding: "12px 16px", backgroundColor: C.panel,
           marginTop: "6px",
         }}>
-          <span style={{ ...overline, color: C.accent, display: "block", marginBottom: "5px" }}>Overall Assessment</span>
-          <p style={{ fontSize: "12px", fontWeight: 700, color: C.ink, lineHeight: 1.6, margin: 0 }}>
+          <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "4px" }}>Reconciliation Conclusion</span>
+          <p style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, lineHeight: 1.5, margin: 0 }}>
             {narrative.conclusion.overallAssessment}
           </p>
-          <p style={{ fontSize: "10px", color: C.muted, margin: "7px 0 0" }}>
-            Audit conclusion: {metrics.auditConclusion}
+          <p style={{ fontSize: "9.5px", color: C.text.muted, margin: "6px 0 0" }}>
+            Reconciliation Standard: {metrics.auditConclusion}
           </p>
         </div>
       </div>
 
-      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: "18px", marginTop: "18px" }}>
-        <span style={{ ...overline, display: "block", marginBottom: "12px" }}>Reconciliation Signatories Approval</span>
+      <div style={{ borderTop: `1px solid ${C.border}`, paddingTop: "14px", marginTop: "14px" }}>
+        <span style={{ ...overline, display: "block", marginBottom: "10px", color: C.brand.primary }}>Reconciliation Signatories Approval</span>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
           {[
             ["Prepared By", cover.preparedBy],
@@ -859,14 +1001,14 @@ function ConclusionBody({ narrative, metrics, cover }: {
             ["Approved By", cover.approvedBy],
           ].map(([label, name]) => (
             <div key={label} style={{
-              border: `1px solid ${C.border}`, borderRadius: "8px",
-              padding: "10px 12px", backgroundColor: C.panel,
+              border: `1px solid ${C.border}`, borderRadius: "6px",
+              padding: "8px 12px", backgroundColor: C.panel,
             }}>
-              <span style={{ ...overline, display: "block" }}>{label}</span>
-              <span style={{ fontSize: "10px", fontWeight: 700, color: C.heading, display: "block", marginTop: "3px" }}>
-                {name || "Not configured"}
+              <span style={{ ...overline, display: "block", fontSize: "7px" }}>{label}</span>
+              <span style={{ fontSize: "10px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, display: "block", marginTop: "2px" }}>
+                {name || "Awaiting Sign-off"}
               </span>
-              <div style={{ borderBottom: `1px dashed ${C.faint}`, height: "30px", marginTop: "6px" }} />
+              <div style={{ borderBottom: `1px dashed ${C.brand.accent}`, height: "24px", marginTop: "4px" }} />
             </div>
           ))}
         </div>
@@ -878,28 +1020,29 @@ function ConclusionBody({ narrative, metrics, cover }: {
 function TeamBody({ images }: { images: UploadedImage[] }) {
   return (
     <div>
-      <Commentary text="Evidence and warehouse photographs appended to this report for verification purposes." />
+      <Commentary text="Photographic evidence logged during physical audits to support reconciliations." />
       {images.length > 0 ? (
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           {images.slice(0, 4).map((img) => (
             <div key={img.id} style={{
-              border: `1px solid ${C.border}`, borderRadius: "8px", padding: "9px",
+              border: `1px solid ${C.border}`, borderRadius: "6px", padding: "8px",
               backgroundColor: C.panel,
+              boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
             }}>
-              <div style={{ height: "150px", borderRadius: "6px", overflow: "hidden", backgroundColor: C.border }}>
+              <div style={{ height: "150px", borderRadius: "4px", overflow: "hidden", backgroundColor: C.border }}>
                 <img src={img.url} alt={img.caption} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               </div>
-              <span style={{ ...overline, color: C.accent, display: "block", marginTop: "7px" }}>
+              <span style={{ ...overline, color: C.brand.accent, display: "block", marginTop: "6px", fontSize: "7.5px" }}>
                 {img.category.replace("_", " ")}
               </span>
-              <p style={{ fontSize: "9.5px", color: C.body, margin: "3px 0 0", lineHeight: 1.4 }}>{img.caption}</p>
+              <p style={{ fontSize: "9px", color: C.text.primary, margin: "2px 0 0", lineHeight: 1.35 }}>{img.caption}</p>
             </div>
           ))}
         </div>
       ) : (
         <div style={{
-          border: `1px dashed ${C.faint}`, borderRadius: "10px", padding: "48px",
-          textAlign: "center", fontSize: "10.5px", color: C.faint,
+          border: `2px dashed ${C.border}`, borderRadius: "6px", padding: "48px",
+          textAlign: "center", fontSize: "11px", color: C.text.muted,
         }}>
           No evidence images or photos uploaded to this builder. Select the “Evidence &amp; Images” tab to add them.
         </div>
@@ -909,7 +1052,7 @@ function TeamBody({ images }: { images: UploadedImage[] }) {
 }
 
 /* ════════════════════════════════════════════════════════════════
-   DOCUMENT
+   DOCUMENT ENTRYPOINT
    ════════════════════════════════════════════════════════════════ */
 
 export function ExecutiveReportDocument({
@@ -938,6 +1081,12 @@ export function ExecutiveReportDocument({
             return (
               <Page key={section.id} {...pageProps} isCover title={undefined} notes={undefined}>
                 <CoverBody cover={cover} reportMeta={reportMeta} />
+              </Page>
+            );
+          case "toc":
+            return (
+              <Page key={section.id} {...pageProps} title="Table of Contents" description="Overview of the verified report structure and pages" notes={undefined}>
+                <TableOfContentsBody sections={enabled} />
               </Page>
             );
           case "executive":

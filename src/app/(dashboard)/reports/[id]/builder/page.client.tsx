@@ -29,6 +29,7 @@ import {
   DEFAULT_COVER, DEFAULT_CONTENT, mergeWithDefaultSections
 } from "@/types/preReport";
 import { ExecutiveReportDocument } from "@/components/pre-report/ExecutiveReportDocument";
+import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
 
 interface Report {
   title: string;
@@ -567,49 +568,72 @@ export default function ReportBuilder() {
           {personnelList.length > 0 && (
             <div
               style={{
-                width: "794px",
-                height: "1123px",
-                padding: "70px 80px 70px 80px",
+                width: LAYOUT.width,
+                height: LAYOUT.height,
+                padding: `${LAYOUT.padding.top} ${LAYOUT.padding.right} ${LAYOUT.padding.bottom} ${LAYOUT.padding.left}`,
                 boxSizing: "border-box",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                backgroundColor: "#ffffff",
+                backgroundColor: C.brand.white,
                 position: "relative",
-                border: "1px solid #e2e8f0"
+                border: `1px solid ${C.border}`,
+                overflow: "hidden",
+                fontFamily: TYPOGRAPHY.fontFamily,
               }}
             >
-              {/* Top Accent */}
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "8px", backgroundColor: "#6366f1" }}></div>
+              {/* Top Gold Accent Bar */}
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", backgroundColor: C.brand.accent }} />
+
+              {/* Bottom Navy Accent Bar */}
+              <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "3px", backgroundColor: C.brand.primary }} />
 
               <div>
                 {/* Header */}
-                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "15px" }}>
-                  <span style={{ fontSize: "10px", fontWeight: "bold", color: "#64748b" }}>INVENTORY RECONCILIATION REPORT</span>
-                  <span style={{ fontSize: "10px", color: "#94a3b8" }}>{report.quarter} {report.year} Cycle</span>
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: `1px solid ${C.border}`, paddingBottom: "10px" }}>
+                  <span style={{ fontSize: TYPOGRAPHY.sizes.label, fontWeight: TYPOGRAPHY.weights.bold, letterSpacing: "0.12em", textTransform: "uppercase", color: C.brand.primary }}>
+                    GAS ARABIAN SERVICES — INVENTORY RECONCILIATION
+                  </span>
+                  <span style={{ fontSize: TYPOGRAPHY.sizes.label, fontWeight: TYPOGRAPHY.weights.bold, letterSpacing: "0.12em", textTransform: "uppercase", color: C.brand.accent }}>
+                    {report.quarter} {report.year} Cycle
+                  </span>
                 </div>
 
                 {/* Title */}
-                <div style={{ marginTop: "30px" }}>
-                  <h2 style={{ fontSize: "16px", fontWeight: "bold", color: "#0f172a" }}>Appendix — On-Site Audit Workers & Visual Evidence</h2>
-                  <p style={{ fontSize: "11px", color: "#64748b", marginTop: "3px" }}>
+                <div style={{ marginTop: "20px", marginBottom: "14px" }}>
+                  <span style={{ fontSize: TYPOGRAPHY.sizes.label, fontWeight: TYPOGRAPHY.weights.bold, letterSpacing: "0.12em", textTransform: "uppercase", color: C.brand.accent }}>
+                    PAGE {String(totalPdfPages).padStart(2, "0")} — SECTION DETAIL
+                  </span>
+                  <h2 style={{
+                    fontSize: TYPOGRAPHY.sizes.sectionTitle,
+                    fontWeight: TYPOGRAPHY.weights.bold,
+                    color: C.brand.primary,
+                    letterSpacing: "-0.02em",
+                    margin: "4px 0 0",
+                    display: "inline-block",
+                  }}>
+                    Appendix — On-Site Audit Workers &amp; Evidence
+                  </h2>
+                  <div style={{ height: "2px", width: "40px", backgroundColor: C.brand.accent, marginTop: "4px" }} />
+                  <p style={{ fontSize: "10.5px", color: C.text.muted, fontStyle: "italic", margin: "5px 0 0" }}>
                     Registered evidence catalog and on-site audit team execution details.
                   </p>
                 </div>
 
                 {/* Personnel Cards Grid in PDF */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px", marginTop: "25px" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginTop: "20px" }}>
                   {personnelList.slice(0, 4).map((p, idx) => (
                     <div
                       key={idx}
                       style={{
-                        border: "1px solid #e2e8f0",
-                        borderRadius: "8px",
+                        border: `1px solid ${C.border}`,
+                        borderRadius: "6px",
                         padding: "12px",
-                        backgroundColor: "#fcfcfd",
+                        backgroundColor: C.panel,
                         display: "flex",
                         gap: "12px",
-                        alignItems: "flex-start"
+                        alignItems: "flex-start",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.01)",
                       }}
                     >
                       {p.photoUrl ? (
@@ -619,9 +643,9 @@ export default function ReportBuilder() {
                           style={{
                             width: "55px",
                             height: "55px",
-                            borderRadius: "6px",
+                            borderRadius: "4px",
                             objectFit: "cover",
-                            border: "1px solid #cbd5e1"
+                            border: `1px solid ${C.border}`
                           }}
                         />
                       ) : (
@@ -629,22 +653,22 @@ export default function ReportBuilder() {
                           style={{
                             width: "55px",
                             height: "55px",
-                            borderRadius: "6px",
-                            backgroundColor: "#e2e8f0",
+                            borderRadius: "4px",
+                            backgroundColor: C.border,
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center"
                           }}
                         >
-                          <span style={{ fontSize: "8px", fontWeight: "bold", color: "#64748b" }}>NO IMG</span>
+                          <span style={{ fontSize: "8px", fontWeight: "bold", color: C.text.muted }}>NO IMG</span>
                         </div>
                       )}
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <span style={{ fontSize: "11px", fontWeight: "bold", color: "#0f172a", display: "block" }}>{p.name}</span>
-                        <span style={{ fontSize: "8.5px", color: "#6366f1", fontWeight: "bold", display: "block", textTransform: "uppercase" }}>{p.role}</span>
-                        <span style={{ fontSize: "8px", color: "#94a3b8", display: "block", marginTop: "2px" }}>Dept: {p.department || "General"}</span>
+                        <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.text.primary, display: "block" }}>{p.name}</span>
+                        <span style={{ fontSize: "8.5px", color: C.brand.accent, fontWeight: TYPOGRAPHY.weights.extrabold, display: "block", textTransform: "uppercase", letterSpacing: "0.08em" }}>{p.role}</span>
+                        <span style={{ fontSize: "8.5px", color: C.text.muted, display: "block", marginTop: "2px" }}>Dept: {p.department || "General"}</span>
                         {p.remarks && (
-                          <p style={{ fontSize: "8.5px", color: "#475569", fontStyle: "italic", margin: "4px 0 0 0", borderTop: "1px solid #f1f5f9", paddingTop: "3px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+                          <p style={{ fontSize: "8.5px", color: C.text.primary, fontStyle: "italic", margin: "4px 0 0 0", borderTop: `1px solid ${C.borderSoft}`, paddingTop: "3px", overflow: "hidden", textOverflow: "ellipsis", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
                             &ldquo;{p.remarks}&rdquo;
                           </p>
                         )}
@@ -654,16 +678,20 @@ export default function ReportBuilder() {
                 </div>
 
                 {personnelList.length > 4 && (
-                  <p style={{ fontSize: "9px", color: "#94a3b8", marginTop: "12px", fontStyle: "italic" }}>
+                  <p style={{ fontSize: "9px", color: C.text.muted, marginTop: "12px", fontStyle: "italic" }}>
                     * Additional {personnelList.length - 4} personnel records omitted from cover summary. See validation screen ledger for complete catalog.
                   </p>
                 )}
               </div>
 
               {/* Footer */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid #e2e8f0", paddingTop: "20px" }}>
-                <span style={{ fontSize: "10px", color: "#94a3b8" }}>CONFIDENTIAL — INVENTORY SYSTEM</span>
-                <span style={{ fontSize: "10px", color: "#94a3b8" }}>Page {totalPdfPages} of {totalPdfPages}</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: "10px", marginTop: "12px" }}>
+                <span style={{ fontSize: TYPOGRAPHY.sizes.label, fontWeight: TYPOGRAPHY.weights.bold, letterSpacing: "0.12em", textTransform: "uppercase", color: C.text.muted }}>
+                  CONFIDENTIAL — INTERNAL MANAGEMENT USE ONLY
+                </span>
+                <span style={{ fontSize: TYPOGRAPHY.sizes.label, fontWeight: TYPOGRAPHY.weights.bold, letterSpacing: "0.12em", textTransform: "uppercase", color: C.brand.primary }}>
+                  Page {totalPdfPages} of {totalPdfPages}
+                </span>
               </div>
             </div>
           )}

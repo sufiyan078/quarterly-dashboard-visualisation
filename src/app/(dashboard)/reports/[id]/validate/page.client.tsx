@@ -220,12 +220,12 @@ export default function DataValidation() {
       setApproveStatus("Finalizing validation report...");
       const docRef = doc(db, "reports", id);
       const currentHighest = getHighestStep(report);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         status: "Validated",
         updatedAt: new Date(),
         calculatedSummary: summary,
         highestStepReached: Math.max(currentHighest, 3)
-      });
+      }, { merge: true });
 
       router.push(`/reports/${id}/dashboard`);
     } catch (err) {

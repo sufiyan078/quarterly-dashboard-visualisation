@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useReportId } from "@/lib/useReportId";
-import { db, doc, getDoc, updateDoc, collection, getDocs } from "@/lib/firebase";
+import { db, doc, getDoc, updateDoc, setDoc, collection, getDocs } from "@/lib/firebase";
 import { getHighestStep } from "@/lib/workflow";
 import { 
   ArrowLeft, 
@@ -98,10 +98,10 @@ export default function ReportBuilder() {
           // Update highest step reached on database if it's less than 4
           const currentHighest = getHighestStep(reportData);
           if (currentHighest < 4) {
-            await updateDoc(docRef, {
+            await setDoc(docRef, {
               highestStepReached: 4,
               updatedAt: new Date()
-            });
+            }, { merge: true });
           }
 
           // Fetch inventoryItems and agingData concurrently for faster loading
@@ -231,10 +231,10 @@ export default function ReportBuilder() {
     setIsClosing(true);
     try {
       const docRef = doc(db, "reports", id);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         status: "closed",
         updatedAt: new Date(),
-      });
+      }, { merge: true });
       router.push("/reports");
     } catch (err) {
       console.error("Error closing audit session:", err);

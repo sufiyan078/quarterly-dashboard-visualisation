@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useReportId } from "@/lib/useReportId";
-import { db, doc, getDoc, collection, getDocs, updateDoc } from "@/lib/firebase";
+import { db, doc, getDoc, collection, getDocs, updateDoc, setDoc } from "@/lib/firebase";
 import { getHighestStep } from "@/lib/workflow";
 import {
   ArrowLeft,
@@ -718,10 +718,10 @@ export default function InventoryDashboard() {
         // Update highest step reached on database if it's less than 3
         const currentHighest = getHighestStep(reportData);
         if (currentHighest < 3) {
-          await updateDoc(docRef, {
+          await setDoc(docRef, {
             highestStepReached: 3,
             updatedAt: new Date()
-          });
+          }, { merge: true });
         }
 
         if (reportData.status?.toLowerCase() !== "draft") {

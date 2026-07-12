@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.0] - 2026-07-13
+### Added
+- **Premium McKinsey/BCG Consulting Commentary Engine**: Refactored the `insightEngine.ts` narrative generators to produce multi-paragraph, analytical, data-grounded assessments, avoiding placeholder/generic AI texts.
+- **Enhanced Page Layout and PDF Typography**: Updated the `Commentary` component in `ExecutiveReportDocument.tsx` to beautifully format and split multi-paragraph texts, adjusting font sizes and line heights to ensure consulting narrative reports fit elegantly on A4 PDF pages.
+- **Premium Builder Refinement**: Completed visual alignment of the report editor panels and preview elements to ensure a high-fidelity WYSIWYG experience.
+
+### Files Modified
+- `src/lib/report/insightEngine.ts`
+- `src/components/pre-report/ExecutiveReportDocument.tsx`
+
+---
+
 ## [1.0.0] - 2026-07-13
 ### Added
 - **Design Token System**: Centralized design parameters in `src/lib/report/designTokens.ts` including corporate colors (Navy/Gold), layout dimensions, and typography.

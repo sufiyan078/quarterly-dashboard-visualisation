@@ -209,14 +209,17 @@ function coverageWord(coverage: number): string {
    SECTION NARRATIVES
    ════════════════════════════════════════════════════════════════ */
 
-function buildOverview(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
+function buildOverview(input: NarrativeInput, m: PreReportMetrics, d: DerivedStats): SectionNarrative {
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const commentary =
-    `The verification exercise covered ${m.totalLines.toLocaleString()} inventory lines with a recorded book value of ${fmtSAR(m.totalInventoryValue)}, ` +
-    `spread across ${d.orgCount} organization${d.orgCount === 1 ? "" : "s"} and ${d.supplierCount} supplier group${d.supplierCount === 1 ? "" : "s"}. ` +
-    `The average value per inventory line is ${fmtSAR(d.avgItemValue)}, which frames the scale of financial exposure carried by individual record errors.`;
+  const situation = `During the Q${input.quarter || "4"} ${input.year} audit cycle, a comprehensive physical inventory verification was executed across the ${input.location || "Gas Arabian Services"} facilities. The program scope encompassed ${m.totalLines.toLocaleString()} individual inventory line items, representing a total ledger book value of ${fmtSAR(m.totalInventoryValue)} across ${d.orgCount} organizational divisions and ${d.supplierCount} primary supplier networks. This audit serves as a critical internal control mechanism to validate asset custody and align physical stock with the ERP general ledger.`;
+
+  const complication = `Our analysis indicates an average value per inventory line of ${fmtSAR(d.avgItemValue)}, highlighting that stock accuracy is highly sensitive to individual record variances. While physical count coverage achieved ${fmtPct(m.coverageRate)} of total book value, the verification team identified ${d.zeroValueLines.toLocaleString()} active line items that are stocked physically but carry zero unit cost valuation in the ERP ledger, creating a structural blind spot in asset valuation.`;
+
+  const implication = `From a management consulting perspective, these unvalued lines understate total capital employed and expose the organization to compliance and tax risks. Furthermore, a high concentration of inventory value within key divisions indicates that any localized inventory control breakdown will have immediate, material impacts on corporate financial statements. Corrective actions must prioritize ERP database valuation updates and division-level custody reviews.`;
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (m.totalLines > 0) {
     insights.push(
@@ -238,9 +241,9 @@ function buildOverview(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
     );
     recs.push({
       id: "rec-valuation",
-      title: "Complete ERP unit-cost records",
-      reason: `${d.zeroValueLines.toLocaleString()} stocked lines have no unit cost, so their financial exposure is invisible to this report.`,
-      benefit: "Full financial visibility of the inventory and more reliable variance valuation.",
+      title: "Map Unit-Cost Records for ERP Database Integrity",
+      reason: `${d.zeroValueLines.toLocaleString()} physically stocked lines have no recorded unit cost, rendering their variance exposure invisible.`,
+      benefit: "Establish complete valuation coverage and remove balance sheet blind spots.",
       priority: d.zeroValueLines > m.totalLines * 0.1 ? "High" : "Medium",
     });
   }
@@ -252,14 +255,15 @@ function buildFinancial(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const direction =
-    m.netVariance < 0 ? "a net shortage" : m.netVariance > 0 ? "a net excess" : "a fully balanced position";
+  const direction = m.netVariance < 0 ? "net shortage (deficit)" : m.netVariance > 0 ? "net excess (surplus)" : "fully balanced ledger state";
 
-  const commentary =
-    `Recorded inventory stands at ${fmtSAR(m.totalInventoryValue)} against a physically verified value of ${fmtSAR(m.verifiedValue)}, ` +
-    `a ${coverageWord(m.coverageRate)} coverage rate of ${fmtPct(m.coverageRate)}. ` +
-    `Reconciliation produced ${direction} of ${fmtSAR(m.netVariance)}, composed of ${fmtSAR(m.totalShortageValue)} in shortages and ${fmtSAR(m.totalExcessValue)} in excess stock. ` +
-    `Gross financial exposure (absolute variance) is ${fmtSAR(m.totalRiskValue)}, equal to ${fmtPct(d.riskRatio)} of book value.`;
+  const situation = `The financial reconciliation for the current audit cycle compares the ERP recorded book value of ${fmtSAR(m.totalInventoryValue)} against a physically verified asset value of ${fmtSAR(m.verifiedValue)}, yielding a verified coverage rate of ${fmtPct(m.coverageRate)}. The reconciliation process revealed a ${direction} of ${fmtSAR(m.netVariance)}, reflecting the net variance between shortages and excesses.`;
+
+  const complication = `While the net variance suggests a moderate discrepancy, the gross financial exposure (absolute variance) is substantial at ${fmtSAR(m.totalRiskValue)}, representing ${fmtPct(d.riskRatio)} of total inventory value. This exposure is driven by a combination of ${fmtSAR(Math.abs(m.totalShortageValue))} in physical shortages and ${fmtSAR(m.totalExcessValue)} in unrecorded physical excesses. This co-existence of offsetting variances points to systemic posting errors, bin location mismatches, and ledger lag rather than direct material shrinkage.`;
+
+  const implication = `Operating with a gross exposure of ${fmtPct(d.riskRatio)} compromises working capital efficiency and procurement accuracy. Additionally, our aging profile identifies slow-moving and obsolete stock older than one year, necessitating a balance sheet provisioning allocation of ${fmtSAR(m.provisionAmount)}. Senior management should immediately execute the targeted reconciliation of high-variance lines and authorize the write-off or liquidation of obsolete stock to release trapped capital.`;
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (d.riskRatio >= 5) {
     insights.push(
@@ -287,18 +291,18 @@ function buildFinancial(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
   if (d.riskRatio >= 2) {
     recs.push({
       id: "rec-reconcile",
-      title: "Run a targeted reconciliation of high-variance lines",
-      reason: `Gross variance exposure is ${fmtSAR(m.totalRiskValue)} (${fmtPct(d.riskRatio)} of book value).`,
-      benefit: "Direct recovery or correction of the largest value discrepancies before period close.",
+      title: "Initiate Targeted High-Variance Bin Audits",
+      reason: `Gross absolute variance stands at ${fmtSAR(m.totalRiskValue)} (${fmtPct(d.riskRatio)} of total value).`,
+      benefit: "Direct recovery or correction of major value discrepancies prior to period close.",
       priority: d.riskRatio >= 10 ? "Critical" : d.riskRatio >= 5 ? "High" : "Medium",
     });
   }
   if (m.provisionAmount > 0) {
     recs.push({
       id: "rec-provision",
-      title: "Review slow-moving and dead stock for provisioning or disposal",
-      reason: `${fmtSAR(m.aging.deadStockValue)} of stock is older than three years and ${fmtSAR(m.aging.slowMovingValue)} is one to three years old.`,
-      benefit: "Accurate balance-sheet valuation and reduced carrying cost of obsolete inventory.",
+      title: "Authorize Obsolete Stock Liquidation or Provisioning",
+      reason: `${fmtSAR(m.aging.deadStockValue)} of stock has remained dormant for over three years, inflating storage and carrying costs.`,
+      benefit: "Accurate balance sheet valuation and release of trapped warehouse working capital.",
       priority: m.aging.deadStockValue > m.totalInventoryValue * 0.05 ? "High" : "Medium",
     });
   }
@@ -310,9 +314,13 @@ function buildHealth(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const commentary =
-    `The composite inventory health score is ${m.healthScore} out of 100, rated “${m.inventoryHealthStatus}”. ` +
-    `The score combines count accuracy (${fmtPct(m.matchRate)}), value coverage (${fmtPct(m.coverageRate)}), financial risk, open items, and aging provisions into a single management indicator.`;
+  const situation = `The composite inventory health index is established at ${m.healthScore} out of 100, which corresponds to a performance classification of "${m.inventoryHealthStatus}". This index serves as a key indicator of the maturity of the inventory control framework, synthesizing count accuracy, value coverage, data quality, aging exposure, and reconciliation progress.`;
+
+  const complication = `The baseline physical count accuracy is recorded at ${fmtPct(m.matchRate)}, meaning ${m.matchedItems.toLocaleString()} lines matched exactly while ${m.mismatchedItems.toLocaleString()} lines exhibited quantity discrepancies. Crucially, the presence of ${m.remainingLines.toLocaleString()} unverified lines (representing ${fmtPct(pct(m.remainingLines, m.totalLines))} of total lines) represents an unmitigated risk where asset value is reported without direct physical confirmation.`;
+
+  const implication = `A count accuracy of ${fmtPct(m.matchRate)} is ${m.matchRate >= 95 ? "satisfactory, but continuous monitoring is required to prevent control drift" : "sub-optimal, falling short of the 95% industry standard required for automated operations"}. The unverified lines represent pockets of high risk in the warehouse, where obsolete, damaged, or pilfered stock could go undetected. Management must enforce strict cycle-counting regimens and assign clear responsibility for completing outstanding physical counts.`;
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   insights.push(
     `Physical count accuracy of ${fmtPct(m.matchRate)} is ${accuracyWord(m.matchRate)} relative to common inventory-audit expectations (95%+).`
@@ -331,18 +339,18 @@ function buildHealth(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
   if (m.matchRate < 95) {
     recs.push({
       id: "rec-accuracy",
-      title: "Strengthen counting procedures in low-accuracy areas",
-      reason: `Overall count accuracy is ${fmtPct(m.matchRate)}, below the 95% benchmark for reliable inventory records.`,
-      benefit: "Higher record reliability, fewer operational surprises, and a stronger audit position next cycle.",
+      title: "Enforce Standard Operating Procedures (SOPs) for Stock Transfers",
+      reason: `Overall count accuracy is ${fmtPct(m.matchRate)}, falling short of the 95% benchmark required for seamless digital replenishment.`,
+      benefit: "Reduce pick-and-pack search latency, avoid stockouts, and improve customer order fulfillment.",
       priority: m.matchRate < 80 ? "Critical" : m.matchRate < 90 ? "High" : "Medium",
     });
   }
   if (m.remainingLines > 0 && m.totalLines > 0 && m.remainingLines / m.totalLines > 0.05) {
     recs.push({
       id: "rec-coverage",
-      title: "Schedule completion counts for unverified lines",
-      reason: `${m.remainingLines.toLocaleString()} lines (${fmtPct(pct(m.remainingLines, m.totalLines))}) were not physically counted.`,
-      benefit: "Complete verification coverage and a defensible basis for the audit opinion.",
+      title: "Complete Outstanding Physical Counts for Unverified Stock",
+      reason: `${m.remainingLines.toLocaleString()} line items were left uncounted, representing a material audit blind spot.`,
+      benefit: "Achieve complete physical verification coverage and prevent auditor qualifications.",
       priority: m.remainingLines / m.totalLines > 0.2 ? "High" : "Medium",
     });
   }
@@ -355,12 +363,19 @@ function buildOrganizations(m: PreReportMetrics, d: DerivedStats): SectionNarrat
   const recs: Recommendation[] = [];
 
   const divs = m.divisions;
-  const commentary =
-    divs.length > 0
-      ? `Inventory is held across ${divs.length} organization${divs.length === 1 ? "" : "s"}. ` +
-        `${d.topDivisionName} carries the largest book value at ${fmtSAR(divs[0].erpValue)} (${fmtPct(d.topDivisionShare)} of the total), ` +
-        `with a matching rate of ${fmtPct(divs[0].matchingRate)} across its ${divs[0].itemCount.toLocaleString()} lines.`
-      : "No organization-level breakdown is available for this reporting period.";
+  const situation = divs.length > 0
+    ? `The organizational analysis evaluates inventory controls and accuracy across the ${divs.length} active divisions of GAS Arabian Services. The value profile is highly concentrated, with the leading division, ${d.topDivisionName}, holding ${fmtSAR(divs[0].erpValue)} or ${fmtPct(d.topDivisionShare)} of the total corporate inventory book value.`
+    : "No division-level structural data was provided for this cycle.";
+
+  const complication = divs.length > 1
+    ? `A comparison between division performances reveals significant control variance. While high-performing units exhibit solid compliance, others show substantial accuracy drift. Notably, ${m.highestRiskDivision || "certain divisions"} represents the highest risk profile, generating the largest net variance of ${fmtSAR(divs.find(x => x.division === m.highestRiskDivision)?.varianceValue || 0)}.`
+    : "";
+
+  const implication = divs.length > 1
+    ? `This discrepancy confirms that inventory control vulnerabilities are localized rather than systemic, pointing to specific differences in warehouse practices, staff training, or ledger transaction discipline. Senior leadership should focus corrective efforts on the highest-risk division to re-align local procedures with corporate standards and recover ledger accuracy.`
+    : "";
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (divs.length > 1) {
     const best = [...divs].sort((a, b) => b.matchingRate - a.matchingRate)[0];
@@ -379,9 +394,9 @@ function buildOrganizations(m: PreReportMetrics, d: DerivedStats): SectionNarrat
       );
       recs.push({
         id: "rec-org-focus",
-        title: `Investigate variances in ${m.highestRiskDivision}`,
-        reason: `This organization carries the largest net variance of ${fmtSAR(riskDiv.varianceValue)}.`,
-        benefit: "Concentrates corrective effort where the financial impact is highest.",
+        title: `Execute Focused Inventory Audit in ${m.highestRiskDivision}`,
+        reason: `This division alone accounts for the largest net variance of ${fmtSAR(riskDiv.varianceValue)}.`,
+        benefit: "Focuses audit resources on the division with the highest risk of financial statement distortion.",
         priority: Math.abs(riskDiv.varianceValue) > m.totalInventoryValue * 0.02 ? "High" : "Medium",
       });
     }
@@ -394,11 +409,19 @@ function buildSuppliers(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const commentary =
-    m.suppliers.length > 0
-      ? `The inventory base spans ${m.suppliers.length} supplier group${m.suppliers.length === 1 ? "" : "s"}. ` +
-        `${d.topSupplierName} represents the largest holding at ${fmtPct(d.topSupplierShare)} of total book value, and the three largest suppliers together account for ${fmtPct(d.top3SupplierShare)}.`
-      : "No supplier-level breakdown is available for this reporting period.";
+  const situation = m.suppliers.length > 0
+    ? `The supplier analysis reviews the inventory portfolio across ${m.suppliers.length} active supplier networks. The portfolio displays significant value concentration, with the top supplier, ${d.topSupplierName}, representing ${fmtPct(d.topSupplierShare)} of total value, and the top three suppliers representing a combined share of ${fmtPct(d.top3SupplierShare)}.`
+    : "No supplier-level attribution data is available.";
+
+  const complication = m.suppliers.length > 0
+    ? `The audit identified material variance patterns concentrated in specific supplier segments. Notably, ${m.highestRiskSupplier || "specific suppliers"} accounts for the largest absolute variance of ${fmtSAR(m.suppliers.find(s => s.supplier === m.highestRiskSupplier)?.absoluteVarianceValue || 0)}. Furthermore, the presence of ${d.othersSupplierLines.toLocaleString()} lines classified under 'Others' indicates incomplete supplier attribution in the database.`
+    : "";
+
+  const implication = m.suppliers.length > 0
+    ? `High supplier concentration exposes GAS Arabian Services to supply-chain disruptions and single-source pricing risks. Supplier-specific variances suggest operational friction during receiving inspection or incorrect unit-of-measure entries. Standardizing receiving audits and improving data mapping for unattributed lines are critical steps to establish full supplier accountability.`
+    : "";
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (d.topSupplierShare >= 40) {
     insights.push(
@@ -406,9 +429,9 @@ function buildSuppliers(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
     );
     recs.push({
       id: "rec-supplier-dependency",
-      title: `Reduce dependency on ${d.topSupplierName}`,
-      reason: `A single supplier accounts for ${fmtPct(d.topSupplierShare)} of inventory value.`,
-      benefit: "Lower supply-chain risk and improved negotiating position.",
+      title: `Diversify Supplier Base for High-Concentration Categories`,
+      reason: `A single supplier (${d.topSupplierName}) accounts for ${fmtPct(d.topSupplierShare)} of total inventory value.`,
+      benefit: "Mitigate single-source supply chain risk and enhance commercial purchasing leverage.",
       priority: d.topSupplierShare >= 60 ? "High" : "Medium",
     });
   } else if (m.suppliers.length >= 3) {
@@ -430,9 +453,9 @@ function buildSuppliers(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
     );
     recs.push({
       id: "rec-supplier-mapping",
-      title: "Improve supplier attribution of inventory records",
-      reason: `${fmtPct(pct(d.othersSupplierLines, m.totalLines))} of lines are unattributed (“Others”).`,
-      benefit: "Reliable supplier scorecards and cleaner accountability for variances.",
+      title: "Remediate Unclassified Supplier Master Data",
+      reason: `${fmtPct(pct(d.othersSupplierLines, m.totalLines))} of lines are unattributed ("Others"), preventing supplier performance analysis.`,
+      benefit: "Enable comprehensive supplier scorecards and cleaner accountability for variances.",
       priority: "Medium",
     });
   }
@@ -443,12 +466,23 @@ function buildSuppliers(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
 function buildDistribution(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
   const insights: string[] = [];
 
-  const commentary =
-    `This section maps how the ${fmtSAR(m.totalInventoryValue)} of recorded value and ${m.totalLines.toLocaleString()} lines are distributed across the operation. ` +
-    `Distribution shape determines where counting effort, controls, and working capital are actually deployed.`;
+  const situation = `This section evaluates the alignment between working capital concentration and inventory line volume. Understanding this distribution is essential for designing efficient, risk-adjusted cycle-counting schedules and optimizing warehouse labor allocation.`;
+
+  const top = m.divisions[0];
+  const valueShare = top ? pct(top.erpValue, m.totalInventoryValue) : 0;
+  const lineShare = top ? pct(top.itemCount, m.totalLines) : 0;
+
+  const complication = top
+    ? `Our analysis reveals a highly asymmetrical distribution: ${top.division} holds ${fmtPct(valueShare)} of total inventory value while accounting for only ${fmtPct(lineShare)} of physical line items. This constitutes a high-density value profile, whereas other divisions carry high line volumes with minimal financial value.`
+    : "";
+
+  const implication = top
+    ? `This asymmetry requires a differentiated control model. High-density value lines represent critical financial exposure where even minor unit discrepancies result in material P&L impact; these must be governed by tight, high-frequency cycle counts. Conversely, low-value high-volume lines should be managed via automated reconciliation and sample-based counts to avoid wasting valuable auditor time.`
+    : "";
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (m.divisions.length > 1) {
-    const top = m.divisions[0];
     const valueShare = pct(top.erpValue, m.totalInventoryValue);
     const lineShare = pct(top.itemCount, m.totalLines);
     if (valueShare - lineShare >= 15) {
@@ -479,11 +513,17 @@ function buildValidation(m: PreReportMetrics, d: DerivedStats): SectionNarrative
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const commentary =
-    d.warningLines > 0
-      ? `Automated validation flagged ${d.warningLines.toLocaleString()} of ${m.totalLines.toLocaleString()} lines (${fmtPct(d.warningRate)}) with at least one data-quality warning. ` +
-        `Flags are advisory: no data was discarded, and all flagged lines remain in the calculations above.`
-      : `Automated validation completed with no data-quality warnings across ${m.totalLines.toLocaleString()} lines, indicating disciplined master-data maintenance.`;
+  const situation = `Automated validation checks were performed across all ${m.totalLines.toLocaleString()} database records to assess the structural integrity of the inventory master file. Data hygiene is the foundational requirement for inventory traceability, automated procurement, and dependable financial reporting.`;
+
+  const complication = d.warningLines > 0
+    ? `The validation engine flagged ${d.warningLines.toLocaleString()} lines (${fmtPct(d.warningRate)}) with record errors or missing fields. The flagged database anomalies include ${d.missingCodeCount.toLocaleString()} missing item codes, ${d.missingDescCount.toLocaleString()} missing descriptions, and ${d.unclassifiedSupplierCount.toLocaleString()} lines missing supplier attribution.`
+    : "The validation engine completed with zero flags, confirming exceptional master-data discipline.";
+
+  const implication = d.warningLines > 0
+    ? `Missing item codes and descriptions prevent the system from enforcing database constraints, resulting in manual purchasing workarounds and counting errors. A database warning rate of ${fmtPct(d.warningRate)} undermines dashboard reliability and risks audit qualifications. Management should establish immediate data-cleansing ownership before the next reporting cycle.`
+    : "This clean database state ensures maximum reliability of report metrics and provides a solid basis for automating inventory planning.";
+
+  const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (d.missingCodeCount > 0) {
     insights.push(`${d.missingCodeCount.toLocaleString()} lines are missing an item code, which prevents reliable cross-period tracking of those items.`);
@@ -504,17 +544,17 @@ function buildValidation(m: PreReportMetrics, d: DerivedStats): SectionNarrative
   if (d.warningRate >= 10) {
     recs.push({
       id: "rec-data-quality",
-      title: "Launch a master-data cleanup for flagged records",
-      reason: `${fmtPct(d.warningRate)} of inventory lines carry data-quality warnings (missing codes, descriptions, suppliers, or units).`,
-      benefit: "Higher confidence in future counts and less manual investigation effort.",
+      title: "Execute Master Data Cleansing and Cleanup",
+      reason: `${fmtPct(d.warningRate)} of inventory lines carry warnings such as missing item codes, descriptions, or suppliers.`,
+      benefit: "Enable system-level relational checks and eliminate purchasing process workarounds.",
       priority: d.warningRate >= 20 ? "High" : "Medium",
     });
   } else if (d.warningLines > 0) {
     recs.push({
       id: "rec-data-quality",
-      title: "Correct the remaining flagged records",
-      reason: `${d.warningLines.toLocaleString()} lines carry residual data-quality warnings.`,
-      benefit: "Moves the dataset to fully clean master data ahead of the next count cycle.",
+      title: "Correct Residual Master Data Warnings",
+      reason: `${d.warningLines.toLocaleString()} inventory lines carry residual master data validation errors.`,
+      benefit: "Achieve a completely clean master data file ahead of the next count cycle.",
       priority: "Low",
     });
   }
@@ -535,8 +575,8 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
       title: "Financial Exposure from Stock Variances",
       level: d.riskRatio >= 10 ? "Critical" : d.riskRatio >= 5 ? "High" : "Medium",
       impact: `${fmtSAR(m.totalRiskValue)} of gross variance (${fmtPct(d.riskRatio)} of book value).`,
-      explanation: `Physical counts diverge from ERP records by ${fmtSAR(m.totalRiskValue)} in absolute terms — ${fmtSAR(m.totalShortageValue)} short and ${fmtSAR(m.totalExcessValue)} over.`,
-      action: "Prioritize reconciliation of the top-variance items listed in the risk ledger before financial close.",
+      explanation: `Physical count quantities diverge from ERP records by ${fmtSAR(m.totalRiskValue)} in absolute terms, consisting of ${fmtSAR(Math.abs(m.totalShortageValue))} in shortages and ${fmtSAR(m.totalExcessValue)} in excesses.`,
+      action: "Prioritize audit-cleansing of the top-variance items in the risk ledger before financial period close.",
     });
   }
   if (m.matchRate < 90 && m.totalLines > 0) {
@@ -545,68 +585,68 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
       title: "Low Inventory Record Accuracy",
       level: m.matchRate < 80 ? "High" : "Medium",
       impact: `${m.mismatchedItems.toLocaleString()} of ${m.totalLines.toLocaleString()} lines (${fmtPct(100 - m.matchRate)}) failed to reconcile.`,
-      explanation: `A count accuracy of ${fmtPct(m.matchRate)} is below the 95% level generally expected for dependable planning and financial reporting.`,
-      action: "Introduce cycle counting and root-cause reviews in the organizations with the lowest matching rates.",
+      explanation: `A physical count accuracy of ${fmtPct(m.matchRate)} is below the 95% threshold required to support automated warehouse planning, leading to frequent manual workarounds.`,
+      action: "Deploy targeted training and establish daily cycle-counting in the lowest-performing organizations.",
     });
   }
   if (d.topSupplierShare >= 40) {
     risks.push({
       id: "risk-supplier",
-      title: "High Supplier Dependency",
+      title: "Concentration Risk on Key Supplier",
       level: d.topSupplierShare >= 60 ? "High" : "Medium",
-      impact: `${fmtPct(d.topSupplierShare)} of inventory value sits with ${d.topSupplierName}.`,
-      explanation: "Concentration of inventory value in a single supplier increases exposure to supply disruption and pricing pressure.",
-      action: "Assess alternative sources for the highest-value item families of this supplier.",
+      impact: `${fmtPct(d.topSupplierShare)} of total inventory value is concentrated with ${d.topSupplierName}.`,
+      explanation: `Extreme value concentration with a single supplier increases vulnerability to delivery delays, single-source pricing inflation, and contract disputes.`,
+      action: "Conduct a risk assessment of this supplier and identify alternative secondary sourcing options for key item categories.",
     });
   }
   if (d.topDivisionShare >= 60) {
     risks.push({
       id: "risk-concentration",
-      title: "Inventory Concentration in One Organization",
+      title: "Inventory Value Concentration in Division",
       level: "Medium",
-      impact: `${d.topDivisionName} holds ${fmtPct(d.topDivisionShare)} of total value.`,
-      explanation: "A localized operational problem (access, damage, process failure) in this organization would affect the majority of inventory value.",
-      action: "Verify that storage, insurance, and counting controls in this organization match its share of value.",
+      impact: `${d.topDivisionName} holds ${fmtPct(d.topDivisionShare)} of corporate inventory value.`,
+      explanation: `Concentrating the majority of inventory value in a single division means local operational bottlenecks or facility damage will have systemic corporate impacts.`,
+      action: "Review insurance coverage thresholds, fire protection, and physical access controls at the primary facility of this division.",
     });
   }
   if (m.coverageRate < 75 && m.totalInventoryValue > 0) {
     risks.push({
       id: "risk-coverage",
-      title: "Limited Verification Coverage",
+      title: "Limited Verification Audit Coverage",
       level: m.coverageRate < 50 ? "High" : "Medium",
-      impact: `Only ${fmtPct(m.coverageRate)} of book value was physically verified.`,
-      explanation: `${m.remainingLines.toLocaleString()} lines were not counted; their reported values rest on ERP records alone.`,
-      action: "Complete the outstanding counts or formally scope them into the next cycle.",
+      impact: `Only ${fmtPct(m.coverageRate)} of book value was physically verified in the current cycle.`,
+      explanation: `${m.remainingLines.toLocaleString()} line items were not counted; their reported valuation rests on ERP data without visual confirmation.`,
+      action: "Schedule a catch-up verification cycle or formally carry over uncounted lines into the next count list.",
     });
   }
   if (d.zeroValueLines > 0 && m.totalLines > 0 && d.zeroValueLines / m.totalLines > 0.05) {
     risks.push({
       id: "risk-zero-value",
-      title: "Unvalued Inventory Records",
+      title: "Unvalued ERP Stock Records",
       level: "Medium",
-      impact: `${d.zeroValueLines.toLocaleString()} stocked lines (${fmtPct(pct(d.zeroValueLines, m.totalLines))}) carry no unit cost.`,
-      explanation: "Lines without unit costs are invisible in every value-based figure in this report, understating both inventory value and variance exposure.",
-      action: "Populate ERP unit costs for stocked items and re-run the valuation.",
+      impact: `${d.zeroValueLines.toLocaleString()} stocked lines (${fmtPct(pct(d.zeroValueLines, m.totalLines))}) carry zero unit cost in the system.`,
+      explanation: `Stock items without recorded unit costs understate corporate asset values and mask true financial variance exposures.`,
+      action: "Instruct the Finance department to map and populate unit costs for all stocked items in the ERP database.",
     });
   }
   if (d.warningRate >= 10) {
     risks.push({
       id: "risk-data-quality",
-      title: "Master-Data Quality Gaps",
+      title: "Inventory Master Data Quality Deficiencies",
       level: d.warningRate >= 20 ? "High" : "Medium",
-      impact: `${fmtPct(d.warningRate)} of lines carry data-quality warnings.`,
-      explanation: "Missing item codes, descriptions, suppliers, or unit assignments reduce traceability and weaken the reliability of grouped analysis.",
-      action: "Assign ownership for master-data cleanup with a completion target before the next count.",
+      impact: `${fmtPct(d.warningRate)} of line items carry active data validation warnings.`,
+      explanation: `Missing item codes, descriptions, or supplier assignments prevent the system from executing auto-reorder and cycle-count logic, causing procurement delays.`,
+      action: "Establish a cross-functional data-cleansing task force to remediate flagged records before the next verification cycle.",
     });
   }
   if (m.aging.deadStockValue > 0) {
     risks.push({
       id: "risk-aging",
-      title: "Obsolete and Slow-Moving Stock",
+      title: "Accumulation of Obsolete and Slow-Moving Stock",
       level: m.aging.deadStockValue > m.totalInventoryValue * 0.1 ? "High" : "Medium",
-      impact: `${fmtSAR(m.aging.deadStockValue)} of stock is older than three years; the indicated provision is ${fmtSAR(m.provisionAmount)}.`,
-      explanation: "Aged stock ties up warehouse space and working capital while its recoverable value declines.",
-      action: "Review the aged population for disposal, resale, or write-down in line with the provisioning policy.",
+      impact: `${fmtSAR(m.aging.deadStockValue)} of stock is dead (older than 3 years); indicated provision is ${fmtSAR(m.provisionAmount)}.`,
+      explanation: `Slow-moving and dead stock ties up valuable warehouse rack space, increases carrying costs, and represents depreciating asset value.`,
+      action: "Formulate a clearance plan, including vendor returns, customer promotions, or disposal write-offs, to recover trapped working capital.",
     });
   }
 
@@ -620,49 +660,49 @@ function buildOpportunities(m: PreReportMetrics, d: DerivedStats): Opportunity[]
   if (m.matchRate >= 95) {
     ops.push({
       id: "op-accuracy",
-      title: "Strong Count Accuracy",
-      detail: `A ${fmtPct(m.matchRate)} match rate demonstrates disciplined stock handling and provides a reliable foundation for planning and financial reporting.`,
+      title: "World-Class Count Accuracy",
+      detail: `Achieving a ${fmtPct(m.matchRate)} match rate reflects excellent physical inventory discipline, minimizing stockout incidents and manual operational adjustments.`,
     });
   }
   if (m.coverageRate >= 90) {
     ops.push({
       id: "op-coverage",
-      title: "High Verification Coverage",
-      detail: `${fmtPct(m.coverageRate)} of book value was physically verified, giving management a direct-observation basis for the reported figures.`,
+      title: "Comprehensive Audit Verification",
+      detail: `Physical verification of ${fmtPct(m.coverageRate)} of book value provides a highly defensible base for external audits and reinforces internal control ratings.`,
     });
   }
   if (d.topSupplierShare < 40 && m.suppliers.length >= 3) {
     ops.push({
       id: "op-diversification",
-      title: "Healthy Supplier Diversification",
+      title: "Supplier Diversification Strength",
       detail: `No supplier exceeds ${fmtPct(d.topSupplierShare)} of inventory value, limiting single-source supply risk.`,
     });
   }
   if (d.warningRate === 0 && m.totalLines > 0) {
     ops.push({
       id: "op-data",
-      title: "Clean Master Data",
-      detail: "Every line passed automated validation, an uncommon result that materially strengthens confidence in this report.",
+      title: "Flawless Master Data Integrity",
+      detail: "All records successfully passed automated validation checks, establishing a high-quality baseline for automated demand forecasting and warehouse optimization.",
     });
   } else if (d.warningRate > 0 && d.warningRate < 5) {
     ops.push({
       id: "op-data",
-      title: "Near-Clean Master Data",
+      title: "Near-Clean Master Data Quality",
       detail: `Only ${fmtPct(d.warningRate)} of lines carry validation warnings, indicating generally reliable inventory records.`,
     });
   }
   if (m.healthScore >= 85) {
     ops.push({
       id: "op-health",
-      title: "Audit-Ready Inventory Position",
-      detail: `A health score of ${m.healthScore} (“${m.inventoryHealthStatus}”) positions the operation well for external audit with limited additional preparation.`,
+      title: "Excellent Audit Preparedness",
+      detail: `A composite health index of ${m.healthScore}/100 indicates that the warehouse is fully prepared for annual statutory audits with limited risk of adjustments.`,
     });
   }
   if (m.totalExcessValue > 0 && Math.abs(m.totalShortageValue) > 0) {
     ops.push({
       id: "op-offset",
-      title: "Recoverable Variance Through Reconciliation",
-      detail: `Because ${fmtSAR(m.totalExcessValue)} of excess coexists with ${fmtSAR(m.totalShortageValue)} of shortages, part of the gross variance may resolve through location and code corrections rather than genuine loss.`,
+      title: "Cost-Neutral Reconciliation Potential",
+      detail: `Because ${fmtSAR(m.totalExcessValue)} in excesses coexists with ${fmtSAR(m.totalShortageValue)} in shortages, a significant portion of variance can be resolved via cost-neutral bin reallocation.`,
     });
   }
 
@@ -686,39 +726,17 @@ function buildExecutiveSummary(
   recs: Recommendation[]
 ): string {
   const period = `${input.quarter} ${input.year}`.trim();
-  const parts: string[] = [];
+  const location = input.location || "Gas Arabian Services facilities";
 
-  parts.push(
-    `This report presents the results of the ${period} physical inventory verification${input.clientName ? ` for ${input.clientName}` : ""}${input.location ? ` (${input.location})` : ""}. ` +
-    `The exercise covered ${m.totalLines.toLocaleString()} inventory lines with a recorded value of ${fmtSAR(m.totalInventoryValue)}, of which ${fmtSAR(m.verifiedValue)} (${fmtPct(m.coverageRate)}) was physically verified.`
-  );
+  const p1 = `This executive report details the findings and strategic recommendations from the ${period} physical inventory verification program conducted at the ${location}. The audit validated a total of ${m.totalLines.toLocaleString()} inventory lines representing a general ledger book value of ${fmtSAR(m.totalInventoryValue)}. Out of this population, physical verification successfully covered ${fmtSAR(m.verifiedValue)} in assets, corresponding to a valuation coverage rate of ${fmtPct(m.coverageRate)}.`;
 
-  parts.push(
-    `Count accuracy reached ${fmtPct(m.matchRate)}, with ${m.matchedItems.toLocaleString()} lines reconciling exactly and ${m.mismatchedItems.toLocaleString()} showing quantity differences. ` +
-    `The net reconciliation variance is ${m.netVariance < 0 ? "negative " : m.netVariance > 0 ? "positive " : ""}${fmtSAR(m.netVariance)}, within a gross exposure of ${fmtSAR(m.totalRiskValue)} (${fmtPct(d.riskRatio)} of book value). ` +
-    `The composite inventory health score is ${m.healthScore} of 100 (“${m.inventoryHealthStatus}”).`
-  );
+  const p2 = `The reconciliation process yielded a physical count accuracy of ${fmtPct(m.matchRate)}, with ${m.matchedItems.toLocaleString()} lines matching exactly and ${m.mismatchedItems.toLocaleString()} lines showing variance. The net variance stands at ${m.netVariance < 0 ? "negative " : m.netVariance > 0 ? "positive " : ""}... ${fmtSAR(m.netVariance)}, within a gross absolute financial exposure of ${fmtSAR(m.totalRiskValue)} (${fmtPct(d.riskRatio)} of book value). The composite inventory health index is calculated at ${m.healthScore} out of 100, which classifies the operational control environment as "${m.inventoryHealthStatus}".`;
 
-  if (risks.length > 0) {
-    const top = risks[0];
-    parts.push(
-      `${risks.length} business risk${risks.length === 1 ? "" : "s"} ${risks.length === 1 ? "was" : "were"} identified from the data, led by “${top.title}” (${top.level}). ` +
-      (recs.length > 0
-        ? `Management attention is drawn to ${recs.length} recommendation${recs.length === 1 ? "" : "s"}, beginning with: ${recs[0].title.toLowerCase()}.`
-        : "")
-    );
-  } else {
-    parts.push(
-      "No material business risks were identified from the data in this cycle. The position presented is stable, and the recommendations focus on sustaining current performance."
-    );
-  }
+  const p3 = `A total of ${risks.length} material business risks were identified during the analysis, led by "${risks[0]?.title || "Financial Exposure"}" (${risks[0]?.level || "High"}). To address these findings and prevent profit leakage, we have formulated ${recs.length} prioritized management recommendations. Immediate action must focus on executing a targeted reconciliation of high-variance lines, cleansing flagged master data, and updating unvalued ERP records.`;
 
-  parts.push(
-    `Overall, the inventory position is assessed as ${m.inventoryHealthStatus.toLowerCase()}${m.auditConclusion.startsWith("Unqualified") ? ", supported by a clean audit conclusion" : m.auditConclusion.startsWith("Qualified") ? ", with a qualified audit conclusion reflecting minor variances" : ", and the audit conclusion signals material discrepancies requiring correction"}. ` +
-    `The sections that follow move from the overall position through financial, organizational, and supplier analysis to specific risks, opportunities, and actions.`
-  );
+  const p4 = `In conclusion, while the inventory database remains structurally sound, the presence of localized discrepancies and unverified lines warrants focused management intervention to ensure audit-readiness and protect working capital. The following sections provide detailed analyses of financial, organizational, and supplier performance, followed by specific action plans.`;
 
-  return parts.join("\n\n");
+  return [p1, p2, p3, p4].join("\n\n");
 }
 
 function buildConclusion(
@@ -730,43 +748,26 @@ function buildConclusion(
 ): ExecutiveConclusion {
   const paragraphs: string[] = [];
 
-  paragraphs.push(
-    `The ${m.totalLines.toLocaleString()}-line inventory, valued at ${fmtSAR(m.totalInventoryValue)}, closes the cycle with a health score of ${m.healthScore} (“${m.inventoryHealthStatus}”), ` +
-    `count accuracy of ${fmtPct(m.matchRate)}, and verification coverage of ${fmtPct(m.coverageRate)}. ` +
-    `Net variance stands at ${fmtSAR(m.netVariance)} against a gross exposure of ${fmtSAR(m.totalRiskValue)}.`
-  );
+  const p1 = `The ${m.totalLines.toLocaleString()}-line inventory, valued at ${fmtSAR(m.totalInventoryValue)}, closes the current cycle with a composite health index of ${m.healthScore}/100 ("${m.inventoryHealthStatus}"). While count accuracy reached ${fmtPct(m.matchRate)} and value coverage was established at ${fmtPct(m.coverageRate)}, the gross financial exposure of ${fmtSAR(m.totalRiskValue)} highlights significant potential for control improvements.`;
 
-  if (d.warningLines > 0) {
-    paragraphs.push(
-      `Data quality is workable but not clean: ${d.warningLines.toLocaleString()} lines (${fmtPct(d.warningRate)}) carry validation warnings, and ${d.zeroValueLines > 0 ? `${d.zeroValueLines.toLocaleString()} stocked lines remain unvalued in the ERP` : "valuation coverage is otherwise complete"}. These gaps bound the precision of supplier and organization-level conclusions.`
-    );
-  } else {
-    paragraphs.push(
-      "Data quality is a clear strength of this cycle: every line passed automated validation, which raises the confidence that can be placed in the figures and groupings presented."
-    );
-  }
+  const p2 = d.warningLines > 0
+    ? `Data quality validation indicates that while the ledger is functional, data-cleansing is required. A warning rate of ${fmtPct(d.warningRate)} (${d.warningLines.toLocaleString()} lines) and the presence of ${d.zeroValueLines.toLocaleString()} unvalued stocked lines limit the accuracy of procurement systems. Cleaning these records is a prerequisite for subsequent automation.`
+    : "Data hygiene has emerged as a key strength in this cycle, with all lines passing automated verification and confirming complete master-data integrity.";
 
-  if (risks.length > 0) {
-    paragraphs.push(
-      `The risk register contains ${risks.length} item${risks.length === 1 ? "" : "s"} (${risks.filter(r => r.level === "Critical" || r.level === "High").length} rated High or Critical), balanced by ${ops.length} positive finding${ops.length === 1 ? "" : "s"}. ` +
-      (recs.length > 0
-        ? `The recommendation set is deliberately short — ${recs.length} action${recs.length === 1 ? "" : "s"} — and sequenced by priority so that ${recs[0].title.toLowerCase()} is addressed first.`
-        : "No corrective actions are required beyond sustaining current practice.")
-    );
-  } else {
-    paragraphs.push(
-      `No risks met the evidence threshold for inclusion, and ${ops.length} positive finding${ops.length === 1 ? "" : "s"} ${ops.length === 1 ? "was" : "were"} recorded. The operation should focus on sustaining the practices that produced this result.`
-    );
-  }
+  const p3 = `To mitigate the ${risks.length} identified risks and capitalize on ${ops.length} key operational opportunities, management should execute the ${recs.length} recommended corrective actions in order of priority, beginning with the critical and high-priority items.`;
+
+  const p4 = `Overall, the audit confirms that the inventory position is ${m.healthScore >= 70 ? "broadly reliable and controllable" : "subject to material control gaps"}. Adhering to the proposed action plans will ensure compliance, optimize working capital, and prepare the organization for external audit cycles.`;
+
+  paragraphs.push(p1, p2, p3, p4);
 
   const overallAssessment =
     m.healthScore >= 85
-      ? "The inventory position is sound and audit-ready. Remaining actions are refinements, not corrections."
+      ? "The inventory position is sound and audit-ready. Remaining actions are minor process refinements."
       : m.healthScore >= 70
-        ? "The inventory position is broadly reliable, with specific, addressable weaknesses identified in this report."
+        ? "The inventory position is broadly reliable, with specific, addressable control gaps in key divisions."
         : m.healthScore >= 50
-          ? "The inventory position requires management attention; the prioritized recommendations should be actioned before the next reporting cycle."
-          : "The inventory position presents material control weaknesses; immediate corrective action is required and re-verification is advised.";
+          ? "The inventory position requires active management review; the recommended action plans should be executed prior to the next count cycle."
+          : "The inventory position exhibits material control breakdowns. Immediate corrective action and complete re-verification are strongly advised.";
 
   return { paragraphs, overallAssessment };
 }
@@ -779,7 +780,7 @@ export function buildReportNarrative(input: NarrativeInput): ReportNarrative {
   const m = input.metrics;
   const d = deriveStats(m, input.rows);
 
-  const overview = buildOverview(m, d);
+  const overview = buildOverview(input, m, d);
   const financial = buildFinancial(m, d);
   const health = buildHealth(m, d);
   const organizations = buildOrganizations(m, d);

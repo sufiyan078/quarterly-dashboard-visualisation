@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Sparkles, Building, User, Calendar, ShieldAlert } from "lucide-react";
 import { CoverPageData } from "@/types/preReport";
 
 interface CoverPageEditorProps {
@@ -27,131 +27,229 @@ export function CoverPageEditor({ cover, onCoverChange }: CoverPageEditorProps) 
     reader.readAsDataURL(file);
   };
 
-  const fields: { key: keyof CoverPageData; label: string; type: 'text' | 'textarea' }[] = [
-    { key: 'reportTitle', label: 'Report Title', type: 'text' },
-    { key: 'reportSubtitle', label: 'Report Subtitle', type: 'text' },
-    { key: 'clientName', label: 'Client Name', type: 'text' },
-    { key: 'reportingPeriod', label: 'Reporting Period', type: 'text' },
-    { key: 'preparedBy', label: 'Prepared By', type: 'text' },
-    { key: 'checkedBy', label: 'Checked By', type: 'text' },
-    { key: 'approvedBy', label: 'Approved By', type: 'text' },
-    { key: 'confidentialityStatement', label: 'Confidentiality Statement', type: 'textarea' },
-  ];
-
   return (
-    <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/40 backdrop-blur-md p-5 space-y-5">
-      <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-        Cover Page Customization
-      </h3>
+    <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/40 backdrop-blur-md p-5 space-y-6">
+      <div className="flex items-center gap-2">
+        <Sparkles className="h-4 w-4 text-indigo-400" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          Cover Page Designer
+        </h3>
+      </div>
+      <p className="text-[11px] text-slate-500 leading-relaxed">
+        Upload corporate identity assets and define executive metadata. These parameters configure the PDF frontispiece live.
+      </p>
 
-      {/* Logo Uploads */}
-      <div className="grid grid-cols-2 gap-4">
-        {/* Company Logo */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-            Company Logo
-          </label>
-          <input
-            ref={companyLogoRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleLogoUpload('companyLogoUrl', f);
-            }}
-          />
-          {cover.companyLogoUrl ? (
-            <div className="relative group">
-              <img
-                src={cover.companyLogoUrl}
-                alt="Company logo"
-                className="h-16 w-auto rounded-lg border border-slate-800 object-contain bg-slate-950/40 p-2"
-              />
+      {/* Visual Identity Logo Section */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Company Logo Card */}
+        <div className="rounded-lg border border-slate-800/80 bg-slate-950/20 p-4 space-y-3 flex flex-col justify-between">
+          <div>
+            <span className="text-[9px] font-black text-slate-550 uppercase tracking-widest block">
+              Auditor Brand Identity
+            </span>
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              Corporate identity logo of the auditor or service provider.
+            </span>
+          </div>
+
+          <div className="pt-2">
+            <input
+              ref={companyLogoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleLogoUpload('companyLogoUrl', f);
+              }}
+            />
+            {cover.companyLogoUrl ? (
+              <div className="relative group rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex items-center justify-center h-20 transition-all duration-200 hover:border-slate-700">
+                <img
+                  src={cover.companyLogoUrl}
+                  alt="Company logo"
+                  className="max-h-14 max-w-full object-contain"
+                />
+                <button
+                  onClick={() => update('companyLogoUrl', '')}
+                  className="absolute top-1.5 right-1.5 bg-red-500 hover:bg-red-600 rounded-full p-1 shadow-lg cursor-pointer transition-colors"
+                  title="Remove logo"
+                >
+                  <X className="h-3 w-3 text-white" />
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={() => update('companyLogoUrl', '')}
-                className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                onClick={() => companyLogoRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center gap-2 py-4 rounded-lg border border-dashed border-slate-800 bg-slate-950/30 text-xs text-slate-500 hover:border-indigo-500/40 hover:text-indigo-400 transition-all duration-200 cursor-pointer"
               >
-                <X className="h-2.5 w-2.5 text-white" />
+                <Upload className="h-4 w-4 text-slate-500 group-hover:text-indigo-400" />
+                <span className="font-semibold text-[11px]">Upload Auditor Logo</span>
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => companyLogoRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-700 text-xs text-slate-500 hover:border-indigo-500/40 hover:text-indigo-400 transition-colors cursor-pointer"
-            >
-              <Upload className="h-3.5 w-3.5" />
-              Upload Logo
-            </button>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* Client Logo */}
-        <div className="space-y-2">
-          <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-            Client Logo
-          </label>
-          <input
-            ref={clientLogoRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) handleLogoUpload('clientLogoUrl', f);
-            }}
-          />
-          {cover.clientLogoUrl ? (
-            <div className="relative group">
-              <img
-                src={cover.clientLogoUrl}
-                alt="Client logo"
-                className="h-16 w-auto rounded-lg border border-slate-800 object-contain bg-slate-950/40 p-2"
-              />
+        {/* Client Logo Card */}
+        <div className="rounded-lg border border-slate-800/80 bg-slate-950/20 p-4 space-y-3 flex flex-col justify-between">
+          <div>
+            <span className="text-[9px] font-black text-slate-550 uppercase tracking-widest block">
+              Client Brand Identity
+            </span>
+            <span className="text-[11px] text-slate-400 mt-1 block">
+              Logo of the corporate client or target division being audited.
+            </span>
+          </div>
+
+          <div className="pt-2">
+            <input
+              ref={clientLogoRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleLogoUpload('clientLogoUrl', f);
+              }}
+            />
+            {cover.clientLogoUrl ? (
+              <div className="relative group rounded-lg border border-slate-800 bg-slate-900/40 p-3 flex items-center justify-center h-20 transition-all duration-200 hover:border-slate-700">
+                <img
+                  src={cover.clientLogoUrl}
+                  alt="Client logo"
+                  className="max-h-14 max-w-full object-contain"
+                />
+                <button
+                  onClick={() => update('clientLogoUrl', '')}
+                  className="absolute top-1.5 right-1.5 bg-red-500 hover:bg-red-600 rounded-full p-1 shadow-lg cursor-pointer transition-colors"
+                  title="Remove logo"
+                >
+                  <X className="h-3 w-3 text-white" />
+                </button>
+              </div>
+            ) : (
               <button
-                onClick={() => update('clientLogoUrl', '')}
-                className="absolute -top-1.5 -right-1.5 bg-red-500 rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                onClick={() => clientLogoRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center gap-2 py-4 rounded-lg border border-dashed border-slate-800 bg-slate-950/30 text-xs text-slate-500 hover:border-indigo-500/40 hover:text-indigo-400 transition-all duration-200 cursor-pointer"
               >
-                <X className="h-2.5 w-2.5 text-white" />
+                <ImageIcon className="h-4 w-4 text-slate-500 group-hover:text-indigo-400" />
+                <span className="font-semibold text-[11px]">Upload Client Logo</span>
               </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => clientLogoRef.current?.click()}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg border border-dashed border-slate-700 text-xs text-slate-500 hover:border-indigo-500/40 hover:text-indigo-400 transition-colors cursor-pointer"
-            >
-              <ImageIcon className="h-3.5 w-3.5" />
-              Upload Logo
-            </button>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Text Fields */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {fields.map(({ key, label, type }) => (
-          <div key={key} className={type === 'textarea' ? 'sm:col-span-2' : ''}>
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-              {label}
+      {/* Structured Text Fields */}
+      <div className="space-y-4 pt-2">
+        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+          Document Metadata
+        </span>
+
+        {/* Title and Subtitle */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+              <Building className="h-3 w-3 text-slate-500" />
+              Report Title
             </label>
-            {type === 'textarea' ? (
-              <textarea
-                value={cover[key]}
-                onChange={(e) => update(key, e.target.value)}
-                rows={2}
-                className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 resize-none placeholder-slate-600"
-                placeholder={`Enter ${label.toLowerCase()}...`}
-              />
-            ) : (
-              <input
-                value={cover[key]}
-                onChange={(e) => update(key, e.target.value)}
-                className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 placeholder-slate-600"
-                placeholder={`Enter ${label.toLowerCase()}...`}
-              />
-            )}
+            <input
+              value={cover.reportTitle}
+              onChange={(e) => update('reportTitle', e.target.value)}
+              className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-700 font-sans"
+              placeholder="e.g. Q4 2026 Inventory Verification Report"
+            />
           </div>
-        ))}
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+              <Building className="h-3 w-3 text-slate-500" />
+              Report Subtitle
+            </label>
+            <input
+              value={cover.reportSubtitle}
+              onChange={(e) => update('reportSubtitle', e.target.value)}
+              className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-700 font-sans"
+              placeholder="e.g. Financial Discrepancy & Valuation Audit"
+            />
+          </div>
+        </div>
+
+        {/* Client & Period */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+              <Building className="h-3 w-3 text-slate-500" />
+              Client Name
+            </label>
+            <input
+              value={cover.clientName}
+              onChange={(e) => update('clientName', e.target.value)}
+              className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-700 font-sans"
+              placeholder="e.g. GAS Arabian Services"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+              <Calendar className="h-3 w-3 text-slate-500" />
+              Reporting Period
+            </label>
+            <input
+              value={cover.reportingPeriod}
+              onChange={(e) => update('reportingPeriod', e.target.value)}
+              className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-700 font-sans"
+              placeholder="e.g. Q4 2026 Cycle"
+            />
+          </div>
+        </div>
+
+        {/* Signatories */}
+        <div className="space-y-1.5">
+          <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+            <User className="h-3 w-3 text-slate-500" />
+            Operational Signatories
+          </label>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <input
+                value={cover.preparedBy}
+                onChange={(e) => update('preparedBy', e.target.value)}
+                className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-[11px] text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-750 font-sans"
+                placeholder="Prepared By (e.g. John Doe)"
+              />
+            </div>
+            <div>
+              <input
+                value={cover.checkedBy}
+                onChange={(e) => update('checkedBy', e.target.value)}
+                className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-[11px] text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-750 font-sans"
+                placeholder="Checked By (e.g. Jane Smith)"
+              />
+            </div>
+            <div>
+              <input
+                value={cover.approvedBy}
+                onChange={(e) => update('approvedBy', e.target.value)}
+                className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-[11px] text-slate-200 outline-none focus:border-indigo-500/50 transition-colors placeholder-slate-750 font-sans"
+                placeholder="Approved By (e.g. Executive Partner)"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Confidentiality Statement */}
+        <div className="space-y-1.5">
+          <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
+            <ShieldAlert className="h-3 w-3 text-slate-500" />
+            Confidentiality Statement
+          </label>
+          <textarea
+            value={cover.confidentialityStatement}
+            onChange={(e) => update('confidentialityStatement', e.target.value)}
+            rows={3}
+            className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 transition-colors resize-none placeholder-slate-700 font-sans leading-relaxed"
+            placeholder="Enter confidentiality statement..."
+          />
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.10.1] - 2026-07-12
+### Added
+- **Move to Dashboard Button**: Added a "Move to Dashboard" button to the Data Profile Summary card header on the validation page, allowing direct calculation and routing to the dashboard view.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
+
+### Reason
+- User requested a button on the validation page to perform the same calculations as "Approve and done calculation" and navigate immediately to the dashboard.
+
+---
+
 ## [0.10.0] - 2026-07-11
 ### Added
 - **Pre-Report Analysis Step**: Created a new pre-report setup step (`src/app/(dashboard)/reports/[id]/pre-report/`) including custom UI components (`src/components/pre-report/`) and TypeScript type definitions (`src/types/preReport.ts`).

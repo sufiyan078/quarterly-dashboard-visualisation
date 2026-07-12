@@ -140,7 +140,7 @@ export default function DataValidation() {
       }
 
       // Configurable chunk size limit for adaptive chunk processing (future-tunable)
-      const CHUNK_SIZE = 1500;
+      const CHUNK_SIZE = 500;
 
       // Perform chunked batch write for inventoryItems
       if (computedRows.length > 0) {

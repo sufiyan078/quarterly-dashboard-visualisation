@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.14.1] - 2026-07-13
+### Fixed
+- **Firestore Document Size Limit Exception**: Reduced `CHUNK_SIZE` from 1500 to 500 rows in chunked writes to guarantee document payloads remain safely below the 1 MB Firestore limit, resolving the validation save failure on large datasets.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
+- `CHANGELOG.md`
+
+### Reason
+- Resolve error "Failed to run calculations and save records" when attempting to validate and move to dashboard with large dataset imports.
+
+---
+
 ## [0.14.0] - 2026-07-12
 ### Added
 - **Adaptive Chunk Saving**: Implemented 1500-row configurable chunk size writes on the Validate page to write typical datasets in a single pass.

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Edit3, Sparkles } from "lucide-react";
 import { EditableContent } from "@/types/preReport";
 
 interface ContentEditorProps {
@@ -11,6 +12,10 @@ interface ContentEditorProps {
 export function ContentEditor({ content, onContentChange }: ContentEditorProps) {
   const update = (field: keyof EditableContent, value: string) => {
     onContentChange({ ...content, [field]: value });
+  };
+
+  const countWords = (text: string) => {
+    return text.trim() ? text.trim().split(/\s+/).length : 0;
   };
 
   const sections: { key: keyof EditableContent; label: string; placeholder: string; description: string }[] = [
@@ -42,33 +47,47 @@ export function ContentEditor({ content, onContentChange }: ContentEditorProps) 
 
   return (
     <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/40 backdrop-blur-md p-5 space-y-5">
-      <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-        Report Content Editor
-      </h3>
+      <div className="flex items-center gap-2">
+        <Edit3 className="h-4 w-4 text-indigo-400" />
+        <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+          Narrative Content Editor
+        </h3>
+      </div>
       <p className="text-[11px] text-slate-500 leading-relaxed">
-        Customize the descriptive narratives of your report. These will render live in the preview and will be compiled into the final PDF.
+        Customize the descriptive narratives of your report. These updates will reflect live in the document preview on the right.
       </p>
 
-      <div className="space-y-4">
-        {sections.map(({ key, label, placeholder, description }) => (
-          <div key={key} className="space-y-1.5">
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-200">
-                {label}
-              </span>
-              <span className="text-[10px] text-slate-500">
-                {description}
-              </span>
+      <div className="space-y-5">
+        {sections.map(({ key, label, placeholder, description }) => {
+          const text = content[key] || "";
+          const wordCount = countWords(text);
+          const charCount = text.length;
+
+          return (
+            <div key={key} className="space-y-2 rounded-lg border border-slate-800/60 bg-slate-950/20 p-3.5 transition-colors hover:border-slate-800">
+              <div className="flex justify-between items-start gap-4">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-200">
+                    {label}
+                  </span>
+                  <span className="text-[10px] text-slate-500 mt-0.5 leading-relaxed">
+                    {description}
+                  </span>
+                </div>
+                <div className="text-[9px] font-mono text-slate-500 text-right flex-shrink-0">
+                  {wordCount} words · {charCount} chars
+                </div>
+              </div>
+              <textarea
+                value={text}
+                onChange={(e) => update(key, e.target.value)}
+                rows={4}
+                className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 resize-y min-h-[90px] placeholder-slate-750 font-sans leading-relaxed transition-colors"
+                placeholder={placeholder}
+              />
             </div>
-            <textarea
-              value={content[key]}
-              onChange={(e) => update(key, e.target.value)}
-              rows={4}
-              className="w-full bg-slate-900/60 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 resize-none placeholder-slate-600 font-sans leading-relaxed"
-              placeholder={placeholder}
-            />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

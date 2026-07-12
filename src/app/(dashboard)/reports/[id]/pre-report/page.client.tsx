@@ -1,14 +1,14 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useReportId } from "@/lib/useReportId";
 import { db, doc, getDoc, updateDoc, collection, getDocs } from "@/lib/firebase";
 import { getHighestStep } from "@/lib/workflow";
 import {
-  ArrowLeft, ArrowRight, ShieldCheck, CheckCircle2,
-  Calendar, Eye, ZoomIn, ZoomOut, Save, Sparkles, Building
+  ArrowLeft, ShieldCheck, CheckCircle2,
+  Calendar, Eye, ZoomIn, ZoomOut, Save, Sparkles, Building, Maximize2, Minimize2
 } from "lucide-react";
 import { computeDashboardMetrics } from "@/lib/inventory/dashboardCalculations";
 import { buildReportNarrative, PreReportMetrics } from "@/lib/report/insightEngine";
@@ -62,7 +62,9 @@ export default function PreReportPage() {
   const [activeTab, setActiveTab] = useState<'sections' | 'cover' | 'content' | 'images' | 'approve'>('sections');
 
   // Preview zoom level
-  const [zoom, setZoom] = useState<number>(0.75);
+  const [zoom, setZoom] = useState<number>(0.7);
+  const previewContainerRef = useRef<HTMLDivElement>(null);
+  const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
   // Configuration States
   const [sections, setSections] = useState<ReportSection[]>(DEFAULT_SECTIONS);
@@ -232,8 +234,7 @@ export default function PreReportPage() {
     };
   }, [formattedRows, agingRecords]);
 
-  // Generate the executive narrative (insights, risks, recommendations)
-  // from the calculated metrics — presentation only, no recalculation.
+  // Generate the executive narrative
   const narrative = useMemo(() => {
     return buildReportNarrative({
       quarter: report?.quarter || "",
@@ -261,10 +262,108 @@ export default function PreReportPage() {
     });
   }, [sections, cover, content, images, metrics, narrative, report]);
 
-  // Auto-fill editable narrative fields from the insight engine when they
-  // are empty OR still contain the pre-v0.11 canned autofill text (which was
-  // saved verbatim, sometimes before any data existed). Genuine user edits
-  // won't match these signatures and are preserved.
+  // Compute Readiness Score for header display
+  const readinessScore = useMemo(() => {
+    const errors = qaIssues.filter(issue => issue.severity === "error");
+    const warnings = qaIssues.filter(issue => issue.severity === "warning");
+    const uncheckedCount = Object.values(approval).filter(v => !v).length;
+    return Math.max(0, 100 - (errors.length * 15) - (warnings.length * 5) - (uncheckedCount * 5));
+  }, [qaIssues, approval]);
+
+  // Section meta compilation
+  const sectionMeta = useMemo(() => {
+    const meta: Record<string, any> = {};
+    
+    sections.forEach(s => {
+      let status: 'complete' | 'review' | 'incomplete' = 'complete';
+      let stats: any = {};
+      
+      switch (s.type) {
+        case 'cover':
+          status = cover.reportTitle?.trim() && cover.preparedBy?.trim() ? 'complete' : 'review';
+          break;
+        case 'toc':
+          status = 'complete';
+          break;
+        case 'executive':
+          const execText = content.executiveSummary?.trim() || "";
+          status = execText.length > 50 ? 'complete' : 'review';
+          stats = {
+            wordCount: execText.split(/\s+/).filter(Boolean).length,
+            insightCount: narrative.overview?.insights?.length || 0,
+          };
+          break;
+        case 'kpi':
+          stats = { chartCount: 1, tableCount: 1 };
+          break;
+        case 'financial':
+          stats = { chartCount: 1, tableCount: 1 };
+          break;
+        case 'health':
+          stats = { chartCount: 1 };
+          break;
+        case 'divisions':
+          stats = { tableCount: 1 };
+          break;
+        case 'suppliers':
+          stats = { tableCount: 1 };
+          break;
+        case 'distribution':
+          stats = { chartCount: 1 };
+          break;
+        case 'validation':
+          stats = { tableCount: 1 };
+          break;
+        case 'risk':
+          const isHighRisk = metrics.totalRiskValue > metrics.totalInventoryValue * 0.2;
+          stats = {
+            riskLevel: isHighRisk ? 'High' : 'Medium',
+            tableCount: 1,
+          };
+          break;
+        case 'opportunities':
+          stats = { insightCount: narrative.opportunities?.length || 0 };
+          break;
+        case 'recommendations':
+          stats = { recCount: narrative.consolidatedRecommendations?.length || 0 };
+          break;
+        case 'conclusion':
+          status = cover.preparedBy?.trim() && cover.checkedBy?.trim() && cover.approvedBy?.trim() ? 'complete' : 'review';
+          break;
+        case 'team':
+          status = images.length > 0 ? 'complete' : 'review';
+          break;
+      }
+      
+      meta[s.id] = { status, ...stats };
+    });
+    
+    return meta;
+  }, [sections, cover, content, images, narrative, metrics]);
+
+  // Scroll Synchronization
+  const handleSectionSelect = (sectionId: string) => {
+    setActiveSectionId(sectionId);
+    
+    // Find page element inside the preview container
+    setTimeout(() => {
+      const pageEl = document.getElementById(`page-${sectionId}`);
+      if (pageEl && previewContainerRef.current) {
+        const container = previewContainerRef.current;
+        const containerRect = container.getBoundingClientRect();
+        const elRect = pageEl.getBoundingClientRect();
+        
+        // Calculate relative offset to scroll the container viewport
+        const scrollTarget = container.scrollTop + (elRect.top - containerRect.top) - 16;
+        container.scrollTo({
+          top: scrollTarget,
+          behavior: "smooth"
+        });
+      }
+    }, 50);
+  };
+
+  // Auto-fill legacy logic
   useEffect(() => {
     if (!narrative || items.length === 0) return;
 
@@ -318,7 +417,7 @@ export default function PreReportPage() {
       });
       if (showNotification) {
         setSuccessMsg("Pre-Report configuration saved successfully!");
-        setTimeout(() => setSuccessMsg(null), 4000);
+        setTimeout(() => setSuccessMsg(null), 4500);
       }
     } catch (err: any) {
       console.error("Error saving pre-report config:", err);
@@ -343,7 +442,7 @@ export default function PreReportPage() {
             readyForExport: true
           }
         },
-        // Promote highest step reached to 5 to unlock the final PDF builder stage
+        // Promote highest step reached to 5 to unlock final PDF Builder stage
         highestStepReached: 5,
         updatedAt: new Date()
       });
@@ -364,13 +463,12 @@ export default function PreReportPage() {
     );
   }
 
-  // Sorted list of sections
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
-
+  const enabledSections = sortedSections.filter(s => s.enabled);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      {/* Header */}
+      {/* Upper Navigation Bar */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Link
@@ -384,19 +482,27 @@ export default function PreReportPage() {
               {report?.quarter} {report?.year} Cycle
             </span>
             <h1 className="text-xl font-bold tracking-tight text-white mt-0.5">
-              Pre-Report Builder & Preview
+              Pre-Report Builder &amp; Workspace
             </h1>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Global Save Actions and Status Indicator */}
+        <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-800/60 bg-slate-950/20 text-[11px]">
+            <span className="text-slate-450">Quality Readiness:</span>
+            <span className={`font-bold ${readinessScore >= 90 ? 'text-emerald-450' : readinessScore >= 70 ? 'text-amber-450' : 'text-rose-450'}`}>
+              {readinessScore}% Complete
+            </span>
+          </div>
+
           <button
             onClick={() => handleSave(true)}
             disabled={saving}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900/50 text-xs font-semibold text-slate-350 hover:bg-slate-800 hover:text-white cursor-pointer transition-colors disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-900/50 text-xs font-semibold text-slate-300 hover:bg-slate-800 hover:text-white cursor-pointer transition-colors disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
-            {saving ? "Saving..." : "Save Config"}
+            {saving ? "Saving..." : "Save Draft"}
           </button>
         </div>
       </div>
@@ -457,26 +563,28 @@ export default function PreReportPage() {
         </div>
       )}
 
-      {/* Main Split Interface */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-        {/* Left Side: Builder Controls (60% width on desktop) */}
-        <div className="lg:col-span-7 space-y-6">
-          {/* Internal Navigation Tabs */}
-          <div className="flex border-b border-slate-800/80 overflow-x-auto pb-px">
+      {/* Main Dual-Pane WYSIWYG Workspace */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        {/* Left Side: Builder Controls / Toolbox (5 of 12 columns) */}
+        <div className="lg:col-span-5 space-y-5">
+          
+          {/* Internal Workspace Toolbox Tabs */}
+          <div className="flex border-b border-slate-800 pb-px overflow-x-auto gap-1">
             {[
-              { id: 'sections', label: 'Section Manager' },
-              { id: 'cover', label: 'Cover Page' },
-              { id: 'content', label: 'Report Content' },
-              { id: 'images', label: 'Evidence & Images' },
-              { id: 'approve', label: 'Sign-Off & Approve' }
+              { id: 'sections', label: 'Outline' },
+              { id: 'cover', label: 'Cover Designer' },
+              { id: 'content', label: 'Narrative Editor' },
+              { id: 'images', label: 'Evidence Images' },
+              { id: 'approve', label: 'Quality & Sign-Off' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`px-4 py-2 border-b-2 text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 ${
+                className={`px-3 py-2 border-b-2 text-xs font-semibold whitespace-nowrap cursor-pointer transition-all duration-200 ${
                   activeTab === tab.id
-                    ? "border-indigo-500 text-white"
-                    : "border-transparent text-slate-400 hover:text-slate-200"
+                    ? "border-indigo-500 text-indigo-450 bg-indigo-500/5 rounded-t-md"
+                    : "border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-900/30 rounded-t-md"
                 }`}
               >
                 {tab.label}
@@ -484,11 +592,15 @@ export default function PreReportPage() {
             ))}
           </div>
 
-          <div className="space-y-6">
+          {/* Active Workspace Control Component */}
+          <div className="space-y-4">
             {activeTab === 'sections' && (
               <SectionManager
                 sections={sections}
                 onSectionsChange={setSections}
+                activeSectionId={activeSectionId}
+                onSectionSelect={handleSectionSelect}
+                sectionMeta={sectionMeta}
               />
             )}
 
@@ -525,45 +637,76 @@ export default function PreReportPage() {
           </div>
         </div>
 
-        {/* Right Side: Sticky Live Preview (40% width on desktop) */}
-        <div className="lg:col-span-5 space-y-4 lg:sticky lg:top-6">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        {/* Right Side: Primary WYSIWYG Document Workspace Hero (7 of 12 columns) */}
+        <div className="lg:col-span-7 space-y-4 lg:sticky lg:top-6">
+          
+          {/* Workspace Action Toolbar */}
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-3 bg-[#090b11]/80 backdrop-blur-md px-1">
             <div className="flex items-center gap-2">
               <Eye className="h-4 w-4 text-indigo-400" />
               <h3 className="text-xs font-bold text-white uppercase tracking-wider">
-                Live Report PDF Preview
+                Live Document Preview Workspace
               </h3>
             </div>
 
-            {/* Zoom Controls */}
-            <div className="flex items-center gap-1.5">
+            {/* Document Presets & Zoom Options */}
+            <div className="flex items-center gap-2">
+              {/* Presets */}
               <button
-                onClick={() => setZoom(prev => Math.max(0.5, prev - 0.05))}
-                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
-                title="Zoom Out"
+                onClick={() => setZoom(0.55)}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-white cursor-pointer hover:border-slate-700"
+                title="Fit full page in viewport"
               >
-                <ZoomOut className="h-3.5 w-3.5" />
+                <Minimize2 className="h-3 w-3" />
+                Fit Page
               </button>
-              <span className="text-[10px] font-mono text-slate-400 w-10 text-center">
-                {Math.round(zoom * 100)}%
-              </span>
               <button
-                onClick={() => setZoom(prev => Math.min(1.2, prev + 0.05))}
-                className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
-                title="Zoom In"
+                onClick={() => setZoom(0.95)}
+                className="flex items-center gap-1 px-2 py-1 rounded bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-400 hover:text-white cursor-pointer hover:border-slate-700"
+                title="Expand page to full width"
               >
-                <ZoomIn className="h-3.5 w-3.5" />
+                <Maximize2 className="h-3 w-3" />
+                Fit Width
               </button>
+
+              {/* Steps/Scale control */}
+              <div className="h-4 w-px bg-slate-850" />
+              
+              <div className="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded p-0.5">
+                <button
+                  onClick={() => setZoom(prev => Math.max(0.4, prev - 0.05))}
+                  className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-850 cursor-pointer"
+                  title="Zoom Out"
+                >
+                  <ZoomOut className="h-3 w-3" />
+                </button>
+                <span className="text-[10px] font-mono text-slate-400 w-10 text-center select-none font-bold">
+                  {Math.round(zoom * 100)}%
+                </span>
+                <button
+                  onClick={() => setZoom(prev => Math.min(1.3, prev + 0.05))}
+                  className="p-1 rounded text-slate-400 hover:text-white hover:bg-slate-850 cursor-pointer"
+                  title="Zoom In"
+                >
+                  <ZoomIn className="h-3 w-3" />
+                </button>
+              </div>
             </div>
           </div>
-          {/* Document Preview Box */}
-          <div className="w-full flex justify-center bg-[#090b11] border border-slate-900 rounded-xl p-4 overflow-auto max-h-[85vh]">
+
+          {/* Interactive Document Page Canvas */}
+          <div
+            ref={previewContainerRef}
+            className="w-full flex flex-col items-center bg-[#07090d]/60 border border-slate-850/80 rounded-xl py-6 px-4 overflow-y-auto max-h-[80vh] scrollbar-thin scrollbar-thumb-slate-800 scrollbar-track-transparent scroll-smooth"
+          >
+            {/* Canvas Container keeping scale wrapper responsive */}
             <div
               style={{
                 width: `${794 * zoom}px`,
-                height: `${(sortedSections.filter(s => s.enabled).length * 1123 + (sortedSections.filter(s => s.enabled).length - 1) * 24) * zoom}px`,
+                height: `${(enabledSections.length * 1123 + (enabledSections.length - 1) * 32) * zoom}px`,
                 position: "relative",
               }}
+              className="transition-all duration-300"
             >
               <div
                 style={{
@@ -574,7 +717,7 @@ export default function PreReportPage() {
                   top: 0,
                   left: 0,
                 }}
-                className="flex flex-col gap-6"
+                className="flex flex-col gap-8"
               >
                 <ExecutiveReportDocument
                   sections={sections}
@@ -592,6 +735,13 @@ export default function PreReportPage() {
               </div>
             </div>
           </div>
+
+          {/* Live Sync Footer Alert */}
+          <div className="flex items-center justify-between text-[10px] text-slate-550 px-1 font-mono">
+            <span>* Document is synchronized in real-time</span>
+            <span>A4 Portrait Layout (794px × 1123px)</span>
+          </div>
+
         </div>
       </div>
     </div>

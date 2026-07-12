@@ -130,7 +130,20 @@ function FactCard({ label, value, tone }: { label: string; value: string; tone?:
 
 function Commentary({ text }: { text: string }) {
   return (
-    <p style={{ ...bodyText, fontSize: TYPOGRAPHY.sizes.bodyLarge, marginBottom: "14px", color: C.text.primary }}>{text}</p>
+    <div style={{ marginBottom: "12px" }}>
+      {text.split("\n\n").map((para, idx) => (
+        <p key={idx} style={{
+          ...bodyText,
+          fontSize: "10.5px",
+          lineHeight: "1.6",
+          color: C.text.primary,
+          marginBottom: "8px",
+          marginTop: 0,
+        }}>
+          {para}
+        </p>
+      ))}
+    </div>
   );
 }
 
@@ -283,7 +296,7 @@ function DonutStat({ label, ratePct, color }: { label: string; ratePct: number; 
 
 /* ─── Page shell ─── */
 function Page({
-  children, pageNumber, totalPages, kicker, title, description, notes, nextTitle, isCover,
+  children, pageNumber, totalPages, kicker, title, description, notes, nextTitle, isCover, sectionId,
 }: {
   children: React.ReactNode;
   pageNumber: number;
@@ -294,9 +307,11 @@ function Page({
   notes?: string;
   nextTitle?: string;
   isCover?: boolean;
+  sectionId?: string;
 }) {
   return (
     <div
+      id={sectionId ? `page-${sectionId}` : undefined}
       className="pdf-report-page"
       style={{
         width: LAYOUT.width,
@@ -1067,6 +1082,7 @@ export function ExecutiveReportDocument({
       {enabled.map((section, idx) => {
         const nextTitle = idx + 1 < enabled.length ? enabled[idx + 1].title : undefined;
         const pageProps = {
+          sectionId: section.id,
           pageNumber: idx + 1,
           totalPages,
           kicker,

@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.10.2] - 2026-07-12
+### Modified
+- **Chunking Logic**: Adjusted chunking size logic for Firestore writes to save/diagnose in chunks of 1500 rows when the dataset is 2000+ rows, and save immediately as a single document write when the dataset has less than 1500 rows.
+- **Validation Sidebar Cleanup**: Removed "Classification Stats", "Validation Diagnostics", and "Workspace Confirmed" cards from the validation screen.
+- **Full-Width Layout**: Refactored validation dashboard container to utilize full horizontal width.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
+
+### Reason
+- User requested removal of classification/diagnostics sidebar cards and configure 1500-row chunk size.
+
+---
+
 ## [0.10.1] - 2026-07-12
 ### Added
 - **Move to Dashboard Button**: Added a "Move to Dashboard" button to the Data Profile Summary card header on the validation page, allowing direct calculation and routing to the dashboard view.

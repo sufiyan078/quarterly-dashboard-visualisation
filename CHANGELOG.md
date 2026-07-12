@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.0.0] - 2026-07-13
+### Added
+- **Design Token System**: Centralized design parameters in `src/lib/report/designTokens.ts` including corporate colors (Navy/Gold), layout dimensions, and typography.
+- **Dynamic Table of Contents**: Added structured page auto-indexing on the second page of the report.
+- **Automated QA Engine**: Integrated narrative, template placeholder, and quantitative financial audits (`qaEngine.ts`) with custom audit logs.
+- **QA-Gated Approval UI**: Interlocked the QA reports with the "Sign-Off & Approve" checklist to prevent PDF downloads when critical discrepancies exist.
+- **Branded Appendix**: Styled the personnel and evidence summary pages to match corporate templates.
+
+### Files Modified
+- `src/lib/report/designTokens.ts`
+- `src/lib/report/qaEngine.ts`
+- `src/types/preReport.ts`
+- `src/components/pre-report/ExecutiveReportDocument.tsx`
+- `src/components/pre-report/ApprovalGatedChecklist.tsx`
+- `src/app/(dashboard)/reports/[id]/pre-report/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/builder/page.client.tsx`
+- `tsconfig.json`
+
+---
+
 ## [0.14.1] - 2026-07-13
 ### Fixed
 - **Firestore Document Size Limit Exception**: Reduced `CHUNK_SIZE` from 1500 to 500 rows in chunked writes to guarantee document payloads remain safely below the 1 MB Firestore limit, resolving the validation save failure on large datasets.

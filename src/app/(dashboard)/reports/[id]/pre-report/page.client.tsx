@@ -23,6 +23,7 @@ import { ContentEditor } from "@/components/pre-report/ContentEditor";
 import { ImageManager } from "@/components/pre-report/ImageManager";
 import { ApprovalGatedChecklist } from "@/components/pre-report/ApprovalGatedChecklist";
 import { ExecutiveReportDocument } from "@/components/pre-report/ExecutiveReportDocument";
+import { runQA } from "@/lib/report/qaEngine";
 
 interface Report {
   title: string;
@@ -243,6 +244,22 @@ export default function PreReportPage() {
       rows: formattedRows,
     });
   }, [metrics, formattedRows, report, cover.clientName]);
+
+  const qaIssues = useMemo(() => {
+    return runQA({
+      sections,
+      cover,
+      content,
+      images,
+      metrics,
+      narrative,
+      reportMeta: {
+        quarter: report?.quarter || "",
+        year: report?.year || "",
+        location: report?.location || "",
+      },
+    });
+  }, [sections, cover, content, images, metrics, narrative, report]);
 
   // Auto-fill editable narrative fields from the insight engine when they
   // are empty OR still contain the pre-v0.11 canned autofill text (which was
@@ -502,6 +519,7 @@ export default function PreReportPage() {
                 onApprovalChange={setApproval}
                 onApproveReport={handleApproveReport}
                 isSubmitting={saving}
+                qaIssues={qaIssues}
               />
             )}
           </div>

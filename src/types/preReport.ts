@@ -1,5 +1,6 @@
 export type ReportSectionType =
   | 'cover'
+  | 'toc'
   | 'executive'
   | 'kpi'            // Inventory Overview (facts grid)
   | 'financial'      // Financial Overview
@@ -63,19 +64,20 @@ export interface ApprovalState {
 
 export const DEFAULT_SECTIONS: ReportSection[] = [
   { id: 'cover', title: 'Cover Page', type: 'cover', enabled: true, order: 0, description: 'Report title, metadata, and branding', notes: '' },
-  { id: 'executive', title: 'Executive Summary', type: 'executive', enabled: true, order: 1, description: 'The complete inventory position in one page for senior management', notes: '' },
-  { id: 'kpi', title: 'Inventory Overview', type: 'kpi', enabled: true, order: 2, description: 'Scale of the inventory: lines, value, organizations, and suppliers', notes: '' },
-  { id: 'financial', title: 'Financial Overview', type: 'financial', enabled: true, order: 3, description: 'Book value versus verified value, variances, and financial exposure', notes: '' },
-  { id: 'health', title: 'Inventory Health', type: 'health', enabled: true, order: 4, description: 'Composite health score, accuracy, and verification coverage', notes: '' },
-  { id: 'divisions', title: 'Organization Analysis', type: 'divisions', enabled: true, order: 5, description: 'Value, accuracy, and variance by organization', notes: '' },
-  { id: 'suppliers', title: 'Supplier Analysis', type: 'suppliers', enabled: true, order: 6, description: 'Supplier dependency, concentration, and variance exposure', notes: '' },
-  { id: 'distribution', title: 'Inventory Distribution', type: 'distribution', enabled: true, order: 7, description: 'How value and volume are spread across the operation', notes: '' },
-  { id: 'validation', title: 'Validation Summary', type: 'validation', enabled: true, order: 8, description: 'Data quality flags and reporting confidence', notes: '' },
-  { id: 'risk', title: 'Key Risks', type: 'risk', enabled: true, order: 9, description: 'Data-supported business risks and the high-variance item ledger', notes: '' },
-  { id: 'opportunities', title: 'Business Opportunities', type: 'opportunities', enabled: true, order: 10, description: 'Positive findings and improvement opportunities', notes: '' },
-  { id: 'recommendations', title: 'Recommendations', type: 'recommendations', enabled: true, order: 11, description: 'Prioritized management actions with reasons and expected benefits', notes: '' },
-  { id: 'conclusion', title: 'Executive Conclusion', type: 'conclusion', enabled: true, order: 12, description: 'Overall assessment, audit readiness, and sign-off', notes: '' },
-  { id: 'team', title: 'Personnel & Evidence', type: 'team', enabled: true, order: 13, description: 'On-site audit team and verification evidence', notes: '' },
+  { id: 'toc', title: 'Table of Contents', type: 'toc', enabled: true, order: 1, description: 'Report contents, sections, and page references', notes: '' },
+  { id: 'executive', title: 'Executive Summary', type: 'executive', enabled: true, order: 2, description: 'The complete inventory position in one page for senior management', notes: '' },
+  { id: 'kpi', title: 'Inventory Overview', type: 'kpi', enabled: true, order: 3, description: 'Scale of the inventory: lines, value, organizations, and suppliers', notes: '' },
+  { id: 'financial', title: 'Financial Overview', type: 'financial', enabled: true, order: 4, description: 'Book value versus verified value, variances, and financial exposure', notes: '' },
+  { id: 'health', title: 'Inventory Health', type: 'health', enabled: true, order: 5, description: 'Composite health score, accuracy, and verification coverage', notes: '' },
+  { id: 'divisions', title: 'Organization Analysis', type: 'divisions', enabled: true, order: 6, description: 'Value, accuracy, and variance by organization', notes: '' },
+  { id: 'suppliers', title: 'Supplier Analysis', type: 'suppliers', enabled: true, order: 7, description: 'Supplier dependency, concentration, and variance exposure', notes: '' },
+  { id: 'distribution', title: 'Inventory Distribution', type: 'distribution', enabled: true, order: 8, description: 'How value and volume are spread across the operation', notes: '' },
+  { id: 'validation', title: 'Validation Summary', type: 'validation', enabled: true, order: 9, description: 'Data quality flags and reporting confidence', notes: '' },
+  { id: 'risk', title: 'Key Risks', type: 'risk', enabled: true, order: 10, description: 'Data-supported business risks and the high-variance item ledger', notes: '' },
+  { id: 'opportunities', title: 'Business Opportunities', type: 'opportunities', enabled: true, order: 11, description: 'Positive findings and improvement opportunities', notes: '' },
+  { id: 'recommendations', title: 'Recommendations', type: 'recommendations', enabled: true, order: 12, description: 'Prioritized management actions with reasons and expected benefits', notes: '' },
+  { id: 'conclusion', title: 'Executive Conclusion', type: 'conclusion', enabled: true, order: 13, description: 'Overall assessment, audit readiness, and sign-off', notes: '' },
+  { id: 'team', title: 'Personnel & Evidence', type: 'team', enabled: true, order: 14, description: 'On-site audit team and verification evidence', notes: '' },
 ];
 
 /**

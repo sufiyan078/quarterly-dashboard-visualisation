@@ -6,6 +6,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.14.0] - 2026-07-12
+### Added
+- **Adaptive Chunk Saving**: Implemented 1500-row configurable chunk size writes on the Validate page to write typical datasets in a single pass.
+- **Batched Persistence Writes**: Configured transactional `writeBatch` in Firestore for inventory items and aging records to reduce write network latency.
+- **Concurrent Subcollection Loading**: Parallelized sequential subcollection reads using `Promise.all` across the Dashboard, Pre-Report, and Report Builder pages.
+- **State Persistence**: Cached parsed inventory workbook data in sessionStorage within `InventoryDataProvider` to survive page reloads and back-navigation.
+- **Routing Cleanliness**: Enabled clean URLs in Firebase hosting.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/dashboard/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/pre-report/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/builder/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/upload/page.client.tsx`
+- `src/context/InventoryDataContext.tsx`
+- `firebase.json`
+- `CHANGELOG.md`
+
+### Reason
+- Optimize transition latency from Validate Data screen to Dashboard and improve overall UI performance.
+
+---
+
 ## [0.13.0] - 2026-07-12
 ### Added
 - **Firebase Live Deployment**: Deployed the fully optimized local changes to the live Firebase web app.

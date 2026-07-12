@@ -706,6 +706,8 @@ export default function InventoryDashboard() {
   });
 
   const fetchReportAndItems = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const docRef = doc(db, "reports", id);
       const docSnap = await getDoc(docRef);
@@ -723,10 +725,15 @@ export default function InventoryDashboard() {
         }
 
         if (reportData.status?.toLowerCase() !== "draft") {
-          // Fetch ALL items in the subcollection
-          // Fetch ALL items in the subcollection
+          // Fetch inventoryItems and agingData concurrently for faster loading
           const itemsCol = collection(db, "reports", id, "inventoryItems");
-          const querySnap = await getDocs(itemsCol);
+          const agingCol = collection(db, "reports", id, "agingData");
+          const [querySnap, agingSnap] = await Promise.all([
+            getDocs(itemsCol),
+            getDocs(agingCol)
+          ]);
+
+          // Process inventory items
           const loadedItems: InventoryItem[] = [];
           querySnap.forEach((docSnap) => {
             const data = docSnap.data();
@@ -752,9 +759,7 @@ export default function InventoryDashboard() {
           });
           setItems(loadedItems);
 
-          // Fetch aging data records
-          const agingCol = collection(db, "reports", id, "agingData");
-          const agingSnap = await getDocs(agingCol);
+          // Process aging data records
           const loadedAging: any[] = [];
           agingSnap.forEach((docSnap) => {
             const data = docSnap.data();
@@ -786,6 +791,7 @@ export default function InventoryDashboard() {
   };
 
   useEffect(() => {
+    if (!id || id === "placeholder") return;
     fetchReportAndItems();
   }, [id]);
 

@@ -158,6 +158,7 @@ export default function UploadExcel() {
       setParsedResult(aggregated);
       const currentHighest = getHighestStep(report);
       await updateDoc(doc(db, "reports", id), {
+        status: "Draft",
         uploadedFileNames: files.map(f => f.name),
         uploadedFiles: files.map(f => ({ filename: f.name, size: f.size, uploadTimestamp: new Date().toISOString(), uploadedBy: profile?.email || user?.email || "Unknown", reportId: id, uploadStatus: f.status })),
         updatedAt: new Date(),

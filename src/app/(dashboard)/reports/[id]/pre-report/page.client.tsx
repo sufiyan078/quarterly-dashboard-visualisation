@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useReportId } from "@/lib/useReportId";
-import { db, doc, getDoc, updateDoc, collection, getDocs } from "@/lib/firebase";
+import { db, doc, getDoc, updateDoc, setDoc, collection, getDocs } from "@/lib/firebase";
 import { getHighestStep } from "@/lib/workflow";
 import {
   ArrowLeft, ShieldCheck, CheckCircle2,
@@ -89,10 +89,10 @@ export default function PreReportPage() {
           // Update highest step reached on database if it's less than 4
           const currentHighest = getHighestStep(reportData);
           if (currentHighest < 4) {
-            await updateDoc(docRef, {
+            await setDoc(docRef, {
               highestStepReached: 4,
               updatedAt: new Date()
-            });
+            }, { merge: true });
           }
 
           // Initialize configs if stored in Firestore
@@ -405,7 +405,7 @@ export default function PreReportPage() {
 
     try {
       const docRef = doc(db, "reports", id);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         preReportConfig: {
           sections,
           cover,
@@ -414,7 +414,7 @@ export default function PreReportPage() {
           approval
         },
         updatedAt: new Date()
-      });
+      }, { merge: true });
       if (showNotification) {
         setSuccessMsg("Pre-Report configuration saved successfully!");
         setTimeout(() => setSuccessMsg(null), 4500);
@@ -431,7 +431,7 @@ export default function PreReportPage() {
     setSaving(true);
     try {
       const docRef = doc(db, "reports", id);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         preReportConfig: {
           sections,
           cover,
@@ -445,7 +445,7 @@ export default function PreReportPage() {
         // Promote highest step reached to 5 to unlock final PDF Builder stage
         highestStepReached: 5,
         updatedAt: new Date()
-      });
+      }, { merge: true });
       router.push(`/reports/${id}/builder`);
     } catch (err: any) {
       console.error("Error saving approval status:", err);

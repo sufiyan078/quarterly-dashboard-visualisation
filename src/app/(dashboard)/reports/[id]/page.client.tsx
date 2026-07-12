@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { db, doc, getDoc, updateDoc, deleteDoc } from "@/lib/firebase";
+import { db, doc, getDoc, updateDoc, deleteDoc, setDoc } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useReportId } from "@/lib/useReportId";
 import { 
@@ -113,10 +113,10 @@ export default function ReportPeriodDetails() {
     setError(null);
     try {
       const docRef = doc(db, "reports", id);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         ...formData,
         updatedAt: new Date(),
-      });
+      }, { merge: true });
       
       setReport((prev) => prev ? {
         ...prev,
@@ -167,10 +167,10 @@ export default function ReportPeriodDetails() {
     setError(null);
     try {
       const docRef = doc(db, "reports", id);
-      await updateDoc(docRef, {
+      await setDoc(docRef, {
         status: nextStatus,
         updatedAt: new Date(),
-      });
+      }, { merge: true });
       
       setReport((prev) => prev ? {
         ...prev,

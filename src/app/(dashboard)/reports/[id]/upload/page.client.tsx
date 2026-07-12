@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { db, doc, getDoc, updateDoc } from "@/lib/firebase";
+import { db, doc, getDoc, updateDoc, setDoc } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { useInventoryData } from "@/context/InventoryDataContext";
 import { parseExcelFile, profileInventoryData } from "@/lib/inventory";
@@ -157,12 +157,12 @@ export default function UploadExcel() {
       };
       setParsedResult(aggregated);
       const currentHighest = getHighestStep(report);
-      await updateDoc(doc(db, "reports", id), {
+      await setDoc(doc(db, "reports", id), {
         uploadedFileNames: files.map(f => f.name),
         uploadedFiles: files.map(f => ({ filename: f.name, size: f.size, uploadTimestamp: new Date().toISOString(), uploadedBy: profile?.email || user?.email || "Unknown", reportId: id, uploadStatus: f.status })),
         updatedAt: new Date(),
         highestStepReached: Math.max(currentHighest, 2)
-      });
+      }, { merge: true });
       router.push(`/reports/${id}/validate`);
     } catch (err: any) {
       setError(err?.message || "Failed to parse Excel files. Check your files and connection.");

@@ -1,6 +1,7 @@
 import { ParsedInventoryRow } from "@/types/inventory";
 
 export interface ComputedInventoryRow extends ParsedInventoryRow {
+  id: string;
   itemCode: string;
   differenceQty: number;
   absoluteDifferenceQty: number;
@@ -53,7 +54,7 @@ export function computeRowMetrics(
   }
 
   // Step 2: Compute metrics for each row
-  return rows.map((row) => {
+  return rows.map((row, idx) => {
     const itemCode = (row.item || "").trim();
     const erpQty = row.systemOnHand || 0;
     const physicalQty = row.physicalCount || 0;
@@ -103,6 +104,7 @@ export function computeRowMetrics(
     const statusVal = differenceQty === 0 && validationWarnings.length === 0 ? "closed" : "open";
 
     return {
+      id: `${reportId}_${row.sheetName || "sheet"}_row_${row.originalRowNumber || idx}_${idx}`,
       ...row,
       itemCode,
       differenceQty,

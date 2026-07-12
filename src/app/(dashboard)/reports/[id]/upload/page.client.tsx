@@ -57,7 +57,10 @@ export default function UploadExcel() {
   const [isDragging, setIsDragging] = useState(false);
 
   useEffect(() => {
+    if (!id || id === "placeholder") return;
     const fetchReport = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const docRef = doc(db, "reports", id);
         const docSnap = await getDoc(docRef);
@@ -120,9 +123,10 @@ export default function UploadExcel() {
         const blob = await res.blob();
         return new File([blob], filename, { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       };
-      const file1 = await fetchFile("/Bartec.xlsx", "Bartec 09.11.2025.xlsx");
-      const file2 = await fetchFile("/MCH.xlsx", "Copy of MCH 07.12.2025.xlsx");
-      const newFiles = [file1, file2].map(f => ({ name: f.name, size: f.size, lastModified: f.lastModified, status: "Ready", fileObject: f }));
+      const file1 = await fetchFile("/PhysicalStock.xlsx", "Copy of 2026 - PHYSICAL STOCK - 01- Q.xlsx");
+      const file2 = await fetchFile("/Bartec.xlsx", "Bartec 09.11.2025.xlsx");
+      const file3 = await fetchFile("/MCH.xlsx", "Copy of MCH 07.12.2025.xlsx");
+      const newFiles = [file1, file2, file3].map(f => ({ name: f.name, size: f.size, lastModified: f.lastModified, status: "Ready", fileObject: f }));
       setFiles(prev => { const filtered = prev.filter(p => !newFiles.some(n => n.name === p.name)); return [...filtered, ...newFiles]; });
       setError(null);
     } catch (err: any) {

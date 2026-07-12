@@ -59,10 +59,11 @@ export default function ReportPeriodDetails() {
   const [isPromoting, setIsPromoting] = useState(false);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id || id === "placeholder") return;
     const fetchReport = async () => {
       try {
         setLoading(true);
+        setError(null);
         const docRef = doc(db, "reports", id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {

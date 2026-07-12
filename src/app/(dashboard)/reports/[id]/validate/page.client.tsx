@@ -84,7 +84,10 @@ export default function DataValidation() {
   };
 
   useEffect(() => {
+    if (!id || id === "placeholder") return;
     const fetchReport = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const docRef = doc(db, "reports", id);
         const docSnap = await getDoc(docRef);
@@ -136,42 +139,81 @@ export default function DataValidation() {
         summary = calculateInventorySummary(computedRows);
       }
 
+      // Configurable chunk size limit for adaptive chunk processing (future-tunable)
+      const CHUNK_SIZE = 1500;
+
       // Perform chunked batch write for inventoryItems
       if (computedRows.length > 0) {
-        const CHUNK_SIZE = computedRows.length >= 2000 ? 1500 : computedRows.length;
         const itemsCol = collection(db, "reports", id, "inventoryItems");
-        
-        for (let i = 0; i < computedRows.length; i += CHUNK_SIZE) {
-          const chunk = computedRows.slice(i, i + CHUNK_SIZE);
-          const chunkDocRef = doc(itemsCol, `chunk_${Math.floor(i / CHUNK_SIZE)}`);
-          
-          setApproveStatus(`Saving ${computedRows.length} inventory items (${Math.min(i + CHUNK_SIZE, computedRows.length)} / ${computedRows.length})...`);
-          await setDoc(chunkDocRef, {
-            items: chunk,
+        if (computedRows.length <= CHUNK_SIZE) {
+          // Single-Pass Processing: Save all results in one pass without chunking
+          setApproveStatus("Saving inventory items in a single pass...");
+          const batch = writeBatch(db);
+          const chunkDocRef = doc(itemsCol, "chunk_0");
+          batch.set(chunkDocRef, {
+            items: computedRows,
             createdAt: new Date(),
             updatedAt: new Date()
           });
+          await batch.commit();
+        } else {
+          // Adaptive Chunk Strategy: Split processing into chunks of CHUNK_SIZE (1500) rows
+          for (let i = 0; i < computedRows.length; i += CHUNK_SIZE) {
+            const chunk = computedRows.slice(i, i + CHUNK_SIZE);
+            const chunkDocRef = doc(itemsCol, `chunk_${Math.floor(i / CHUNK_SIZE)}`);
+            
+            // Commit chunk data using efficient writeBatch
+            const batch = writeBatch(db);
+            batch.set(chunkDocRef, {
+              items: chunk,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            await batch.commit();
+
+            // Update progress indicator state only after the chunk completes
+            setApproveStatus(`Saving inventory items (${Math.min(i + CHUNK_SIZE, computedRows.length)} / ${computedRows.length})...`);
+          }
         }
       }
 
       // Perform chunked batch write for agingData
       const agingDataList = parsedResult?.agingData || [];
       if (agingDataList.length > 0) {
-        const CHUNK_SIZE = agingDataList.length >= 2000 ? 1500 : agingDataList.length;
         const agingCol = collection(db, "reports", id, "agingData");
-        
-        for (let i = 0; i < agingDataList.length; i += CHUNK_SIZE) {
-          const chunk = agingDataList.slice(i, i + CHUNK_SIZE);
-          const chunkDocRef = doc(agingCol, `chunk_${Math.floor(i / CHUNK_SIZE)}`);
-          
-          setApproveStatus(`Saving ${agingDataList.length} aging records (${Math.min(i + CHUNK_SIZE, agingDataList.length)} / ${agingDataList.length})...`);
-          await setDoc(chunkDocRef, {
-            records: chunk,
+        if (agingDataList.length <= CHUNK_SIZE) {
+          // Single-Pass Processing: Save all results in one pass without chunking
+          setApproveStatus("Saving aging records in a single pass...");
+          const batch = writeBatch(db);
+          const chunkDocRef = doc(agingCol, "chunk_0");
+          batch.set(chunkDocRef, {
+            records: agingDataList,
             companyId,
             reportId: id,
             createdAt: new Date(),
             updatedAt: new Date()
           });
+          await batch.commit();
+        } else {
+          // Adaptive Chunk Strategy: Split processing into chunks of CHUNK_SIZE (1500) rows
+          for (let i = 0; i < agingDataList.length; i += CHUNK_SIZE) {
+            const chunk = agingDataList.slice(i, i + CHUNK_SIZE);
+            const chunkDocRef = doc(agingCol, `chunk_${Math.floor(i / CHUNK_SIZE)}`);
+            
+            // Commit chunk data using efficient writeBatch
+            const batch = writeBatch(db);
+            batch.set(chunkDocRef, {
+              records: chunk,
+              companyId,
+              reportId: id,
+              createdAt: new Date(),
+              updatedAt: new Date()
+            });
+            await batch.commit();
+
+            // Update progress indicator state only after the chunk completes
+            setApproveStatus(`Saving aging records (${Math.min(i + CHUNK_SIZE, agingDataList.length)} / ${agingDataList.length})...`);
+          }
         }
       }
 

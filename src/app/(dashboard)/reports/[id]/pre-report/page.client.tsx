@@ -71,7 +71,10 @@ export default function PreReportPage() {
   const [approval, setApproval] = useState<ApprovalState>(DEFAULT_APPROVAL);
 
   useEffect(() => {
+    if (!id || id === "placeholder") return;
     const fetchReportAndData = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const docRef = doc(db, "reports", id);
         const docSnap = await getDoc(docRef);
@@ -110,9 +113,15 @@ export default function PreReportPage() {
             });
           }
 
-          // Fetch items for discrepancy breakdown table
+          // Fetch inventoryItems and agingData concurrently for faster loading
           const itemsCol = collection(db, "reports", id, "inventoryItems");
-          const querySnap = await getDocs(itemsCol);
+          const agingCol = collection(db, "reports", id, "agingData");
+          const [querySnap, agingSnap] = await Promise.all([
+            getDocs(itemsCol),
+            getDocs(agingCol)
+          ]);
+
+          // Process inventory items
           const loadedItems: any[] = [];
           querySnap.forEach((docSnap) => {
             const data = docSnap.data();
@@ -136,9 +145,7 @@ export default function PreReportPage() {
           });
           setItems(loadedItems);
 
-          // Fetch aging data records
-          const agingCol = collection(db, "reports", id, "agingData");
-          const agingSnap = await getDocs(agingCol);
+          // Process aging data records
           const loadedAging: any[] = [];
           agingSnap.forEach((docSnap) => {
             const data = docSnap.data();

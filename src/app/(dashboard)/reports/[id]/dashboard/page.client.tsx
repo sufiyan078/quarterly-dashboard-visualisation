@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useParams } from "next/navigation";
 import Link from "next/link";
+import { useReportId } from "@/lib/useReportId";
 import { db, doc, getDoc, collection, getDocs, updateDoc } from "@/lib/firebase";
 import { getHighestStep } from "@/lib/workflow";
 import {
@@ -659,8 +659,7 @@ function DivisionRankingList({ data, title, subtitle }: DivisionRankingListProps
 // ==========================================
 
 export default function InventoryDashboard() {
-  const params = useParams();
-  const id = params?.id as string;
+  const id = useReportId();
 
   const [report, setReport] = useState<Report | null>(null);
   const [items, setItems] = useState<InventoryItem[]>([]);

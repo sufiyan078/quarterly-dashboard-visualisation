@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db, doc, getDoc, updateDoc, deleteDoc } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
+import { useReportId } from "@/lib/useReportId";
 import { 
   ArrowLeft, Edit, Save, Trash2, Calendar, MapPin, User, FileSpreadsheet, 
   ChevronRight, CheckCircle2, AlertTriangle, ArrowRight, ShieldCheck, HelpCircle, FileText
@@ -31,10 +32,9 @@ interface ReportPeriod {
 const STATUS_FLOW = ["Draft", "Validated", "Generated", "Approved", "closed"];
 
 export default function ReportPeriodDetails() {
-  const params = useParams();
   const router = useRouter();
   const { profile } = useAuth();
-  const id = params.id as string;
+  const id = useReportId();
 
   const [report, setReport] = useState<ReportPeriod | null>(null);
   const [loading, setLoading] = useState(true);

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { db, doc, getDoc, updateDoc } from "@/lib/firebase";
 import { useAuth } from "@/context/AuthContext";
@@ -9,6 +9,7 @@ import { useInventoryData } from "@/context/InventoryDataContext";
 import { parseExcelFile, profileInventoryData } from "@/lib/inventory";
 import { ParsedWorkbookResult } from "@/types/inventory";
 import { getHighestStep } from "@/lib/workflow";
+import { useReportId } from "@/lib/useReportId";
 
 import {
   Upload as UploadIcon,
@@ -44,8 +45,7 @@ interface SelectedFile {
 
 export default function UploadExcel() {
   const router = useRouter();
-  const params = useParams();
-  const id = params?.id as string;
+  const id = useReportId();
   const { user, profile } = useAuth();
   const { setParsedResult } = useInventoryData();
 

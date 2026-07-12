@@ -420,7 +420,17 @@ export default function DataValidation() {
             <BarChart3 className="h-4.5 w-4.5 text-indigo-450" />
             <span>Data Profile Summary</span>
           </h2>
-          <span className="text-[10px] text-slate-500 font-mono">Profiled in-memory</span>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">Profiled in-memory</span>
+            <button
+              onClick={handleApprove}
+              disabled={isApproving || missingRequiredColumns.length > 0}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-650 px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
+            >
+              {isApproving ? (approveStatus || "Calculating...") : "Move to Dashboard"}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
         </div>
 
         {/* 4-column responsive grid */}

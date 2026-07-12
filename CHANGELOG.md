@@ -6,6 +6,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [0.13.0] - 2026-07-12
+### Added
+- **Firebase Live Deployment**: Deployed the fully optimized local changes to the live Firebase web app.
+
+---
+
+## [0.12.0] - 2026-07-12
+### Added
+- **Unique Item IDs**: Modified `computeRowMetrics` in `calculations.ts` to assign a unique ID to every inventory row (composed of `reportId`, `sheetName`, `originalRowNumber`, and mapped `idx`).
+- **Database & UI Key Resolution**: Swapped fallback keys in `dashboard`, `pre-report`, and `builder` views to utilize `item.id`, eliminating the duplicate React key `chunk_0` error.
+
+### Files Modified
+- `src/lib/inventory/calculations.ts`
+- `package.json`
+
+### Reason
+- Fix duplicate React key warning/error during navigation and rendering.
+
+---
+
+## [0.11.0] - 2026-07-12
+### Identified
+- **Duplicate Key Warnings**: Diagnosed React console errors caused by using the Firestore document ID (`chunk_0`, `chunk_1`) as the fallback React key for mapped rows.
+
+---
+
 ## [0.10.3] - 2026-07-12
 ### Added
 - **Dynamic Route Fallback Hook**: Added a custom `useReportId` hook to resolve production URL parsing issues resulting from Next.js static HTML export constraints on wildcard rewrites.

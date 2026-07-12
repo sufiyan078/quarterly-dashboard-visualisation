@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.1] - 2026-07-13
+### Fixed
+- **Resilient Firestore Operations**: Replaced `updateDoc` with `setDoc(docRef, ..., { merge: true })` across all steps (upload, validation, dashboard, pre-report, and builder phases). This resolves the `No document to update` Firebase error when finalizing the pre-report phase, ensuring that updates succeed even if document metadata is loaded in dynamic or transient sessions.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/builder/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/dashboard/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/pre-report/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/upload/page.client.tsx`
+- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
+
+---
+
 ## [1.1.0] - 2026-07-13
 ### Added
 - **Premium McKinsey/BCG Consulting Commentary Engine**: Refactored the `insightEngine.ts` narrative generators to produce multi-paragraph, analytical, data-grounded assessments, avoiding placeholder/generic AI texts.

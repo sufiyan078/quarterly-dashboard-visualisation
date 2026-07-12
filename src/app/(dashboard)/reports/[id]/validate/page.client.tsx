@@ -138,7 +138,7 @@ export default function DataValidation() {
 
       // Perform chunked batch write for inventoryItems
       if (computedRows.length > 0) {
-        const CHUNK_SIZE = 1000;
+        const CHUNK_SIZE = computedRows.length >= 2000 ? 1500 : computedRows.length;
         const itemsCol = collection(db, "reports", id, "inventoryItems");
         
         for (let i = 0; i < computedRows.length; i += CHUNK_SIZE) {
@@ -157,7 +157,7 @@ export default function DataValidation() {
       // Perform chunked batch write for agingData
       const agingDataList = parsedResult?.agingData || [];
       if (agingDataList.length > 0) {
-        const CHUNK_SIZE = 1000;
+        const CHUNK_SIZE = agingDataList.length >= 2000 ? 1500 : agingDataList.length;
         const agingCol = collection(db, "reports", id, "agingData");
         
         for (let i = 0; i < agingDataList.length; i += CHUNK_SIZE) {
@@ -917,10 +917,10 @@ export default function DataValidation() {
       </div>
 
       {/* Main Review Dashboard Area */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 max-w-[1600px]">
+      <div className="max-w-[1600px]">
         
         {/* Left Area: Previews & Rejection Review */}
-        <div className="lg:col-span-9 space-y-6">
+        <div className="space-y-6">
           <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/40 backdrop-blur-md overflow-hidden">
             
             {/* Tabs */}
@@ -1575,119 +1575,6 @@ export default function DataValidation() {
             )}
 
           </div>
-        </div>
-
-        {/* Right Area: Control Panel & Warnings */}
-        <div className="lg:col-span-3 space-y-6">
-          
-          {/* Row Classification Breakdown Card */}
-          <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/50 p-6 space-y-4">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider border-b border-slate-850 pb-2 flex items-center gap-2">
-              <Layers className="h-4.5 w-4.5 text-indigo-400" />
-              <span>Classification Stats</span>
-            </h3>
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between items-center py-1 border-b border-slate-900/60">
-                <span className="text-slate-400">Valid Items:</span>
-                <span className="font-mono font-bold text-emerald-450">{parsedRows.length.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-900/60">
-                <span className="text-slate-400">Header Rows:</span>
-                <span className="font-mono font-semibold text-slate-300">{ignoredRows.filter(r => r.category === "ignored_header_row").length.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-900/60">
-                <span className="text-slate-400">Empty Rows:</span>
-                <span className="font-mono font-semibold text-slate-500">{ignoredRows.filter(r => r.category === "ignored_empty_row").length.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-900/60">
-                <span className="text-slate-400">Total/Subtotal Rows:</span>
-                <span className="font-mono font-semibold text-amber-400">{ignoredRows.filter(r => r.category === "ignored_total_row").length.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center py-1 border-b border-slate-900/60">
-                <span className="text-slate-400">Summary Sheets:</span>
-                <span className="font-mono font-semibold text-purple-400">{ignoredRows.filter(r => r.category === "ignored_summary_row").length.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center py-1">
-                <span className="text-slate-400">Needs Review:</span>
-                <span className="font-mono font-bold text-rose-400">{needsReviewRows.length.toLocaleString()}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Warnings card if any */}
-          <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/50 p-6 space-y-4">
-            <h3 className="text-xs font-extrabold text-white uppercase tracking-wider border-b border-slate-850 pb-2 flex items-center gap-2">
-              <AlertTriangle className="h-4.5 w-4.5 text-amber-400" />
-              <span>Validation Diagnostics</span>
-            </h3>
-
-            <div className="space-y-3.5 text-xs text-slate-400">
-              <div className="flex gap-2.5">
-                <Layers className="h-4 w-4 text-indigo-400 flex-shrink-0 mt-0.5" />
-                <div>
-                  <h5 className="font-bold text-slate-200">Supplier Mapping</h5>
-                  <p className="mt-0.5 text-[11px] leading-normal">
-                    Fallbacks mapped {parsedRows.filter(r => (r as any).supplierDetectionMethod === "description_match").length} item descriptions and {parsedRows.filter(r => (r as any).supplierDetectionMethod === "source_file_name").length} source file names to standard suppliers.
-                  </p>
-                </div>
-              </div>
-
-              {needsReviewRows.filter(r => r.reason.toLowerCase().includes("qty") || r.reason.toLowerCase().includes("quantities")).length > 0 && (
-                <div className="flex gap-2.5">
-                  <AlertCircle className="h-4 w-4 text-amber-550 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h5 className="font-bold text-amber-405">Invalid/Missing Quantities</h5>
-                    <p className="mt-0.5 text-[11px] leading-normal">
-                      {needsReviewRows.filter(r => r.reason.toLowerCase().includes("qty") || r.reason.toLowerCase().includes("quantities")).length} rows have missing or malformed quantities.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {needsReviewRows.filter(r => r.reason.toLowerCase().includes("item")).length > 0 && (
-                <div className="flex gap-2.5">
-                  <XCircle className="h-4 w-4 text-rose-450 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h5 className="font-bold text-rose-450">Missing Item Codes</h5>
-                    <p className="mt-0.5 text-[11px] leading-normal">
-                      {needsReviewRows.filter(r => r.reason.toLowerCase().includes("item")).length} rows are missing a valid item code.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Action Trigger Card */}
-          <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/50 p-6 space-y-4">
-            <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 uppercase tracking-wider">
-              <CheckCircle2 className="h-4.5 w-4.5 text-indigo-400" />
-              <span>Workspace Confirmed</span>
-            </div>
-            
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Verify detected columns and ignored rows. When ready, approve the workspace to calculate audit summaries and view discrepancies in the dashboard.
-            </p>
-
-            <div className="pt-2 flex flex-col gap-2">
-              <button
-                onClick={handleApprove}
-                disabled={isApproving || missingRequiredColumns.length > 0}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-650 px-4 py-2.5 text-sm font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-indigo-500/10"
-              >
-                {isApproving ? (approveStatus || "Locking & Calculating...") : "Approve & Run Calculations"}
-                <ArrowRight className="h-4 w-4" />
-              </button>
-
-              <Link
-                href={`/reports/${id}/upload`}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-850 hover:bg-slate-900/60 px-4 py-2 text-xs font-bold text-slate-400 transition-colors"
-              >
-                Back to Upload Workspace
-              </Link>
-            </div>
-          </div>
-
         </div>
 
       </div>

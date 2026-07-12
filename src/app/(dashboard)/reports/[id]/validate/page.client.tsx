@@ -3,9 +3,9 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { db, doc, getDoc, updateDoc, writeBatch, collection, setDoc, getDocs } from "@/lib/firebase";
+import { db, doc, getDoc, updateDoc, writeBatch, collection, setDoc } from "@/lib/firebase";
 import { useInventoryData } from "@/context/InventoryDataContext";
-import { ParsedInventoryRow, IgnoredInventoryRow, NeedsReviewInventoryRow, SheetDiagnosisResult, InventoryDataProfile, ParsedWorkbookResult } from "@/types/inventory";
+import { ParsedInventoryRow, IgnoredInventoryRow, NeedsReviewInventoryRow, SheetDiagnosisResult, InventoryDataProfile } from "@/types/inventory";
 import { profileInventoryData } from "@/lib/inventory/dataProfiler";
 import { getHighestStep } from "@/lib/workflow";
 import { computeRowMetrics, calculateInventorySummary } from "@/lib/inventory/calculations";
@@ -44,12 +44,10 @@ interface Report {
 export default function DataValidation() {
   const router = useRouter();
   const id = useReportId();
-  const { parsedResult, setParsedResult } = useInventoryData();
+  const { parsedResult } = useInventoryData();
 
   const [report, setReport] = useState<Report | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingData, setLoadingData] = useState(false);
-  const [loadingDataError, setLoadingDataError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isApproving, setIsApproving] = useState(false);
   const [approveStatus, setApproveStatus] = useState<string>("");
@@ -110,163 +108,10 @@ export default function DataValidation() {
   }, [id]);
 
   useEffect(() => {
-    if (parsedResult && id && parsedResult.parsedRows?.[0]?.reportId !== id) {
-      setParsedResult(null);
+    if (!loading && !parsedResult && report && ["validated", "generated", "approved", "closed"].includes(report.status.toLowerCase())) {
+      router.replace(`/reports/${id}/dashboard`);
     }
-  }, [parsedResult, id, setParsedResult]);
-
-  useEffect(() => {
-    if (!id || id === "placeholder" || loading || !report) return;
-
-    const isReportValidated = ["validated", "generated", "approved", "closed"].includes(report.status.toLowerCase());
-    const hasCorrectData = parsedResult && parsedResult.parsedRows?.[0]?.reportId === id;
-
-    if (!hasCorrectData && isReportValidated && !loadingData) {
-      const loadValidationData = async () => {
-        setLoadingData(true);
-        setLoadingDataError(null);
-        try {
-          const detailsCol = collection(db, "reports", id, "validationDetails");
-          const metadataDoc = await getDoc(doc(detailsCol, "metadata"));
-          
-          if (!metadataDoc.exists()) {
-            // Fallback for backwards compatibility: Try to reconstruct parsedRows from inventoryItems
-            const itemsCol = collection(db, "reports", id, "inventoryItems");
-            const itemsSnap = await getDocs(itemsCol);
-            const parsedRows: any[] = [];
-            const itemsDocs = itemsSnap.docs;
-            itemsDocs.sort((a, b) => {
-              const aIdx = parseInt(a.id.replace("chunk_", "")) || 0;
-              const bIdx = parseInt(b.id.replace("chunk_", "")) || 0;
-              return aIdx - bIdx;
-            });
-            for (const docSnap of itemsDocs) {
-              const data = docSnap.data();
-              if (Array.isArray(data.items)) {
-                parsedRows.push(...data.items);
-              }
-            }
-
-            if (parsedRows.length === 0) {
-              throw new Error("No validation records found for this report.");
-            }
-
-            const fallbackProfile = profileInventoryData(parsedRows, [], [], [], []);
-            const fallbackResult: ParsedWorkbookResult = {
-              totalFiles: report.uploadedFileNames?.length || 1,
-              totalSheets: 1,
-              totalRows: parsedRows.length,
-              parsedRows,
-              ignoredRows: [],
-              needsReviewRows: [],
-              rejectedRows: [],
-              detectedColumns: [],
-              ignoredColumns: [],
-              missingRequiredColumns: [],
-              sheetDiagnoses: [],
-              dataProfile: fallbackProfile,
-              agingData: []
-            };
-            setParsedResult(fallbackResult);
-            return;
-          }
-          
-          const metaData = metadataDoc.data();
-          
-          // 2. Fetch inventoryItems (parsedRows)
-          const itemsCol = collection(db, "reports", id, "inventoryItems");
-          const itemsSnap = await getDocs(itemsCol);
-          const parsedRows: any[] = [];
-          const itemsDocs = itemsSnap.docs;
-          itemsDocs.sort((a, b) => {
-            const aIdx = parseInt(a.id.replace("chunk_", "")) || 0;
-            const bIdx = parseInt(b.id.replace("chunk_", "")) || 0;
-            return aIdx - bIdx;
-          });
-          for (const docSnap of itemsDocs) {
-            const data = docSnap.data();
-            if (Array.isArray(data.items)) {
-              parsedRows.push(...data.items);
-            }
-          }
-
-          // 3. Fetch ignored and needsReview rows
-          const ignoredSnap = await getDocs(detailsCol);
-          const ignoredDocs = ignoredSnap.docs.filter(d => d.id.startsWith("ignored_chunk_"));
-          ignoredDocs.sort((a, b) => {
-            const aIdx = parseInt(a.id.replace("ignored_chunk_", "")) || 0;
-            const bIdx = parseInt(b.id.replace("ignored_chunk_", "")) || 0;
-            return aIdx - bIdx;
-          });
-          const ignoredRows: any[] = [];
-          for (const docSnap of ignoredDocs) {
-            const data = docSnap.data();
-            if (Array.isArray(data.rows)) {
-              ignoredRows.push(...data.rows);
-            }
-          }
-
-          const needsReviewDocs = ignoredSnap.docs.filter(d => d.id.startsWith("needsReview_chunk_"));
-          needsReviewDocs.sort((a, b) => {
-            const aIdx = parseInt(a.id.replace("needsReview_chunk_", "")) || 0;
-            const bIdx = parseInt(b.id.replace("needsReview_chunk_", "")) || 0;
-            return aIdx - bIdx;
-          });
-          const needsReviewRows: any[] = [];
-          for (const docSnap of needsReviewDocs) {
-            const data = docSnap.data();
-            if (Array.isArray(data.rows)) {
-              needsReviewRows.push(...data.rows);
-            }
-          }
-
-          // 4. Fetch agingData
-          const agingCol = collection(db, "reports", id, "agingData");
-          const agingSnap = await getDocs(agingCol);
-          const agingDocs = agingSnap.docs;
-          agingDocs.sort((a, b) => {
-            const aIdx = parseInt(a.id.replace("chunk_", "")) || 0;
-            const bIdx = parseInt(b.id.replace("chunk_", "")) || 0;
-            return aIdx - bIdx;
-          });
-          const agingData: any[] = [];
-          for (const docSnap of agingDocs) {
-            const data = docSnap.data();
-            if (Array.isArray(data.records)) {
-              agingData.push(...data.records);
-            }
-          }
-
-          // 5. Reconstruct
-          const reconstructed: ParsedWorkbookResult = {
-            totalFiles: metaData.totalFiles || 0,
-            totalSheets: metaData.totalSheets || 0,
-            totalRows: metaData.totalRows || 0,
-            parsedRows,
-            ignoredRows,
-            needsReviewRows,
-            rejectedRows: needsReviewRows,
-            detectedColumns: metaData.detectedColumns || [],
-            ignoredColumns: metaData.ignoredColumns || [],
-            missingRequiredColumns: metaData.missingRequiredColumns || [],
-            sheetDiagnoses: metaData.sheetDiagnoses || [],
-            dataProfile: metaData.dataProfile || undefined,
-            agingData
-          };
-
-          setParsedResult(reconstructed);
-        } catch (err: any) {
-          console.error("Error loading validation details:", err);
-          setLoadingDataError(err.message || "Failed to load validation details.");
-          setError(err.message || "Failed to load validation details.");
-        } finally {
-          setLoadingData(false);
-        }
-      };
-
-      loadValidationData();
-    }
-  }, [id, loading, report, parsedResult, loadingData, setParsedResult]);
+  }, [loading, parsedResult, report, router, id]);
 
   const handleApprove = async () => {
     setIsApproving(true);
@@ -296,77 +141,6 @@ export default function DataValidation() {
 
       // Configurable chunk size limit for adaptive chunk processing (future-tunable)
       const CHUNK_SIZE = 1500;
-
-      // Save validation details metadata and chunked lists
-      if (parsedResult) {
-        setApproveStatus("Saving validation metadata...");
-        const detailsCol = collection(db, "reports", id, "validationDetails");
-        const metadataDocRef = doc(detailsCol, "metadata");
-        await setDoc(metadataDocRef, {
-          totalFiles: parsedResult.totalFiles,
-          totalSheets: parsedResult.totalSheets,
-          totalRows: parsedResult.totalRows,
-          detectedColumns: parsedResult.detectedColumns || [],
-          ignoredColumns: parsedResult.ignoredColumns || [],
-          missingRequiredColumns: parsedResult.missingRequiredColumns || [],
-          sheetDiagnoses: parsedResult.sheetDiagnoses || [],
-          dataProfile: parsedResult.dataProfile || null,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-
-        // Perform chunked batch write for ignoredRows
-        const ignoredList = parsedResult.ignoredRows || [];
-        if (ignoredList.length > 0) {
-          setApproveStatus("Saving ignored row lists...");
-          if (ignoredList.length <= CHUNK_SIZE) {
-            const batch = writeBatch(db);
-            const chunkDocRef = doc(detailsCol, "ignored_chunk_0");
-            batch.set(chunkDocRef, {
-              rows: ignoredList,
-              createdAt: new Date()
-            });
-            await batch.commit();
-          } else {
-            for (let i = 0; i < ignoredList.length; i += CHUNK_SIZE) {
-              const chunk = ignoredList.slice(i, i + CHUNK_SIZE);
-              const chunkDocRef = doc(detailsCol, `ignored_chunk_${Math.floor(i / CHUNK_SIZE)}`);
-              const batch = writeBatch(db);
-              batch.set(chunkDocRef, {
-                rows: chunk,
-                createdAt: new Date()
-              });
-              await batch.commit();
-            }
-          }
-        }
-
-        // Perform chunked batch write for needsReviewRows
-        const needsReviewList = parsedResult.needsReviewRows || [];
-        if (needsReviewList.length > 0) {
-          setApproveStatus("Saving validation warnings...");
-          if (needsReviewList.length <= CHUNK_SIZE) {
-            const batch = writeBatch(db);
-            const chunkDocRef = doc(detailsCol, "needsReview_chunk_0");
-            batch.set(chunkDocRef, {
-              rows: needsReviewList,
-              createdAt: new Date()
-            });
-            await batch.commit();
-          } else {
-            for (let i = 0; i < needsReviewList.length; i += CHUNK_SIZE) {
-              const chunk = needsReviewList.slice(i, i + CHUNK_SIZE);
-              const chunkDocRef = doc(detailsCol, `needsReview_chunk_${Math.floor(i / CHUNK_SIZE)}`);
-              const batch = writeBatch(db);
-              batch.set(chunkDocRef, {
-                rows: chunk,
-                createdAt: new Date()
-              });
-              await batch.commit();
-            }
-          }
-        }
-      }
 
       // Perform chunked batch write for inventoryItems
       if (computedRows.length > 0) {
@@ -462,35 +236,44 @@ export default function DataValidation() {
     }
   };
 
-  if (loading || loadingData) {
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 bg-[#08090d] animate-in fade-in duration-300">
-        <Loader2 className="h-10 w-10 animate-spin text-indigo-500" />
-        <span className="mt-4 text-sm text-slate-400 font-medium">
-          {loading ? "Analyzing uploaded sheets..." : "Loading validation records from database..."}
-        </span>
+      <div className="flex flex-col items-center justify-center py-32 bg-[#08090d]">
+        <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-800 border-t-indigo-500"></div>
+        <span className="mt-4 text-sm text-slate-400 font-medium">Analyzing uploaded sheets...</span>
       </div>
     );
   }
 
   if (!parsedResult) {
+    // If already validated with no in-memory data, the useEffect above will have
+    // triggered router.replace('/reports'). Show a minimal redirect spinner.
+    if (report?.status === "Validated") {
+      return (
+        <div className="flex flex-col items-center justify-center py-32">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-800 border-t-indigo-500"></div>
+          <span className="mt-4 text-sm text-slate-400 font-medium">Redirecting...</span>
+        </div>
+      );
+    }
+
+    // Otherwise, the data was never uploaded for this session
     return (
       <div className="space-y-6 max-w-xl mx-auto py-12 text-center animate-in fade-in duration-300">
         <div className="h-16 w-16 mx-auto rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
           <AlertTriangle className="h-8 w-8" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-xl font-bold text-white">
-            {error ? "Failed to Load Validation Data" : "No Excel Data Found"}
-          </h2>
+          <h2 className="text-xl font-bold text-white">No Excel Data Found</h2>
           <p className="text-sm text-slate-400 leading-relaxed">
-            {error || "Excel data is parsed directly in browser memory and is not stored permanently. Your session has expired or you have not uploaded files for this report cycle yet."}
+            Excel data is parsed directly in browser memory and is not stored permanently. 
+            Your session has expired or you have not uploaded files for this report cycle yet.
           </p>
         </div>
         <div className="pt-4">
           <Link
             href={`/reports/${id}/upload`}
-            className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-650 px-5 py-2.5 text-sm font-semibold text-white transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4" />
             Go to Upload Workspace
@@ -680,29 +463,15 @@ export default function DataValidation() {
             <span>Data Profile Summary</span>
           </h2>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">
-              {["validated", "generated", "approved", "closed"].includes(report?.status?.toLowerCase() || "") 
-                ? "Validated & Locked" 
-                : "Profiled in-memory"}
-            </span>
-            {["validated", "generated", "approved", "closed"].includes(report?.status?.toLowerCase() || "") ? (
-              <Link
-                href={`/reports/${id}/dashboard`}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-md shadow-emerald-600/10"
-              >
-                <span>Go to Dashboard</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Link>
-            ) : (
-              <button
-                onClick={handleApprove}
-                disabled={isApproving || missingRequiredColumns.length > 0}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-650 px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
-              >
-                {isApproving ? (approveStatus || "Calculating...") : "Move to Dashboard"}
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
-            )}
+            <span className="text-[10px] text-slate-500 font-mono hidden sm:inline">Profiled in-memory</span>
+            <button
+              onClick={handleApprove}
+              disabled={isApproving || missingRequiredColumns.length > 0}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-650 px-3 py-1.5 text-xs font-semibold text-white transition-colors cursor-pointer disabled:cursor-not-allowed shadow-md shadow-indigo-500/10"
+            >
+              {isApproving ? (approveStatus || "Calculating...") : "Move to Dashboard"}
+              <ArrowRight className="h-3.5 w-3.5" />
+            </button>
           </div>
         </div>
 

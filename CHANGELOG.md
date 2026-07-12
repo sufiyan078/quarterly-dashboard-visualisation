@@ -6,23 +6,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
-## [0.15.0] - 2026-07-12
-### Added
-- **Unrestricted Post-Validation Navigation**: Enabled persistent, unhindered access to the Validate Data page even after reports are marked as "Validated".
-- **Validation Log Database Storage**: Saved validationDetails (including metadata, ignoredRows, and needsReviewRows) to Firestore subcollections on approval to preserve reports' full context.
-- **Asynchronous Data Hydration**: Loaded historical validation lists and metadata directly from Firestore when accessing validated reports with empty memory.
-- **Workflow State Reset**: Reset report status back to "Draft" on new sheet uploads to prompt re-validation.
-
-### Files Modified
-- `src/app/(dashboard)/reports/[id]/validate/page.client.tsx`
-- `src/app/(dashboard)/reports/[id]/upload/page.client.tsx`
-- `CHANGELOG.md`
-
-### Reason
-- Retain data validation insights and allow user back-navigation for verification of validated report periods.
-
----
-
 ## [0.14.0] - 2026-07-12
 ### Added
 - **Adaptive Chunk Saving**: Implemented 1500-row configurable chunk size writes on the Validate page to write typical datasets in a single pass.

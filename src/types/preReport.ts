@@ -14,6 +14,7 @@ export type ReportSectionType =
   | 'recommendations'// Consolidated Recommendations
   | 'conclusion'     // Executive Conclusion
   | 'team'           // Personnel & Evidence appendix
+  | 'backcover'      // Template "Thank You" closing page
   | 'custom';
 
 export interface ReportSection {
@@ -78,6 +79,7 @@ export const DEFAULT_SECTIONS: ReportSection[] = [
   { id: 'recommendations', title: 'Recommendations', type: 'recommendations', enabled: true, order: 12, description: 'Prioritized management actions with reasons and expected benefits', notes: '' },
   { id: 'conclusion', title: 'Executive Conclusion', type: 'conclusion', enabled: true, order: 13, description: 'Overall assessment, audit readiness, and sign-off', notes: '' },
   { id: 'team', title: 'Personnel & Evidence', type: 'team', enabled: true, order: 14, description: 'On-site audit team and verification evidence', notes: '' },
+  { id: 'backcover', title: 'Closing Page', type: 'backcover', enabled: true, order: 15, description: 'Branded thank-you page closing the report', notes: '' },
 ];
 
 /**
@@ -90,20 +92,43 @@ export const DEFAULT_SECTIONS: ReportSection[] = [
 export function mergeWithDefaultSections(saved: ReportSection[] | undefined): ReportSection[] {
   if (!saved || saved.length === 0) return DEFAULT_SECTIONS;
 
-  // Already migrated configs keep their own ordering and titles.
+  // Legacy (pre-storytelling) schema: rebuild from defaults, carrying over
+  // the user's enabled flags and notes for sections that still exist.
   const isCurrentSchema = saved.some(s => s.id === 'conclusion');
-  if (isCurrentSchema) return saved;
+  if (!isCurrentSchema) {
+    const savedById = new Map(saved.map(s => [s.id, s]));
+    const merged = DEFAULT_SECTIONS.map(def => {
+      const prev = savedById.get(def.id);
+      return prev ? { ...def, enabled: prev.enabled, notes: prev.notes } : { ...def };
+    });
+    const customs = saved.filter(s => s.type === 'custom');
+    customs.forEach((c, i) => merged.push({ ...c, order: merged.length + i }));
+    return merged;
+  }
 
-  const savedById = new Map(saved.map(s => [s.id, s]));
-  const merged = DEFAULT_SECTIONS.map(def => {
-    const prev = savedById.get(def.id);
-    return prev ? { ...def, enabled: prev.enabled, notes: prev.notes } : { ...def };
-  });
+  // Current schema: keep the user's list (order, titles, customizations)
+  // but union in any default sections introduced after their config was
+  // saved (e.g. 'toc', 'backcover'), inserted at their default position
+  // relative to the sections the user already has.
+  const savedIds = new Set(saved.map(s => s.id));
+  const result = [...saved].sort((a, b) => a.order - b.order);
 
-  const customs = saved.filter(s => s.type === 'custom');
-  customs.forEach((c, i) => merged.push({ ...c, order: merged.length + i }));
+  for (const def of DEFAULT_SECTIONS) {
+    if (savedIds.has(def.id)) continue;
 
-  return merged;
+    // Find the default section that precedes `def` and exists in the saved
+    // list; insert right after it (or at the start if none).
+    const defIdx = DEFAULT_SECTIONS.findIndex(d => d.id === def.id);
+    let insertAt = 0;
+    for (let i = defIdx - 1; i >= 0; i--) {
+      const anchorIdx = result.findIndex(s => s.id === DEFAULT_SECTIONS[i].id);
+      if (anchorIdx !== -1) { insertAt = anchorIdx + 1; break; }
+    }
+    result.splice(insertAt, 0, { ...def });
+    savedIds.add(def.id);
+  }
+
+  return result.map((s, i) => ({ ...s, order: i }));
 }
 
 export const DEFAULT_COVER: CoverPageData = {

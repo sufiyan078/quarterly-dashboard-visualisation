@@ -21,6 +21,9 @@ export interface Recommendation {
   reason: string;
   benefit: string;
   priority: Priority;
+  /** Populated by enrichRecommendation before the narrative is returned. */
+  suggestedOwner?: string;
+  suggestedTimeline?: string;
 }
 
 export interface RiskFinding {
@@ -30,6 +33,8 @@ export interface RiskFinding {
   impact: string;
   explanation: string;
   action: string;
+  /** Concrete figures backing the finding; populated in buildRisks. */
+  evidence?: string;
 }
 
 export interface Opportunity {
@@ -650,8 +655,54 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
     });
   }
 
+  // Attach the concrete figures each finding rests on (traceability).
+  const evidenceById: Record<string, string> = {
+    "risk-exposure": `Gross variance ${fmtSAR(m.totalRiskValue)} = shortages ${fmtSAR(m.totalShortageValue)} + excesses ${fmtSAR(m.totalExcessValue)}, against a book value of ${fmtSAR(m.totalInventoryValue)}.`,
+    "risk-accuracy": `${m.matchedItems.toLocaleString()} matched vs ${m.mismatchedItems.toLocaleString()} mismatched of ${m.totalLines.toLocaleString()} counted lines (${fmtPct(m.matchRate)} accuracy).`,
+    "risk-supplier": `${d.topSupplierName} holds ≈${fmtSAR(m.totalInventoryValue * (d.topSupplierShare / 100))} (${fmtPct(d.topSupplierShare)}) of total book value.`,
+    "risk-concentration": `${d.topDivisionName} holds ≈${fmtSAR(m.totalInventoryValue * (d.topDivisionShare / 100))} (${fmtPct(d.topDivisionShare)}) of total book value.`,
+    "risk-coverage": `Verified ${fmtSAR(m.verifiedValue)} of ${fmtSAR(m.totalInventoryValue)} book value; ${m.remainingLines.toLocaleString()} lines recorded no physical count.`,
+    "risk-zero-value": `${d.zeroValueLines.toLocaleString()} stocked lines with zero unit cost out of ${m.totalLines.toLocaleString()} total lines.`,
+    "risk-data-quality": `${d.warningLines.toLocaleString()} flagged lines (${fmtPct(d.warningRate)}): ${d.missingCodeCount} missing codes, ${d.missingDescCount} missing descriptions, ${d.unclassifiedSupplierCount} unattributed suppliers, ${d.missingOrgCount} missing org units.`,
+    "risk-aging": `Aged stock: 1–3 years ${fmtSAR(m.aging.slowMovingValue)}, over 3 years ${fmtSAR(m.aging.deadStockValue)}; indicated provision ${fmtSAR(m.provisionAmount)}.`,
+  };
+
   const order: Priority[] = ["Critical", "High", "Medium", "Low"];
-  return risks.sort((a, b) => order.indexOf(a.level) - order.indexOf(b.level));
+  return risks
+    .sort((a, b) => order.indexOf(a.level) - order.indexOf(b.level))
+    .map((r) => ({ ...r, evidence: r.evidence ?? evidenceById[r.id] }));
+}
+
+/* ─── Recommendation enrichment: suggested owner & timeline ─── */
+const REC_OWNER_BY_ID: Record<string, string> = {
+  "rec-valuation": "Finance / ERP Master Data Team",
+  "rec-reconcile": "Finance & Inventory Control",
+  "rec-provision": "Finance Controller",
+  "rec-accuracy": "Warehouse Operations Manager",
+  "rec-coverage": "Warehouse Operations Manager",
+  "rec-org-focus": "Division Operations Lead",
+  "rec-supplier-dependency": "Procurement Manager",
+  "rec-supplier-mapping": "Procurement / Master Data Team",
+  "rec-data-quality": "Inventory Data Steward",
+};
+
+const TIMELINE_BY_PRIORITY: Record<Priority, string> = {
+  Critical: "Immediate — within 2 weeks",
+  High: "Within 30 days",
+  Medium: "Within 60–90 days",
+  Low: "Before the next audit cycle",
+};
+
+function enrichRecommendation(r: Recommendation): Recommendation {
+  return {
+    ...r,
+    suggestedOwner: r.suggestedOwner ?? REC_OWNER_BY_ID[r.id] ?? "Inventory Control Team",
+    suggestedTimeline: r.suggestedTimeline ?? TIMELINE_BY_PRIORITY[r.priority],
+  };
+}
+
+function enrichSection(narr: SectionNarrative): SectionNarrative {
+  return { ...narr, recommendations: narr.recommendations.map(enrichRecommendation) };
 }
 
 function buildOpportunities(m: PreReportMetrics, d: DerivedStats): Opportunity[] {
@@ -780,13 +831,13 @@ export function buildReportNarrative(input: NarrativeInput): ReportNarrative {
   const m = input.metrics;
   const d = deriveStats(m, input.rows);
 
-  const overview = buildOverview(input, m, d);
-  const financial = buildFinancial(m, d);
-  const health = buildHealth(m, d);
-  const organizations = buildOrganizations(m, d);
-  const suppliers = buildSuppliers(m, d);
-  const distribution = buildDistribution(m, d);
-  const validation = buildValidation(m, d);
+  const overview = enrichSection(buildOverview(input, m, d));
+  const financial = enrichSection(buildFinancial(m, d));
+  const health = enrichSection(buildHealth(m, d));
+  const organizations = enrichSection(buildOrganizations(m, d));
+  const suppliers = enrichSection(buildSuppliers(m, d));
+  const distribution = enrichSection(buildDistribution(m, d));
+  const validation = enrichSection(buildValidation(m, d));
   const risks = buildRisks(m, d);
   const opportunities = buildOpportunities(m, d);
 

@@ -1324,3 +1324,29 @@ div.rounded-2xl {
 .pdf-report-page .bg-indigo-50, [data-theme="dark"] .pdf-report-page .bg-indigo-50, [data-theme="light"] .pdf-report-page .bg-indigo-50 { background-color: #e0e7ff !important; }
 .pdf-report-page .border-l-indigo-200, [data-theme="dark"] .pdf-report-page .border-l-indigo-200, [data-theme="light"] .pdf-report-page .border-l-indigo-200 { border-left-color: #c7d2fe !important; }
 
+/* ─── Dark template pages (cover / back cover): GAS Primary Navy.
+   Must outrank the white-page enforcement above and the app-theme
+   heading overrides; all inner text colors are inline styles. ─── */
+.pdf-report-page.pdf-report-page--dark,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--dark,
+[data-theme="light"] .pdf-report-page.pdf-report-page--dark {
+  background-color: #12283C !important;
+  color: #F3F5F7 !important;
+}
+.pdf-report-page.pdf-report-page--dark h1,
+.pdf-report-page.pdf-report-page--dark h2,
+.pdf-report-page.pdf-report-page--dark h3,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--dark h1,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--dark h2,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--dark h3,
+[data-theme="light"] .pdf-report-page.pdf-report-page--dark h1,
+[data-theme="light"] .pdf-report-page.pdf-report-page--dark h2,
+[data-theme="light"] .pdf-report-page.pdf-report-page--dark h3 {
+  color: #ffffff !important;
+}
+.pdf-report-page.pdf-report-page--dark p,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--dark p,
+[data-theme="light"] .pdf-report-page.pdf-report-page--dark p {
+  color: #AEB6C0 !important;
+}
+

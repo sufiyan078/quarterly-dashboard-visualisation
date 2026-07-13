@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.9] - 2026-07-13
+### Changed
+- **Home Dashboard Integration**: Replaced the legacy process step pipeline with the newly integrated `MorphingCardStack` component (`DemoOne`) on the main dashboard home page. Refactored the UI classes to utilize standard project tailwind theme tokens.
+
+### Files Modified
+- `src/app/(dashboard)/dashboard/page.tsx`
+- `src/components/ui/morphing-card-stack.tsx`
+
+---
+
 ## [1.1.8] - 2026-07-13
 ### Added
 - **Morphing Card Stack UI**: Integrated a custom, physics-based interactive `MorphingCardStack` component under `src/components/ui/morphing-card-stack.tsx` supporting stack, grid, and list layouts.

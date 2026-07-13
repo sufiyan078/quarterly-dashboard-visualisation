@@ -95,17 +95,17 @@ export function Component({
   }
 
   const containerStyles = {
-    stack: "relative h-64 w-64",
-    grid: "grid grid-cols-2 gap-3",
-    list: "flex flex-col gap-3",
+    stack: "relative h-60 w-64",
+    grid: "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 w-full",
+    list: "flex flex-col gap-3 w-full max-w-2xl",
   }
 
   const displayCards = layout === "stack" ? getStackOrder() : cards.map((c, i) => ({ ...c, stackPosition: i }))
 
   return (
-    <div className={cn("space-y-4", className)}>
+    <div className={cn("space-y-6", className)}>
       {/* Layout Toggle */}
-      <div className="flex items-center justify-center gap-1 rounded-lg bg-secondary/50 p-1 w-fit mx-auto">
+      <div className="flex items-center justify-center gap-1 rounded-lg bg-slate-900/60 border border-slate-800 p-1 w-fit mx-auto">
         {(Object.keys(layoutIcons) as LayoutMode[]).map((mode) => {
           const Icon = layoutIcons[mode]
           return (
@@ -115,8 +115,8 @@ export function Component({
               className={cn(
                 "rounded-md p-2 transition-all cursor-pointer",
                 layout === mode
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary",
+                  ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/10"
+                  : "text-slate-400 hover:text-white hover:bg-slate-850",
               )}
               aria-label={`Switch to ${mode} layout`}
             >
@@ -128,7 +128,7 @@ export function Component({
 
       {/* Cards Container */}
       <LayoutGroup>
-        <motion.div layout className={cn(containerStyles[layout], "mx-auto")}>
+        <motion.div layout className={cn(containerStyles[layout], "mx-auto relative")}>
           <AnimatePresence mode="popLayout">
             {displayCards.map((card) => {
               const styles = getLayoutStyles(card.stackPosition)
@@ -142,7 +142,7 @@ export function Component({
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{
                     opacity: 1,
-                    scale: isExpanded ? 1.05 : 1,
+                    scale: isExpanded ? 1.03 : 1,
                     x: 0,
                     ...styles,
                   }}
@@ -164,13 +164,13 @@ export function Component({
                     onCardClick?.(card)
                   }}
                   className={cn(
-                    "cursor-pointer rounded-xl border border-border bg-card p-4",
-                    "hover:border-primary/50 transition-colors",
-                    layout === "stack" && "absolute w-56 h-48",
+                    "cursor-pointer rounded-xl border border-slate-800 bg-slate-900/40 p-4 backdrop-blur-md",
+                    "hover:border-indigo-500/50 transition-all duration-300",
+                    layout === "stack" && "absolute w-64 h-52",
                     layout === "stack" && isTopCard && "cursor-grab active:cursor-grabbing",
-                    layout === "grid" && "w-full aspect-square",
+                    layout === "grid" && "w-full min-h-[140px]",
                     layout === "list" && "w-full",
-                    isExpanded && "ring-2 ring-primary",
+                    isExpanded && "ring-2 ring-indigo-500 border-transparent",
                   )}
                   style={{
                     backgroundColor: card.color || undefined,
@@ -178,18 +178,18 @@ export function Component({
                 >
                   <div className="flex items-start gap-3">
                     {card.icon && (
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary text-foreground">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-800 text-indigo-400 border border-slate-700/50">
                         {card.icon}
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <h3 className="font-semibold text-card-foreground truncate">{card.title}</h3>
+                      <h3 className="font-semibold text-white truncate">{card.title}</h3>
                       <p
                         className={cn(
-                          "text-sm text-muted-foreground mt-1",
-                          layout === "stack" && "line-clamp-3",
-                          layout === "grid" && "line-clamp-2",
-                          layout === "list" && "line-clamp-1",
+                          "text-xs text-slate-400 mt-1.5 leading-relaxed",
+                          layout === "stack" && "line-clamp-4",
+                          layout === "grid" && "line-clamp-3",
+                          layout === "list" && "line-clamp-2",
                         )}
                       >
                         {card.description}
@@ -198,8 +198,8 @@ export function Component({
                   </div>
 
                   {isTopCard && (
-                    <div className="absolute bottom-2 left-0 right-0 text-center">
-                      <span className="text-xs text-muted-foreground/50">Swipe to navigate</span>
+                    <div className="absolute bottom-2.5 left-0 right-0 text-center pointer-events-none">
+                      <span className="text-[10px] text-slate-500/80 tracking-wider">Swipe to navigate</span>
                     </div>
                   )}
                 </motion.div>
@@ -210,14 +210,14 @@ export function Component({
       </LayoutGroup>
 
       {layout === "stack" && cards.length > 1 && (
-        <div className="flex justify-center gap-1.5">
+        <div className="flex justify-center gap-1.5 mt-4">
           {cards.map((_, index) => (
             <button
               key={index}
               onClick={() => setActiveIndex(index)}
               className={cn(
                 "h-1.5 rounded-full transition-all cursor-pointer",
-                index === activeIndex ? "w-4 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/50",
+                index === activeIndex ? "w-4 bg-indigo-500" : "w-1.5 bg-slate-700 hover:bg-slate-500",
               )}
               aria-label={`Go to card ${index + 1}`}
             />

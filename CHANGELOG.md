@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.3] - 2026-07-13
+### Removed
+- **Upload Screen Cards**: Removed "Privacy", "Engine", "Session", and "Expected Column Structure" cards from the Excel Upload screen to simplify the interface layout.
+
+---
+
 ## [1.1.2] - 2026-07-13
 ### Fixed
 - **Firebase Deploy**: Rebuilt production assets and redeployed files to Firebase Hosting to ensure that the previously introduced Firestore `setDoc` updates are successfully reflected in the production app.

@@ -196,6 +196,25 @@ function RecommendationCard({ rec, compact }: { rec: Recommendation; compact?: b
         <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "3px", color: C.text.secondary }}>
           <strong style={{ color: C.brand.primary, fontWeight: TYPOGRAPHY.weights.bold }}>Expected benefit: </strong>{rec.benefit}
         </span>
+        {(rec.suggestedOwner || rec.suggestedTimeline) && (
+          <div style={{
+            display: "flex", gap: "14px", marginTop: "6px", paddingTop: "5px",
+            borderTop: `1px solid ${C.borderSoft}`,
+          }}>
+            {rec.suggestedOwner && (
+              <span style={{ fontSize: "8.5px", color: C.text.muted }}>
+                <strong style={{ color: C.text.secondary, fontWeight: TYPOGRAPHY.weights.bold, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7.5px" }}>Owner </strong>
+                {rec.suggestedOwner}
+              </span>
+            )}
+            {rec.suggestedTimeline && (
+              <span style={{ fontSize: "8.5px", color: C.text.muted }}>
+                <strong style={{ color: C.text.secondary, fontWeight: TYPOGRAPHY.weights.bold, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "7.5px" }}>Timeline </strong>
+                {rec.suggestedTimeline}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -294,9 +313,37 @@ function DonutStat({ label, ratePct, color }: { label: string; ratePct: number; 
   );
 }
 
-/* ─── Page shell ─── */
+/* ─── Brand mark (template header: logo block + wordmark) ─── */
+function BrandMark({ logoUrl, dark }: { logoUrl?: string; dark?: boolean }) {
+  if (logoUrl) {
+    return <img src={logoUrl} alt="GAS Arabian Services" style={{ maxHeight: "30px", objectFit: "contain" }} />;
+  }
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
+      <div style={{
+        backgroundColor: dark ? C.brand.white : C.brand.primary,
+        color: dark ? C.brand.primary : C.brand.white,
+        fontFamily: TYPOGRAPHY.headingFamily,
+        fontWeight: TYPOGRAPHY.weights.extrabold,
+        fontSize: "11px", letterSpacing: "0.04em",
+        padding: "4px 7px", borderRadius: "3px",
+      }}>
+        GAS
+      </div>
+      <span style={{
+        fontFamily: TYPOGRAPHY.headingFamily,
+        fontSize: "9px", fontWeight: TYPOGRAPHY.weights.semibold,
+        color: dark ? C.brand.white : C.brand.primary, lineHeight: 1.25,
+      }}>
+        GAS Arabian<br />Services
+      </span>
+    </div>
+  );
+}
+
+/* ─── Page shell (GAS master template layout) ─── */
 function Page({
-  children, pageNumber, totalPages, kicker, title, description, notes, nextTitle, isCover, sectionId,
+  children, pageNumber, totalPages, kicker, title, description, notes, nextTitle, isCover, dark, sectionIndex, sectionId, brandLogoUrl,
 }: {
   children: React.ReactNode;
   pageNumber: number;
@@ -307,12 +354,18 @@ function Page({
   notes?: string;
   nextTitle?: string;
   isCover?: boolean;
+  /** Full-bleed navy page (cover, back cover) */
+  dark?: boolean;
+  /** 1-based index shown as "Section 0N" in the template overline */
+  sectionIndex?: number;
   sectionId?: string;
+  brandLogoUrl?: string;
 }) {
+  const isDark = dark || isCover;
   return (
     <div
       id={sectionId ? `page-${sectionId}` : undefined}
-      className="pdf-report-page"
+      className={isDark ? "pdf-report-page pdf-report-page--dark" : "pdf-report-page"}
       style={{
         width: LAYOUT.width,
         height: LAYOUT.height,
@@ -320,46 +373,52 @@ function Page({
         boxSizing: "border-box",
         display: "flex",
         flexDirection: "column",
-        backgroundColor: C.brand.white,
+        backgroundColor: isDark ? C.brand.primary : C.brand.white,
+        backgroundImage: isDark ? `linear-gradient(160deg, ${C.brand.primary} 0%, ${C.brand.dark} 100%)` : undefined,
         position: "relative",
-        border: `1px solid ${C.border}`,
+        border: `1px solid ${isDark ? C.brand.primary : C.border}`,
         overflow: "hidden",
         fontFamily: TYPOGRAPHY.fontFamily,
-        color: C.text.secondary,
+        color: isDark ? C.brand.light : C.text.secondary,
       }}
     >
-      {/* Top Gold Accent Bar */}
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: "4px", backgroundColor: C.brand.accent }} />
-
-      {/* Bottom Navy Accent Bar */}
-      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: "3px", backgroundColor: C.brand.primary }} />
-
-      {!isCover && (
+      {/* Template content-page header: brand mark left, page number right */}
+      {!isCover && !dark && (
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
-          borderBottom: `1px solid ${C.border}`, paddingBottom: "10px",
         }}>
-          <span style={{ ...overline, color: C.brand.primary }}>GAS ARABIAN SERVICES — INVENTORY RECONCILIATION</span>
-          <span style={overline}>{kicker}</span>
+          <BrandMark logoUrl={brandLogoUrl} />
+          <span style={{
+            fontFamily: TYPOGRAPHY.headingFamily,
+            fontSize: "10px", fontWeight: TYPOGRAPHY.weights.medium,
+            color: C.text.faint, letterSpacing: "0.25em",
+          }}>
+            {String(pageNumber).padStart(2, "0")}
+          </span>
         </div>
       )}
 
-      {!isCover && title && (
-        <div style={{ marginTop: "20px", marginBottom: "14px" }}>
-          <span style={{ ...overline, color: C.brand.accent }}>PAGE {String(pageNumber).padStart(2, "0")} — SECTION DETAIL</span>
+      {!isCover && !dark && title && (
+        <div style={{ marginTop: "24px", marginBottom: "14px" }}>
+          {sectionIndex !== undefined && (
+            <span style={{ ...overline, color: C.brand.accentDark, letterSpacing: "0.3em", display: "block" }}>
+              Section {String(sectionIndex).padStart(2, "0")}
+            </span>
+          )}
           <h2 style={{
-            fontSize: TYPOGRAPHY.sizes.sectionTitle,
+            fontFamily: TYPOGRAPHY.headingFamily,
+            fontSize: "22px",
             fontWeight: TYPOGRAPHY.weights.bold,
             color: C.brand.primary,
-            letterSpacing: "-0.02em",
-            margin: "4px 0 0",
+            letterSpacing: "-0.01em",
+            lineHeight: 1.2,
+            margin: "6px 0 0",
             display: "inline-block",
           }}>
             {title}
           </h2>
-          <div style={{ height: "2px", width: "40px", backgroundColor: C.brand.accent, marginTop: "4px" }} />
           {description && (
-            <p style={{ fontSize: "10.5px", color: C.text.muted, fontStyle: "italic", margin: "5px 0 0" }}>
+            <p style={{ fontSize: "10.5px", color: C.text.muted, margin: "6px 0 0" }}>
               {description}
             </p>
           )}
@@ -367,26 +426,26 @@ function Page({
       )}
 
       {/* Body */}
-      <div style={{ flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column", marginTop: isCover ? 0 : "10px" }}>
+      <div style={{ flexGrow: 1, minHeight: 0, display: "flex", flexDirection: "column", marginTop: isCover || dark ? 0 : "8px" }}>
         {children}
       </div>
 
       {/* Section notes */}
-      {notes && (
+      {notes && !isDark && (
         <div style={{ borderTop: `1px solid ${C.borderSoft}`, paddingTop: "8px", marginTop: "10px" }}>
-          <span style={{ ...overline, display: "block", marginBottom: "2px", fontSize: "7.5px" }}>Notes &amp; Disclaimer</span>
+          <span style={{ ...overline, display: "block", marginBottom: "2px", fontSize: "7.5px", color: C.text.muted }}>Notes &amp; Disclaimer</span>
           <p style={{ fontSize: "9px", color: C.text.muted, fontStyle: "italic", lineHeight: 1.4, margin: 0 }}>{notes}</p>
         </div>
       )}
 
-      {/* Footer */}
-      {!isCover && (
+      {/* Template content-page footer: brand · confidential left, page right */}
+      {!isCover && !dark && (
         <div style={{
           display: "flex", justifyContent: "space-between", alignItems: "center",
-          borderTop: `1px solid ${C.border}`, paddingTop: "10px", marginTop: "12px",
+          borderTop: `1px solid ${C.borderSoft}`, paddingTop: "10px", marginTop: "12px",
         }}>
-          <span style={{ ...overline, color: C.text.muted }}>CONFIDENTIAL — INTERNAL MANAGEMENT USE ONLY</span>
-          <span style={{ ...overline, color: C.brand.primary }}>
+          <span style={{ ...overline, color: C.text.faint }}>GAS Arabian Services · Confidential</span>
+          <span style={{ ...overline, color: C.text.muted }}>
             {nextTitle ? `Next: ${nextTitle}   ·   ` : ""}Page {pageNumber} of {totalPages}
           </span>
         </div>
@@ -399,103 +458,90 @@ function Page({
    SECTION BODIES
    ════════════════════════════════════════════════════════════════ */
 
+/** Splits the report title in the template's two-tone style:
+    leading words in white, the final one or two words in accent teal. */
+function splitTitleForCover(title: string): { white: string; teal: string } {
+  const words = title.trim().split(/\s+/);
+  if (words.length <= 1) return { white: "", teal: title };
+  const tealCount = words.length >= 4 ? 2 : 1;
+  return {
+    white: words.slice(0, words.length - tealCount).join(" "),
+    teal: words.slice(words.length - tealCount).join(" "),
+  };
+}
+
 function CoverBody({ cover, reportMeta }: { cover: CoverPageData; reportMeta: ReportMeta }) {
+  const title = cover.reportTitle || "Physical Inventory Audit Report";
+  const { white, teal } = splitTitleForCover(title);
+  const period = cover.reportingPeriod || `${reportMeta.quarter} ${reportMeta.year}`.trim();
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
-      {/* Logos Strip */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: `2px solid ${C.borderSoft}`, paddingBottom: "15px" }}>
-        {cover.companyLogoUrl ? (
-          <img src={cover.companyLogoUrl} alt="GAS Arabian Services" style={{ maxHeight: "38px", objectFit: "contain" }} />
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column" }}>
-            <span style={{ fontSize: "12px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.primary, letterSpacing: "0.05em" }}>GAS ARABIAN</span>
-            <span style={{ fontSize: "7px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.accent, letterSpacing: "0.2em", textTransform: "uppercase" }}>SERVICES</span>
-          </div>
-        )}
+      {/* Top strip: brand mark left, client logo / site line right (template) */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <BrandMark logoUrl={cover.companyLogoUrl} dark />
         {cover.clientLogoUrl ? (
-          <img src={cover.clientLogoUrl} alt="Client Logo" style={{ maxHeight: "38px", objectFit: "contain" }} />
+          <img src={cover.clientLogoUrl} alt="Client Logo" style={{ maxHeight: "34px", objectFit: "contain" }} />
         ) : (
-          <div style={{ border: `1px solid ${C.brand.accent}`, padding: "4px 10px", borderRadius: "4px", backgroundColor: C.brand.primary }}>
-            <span style={{ ...overline, color: C.brand.white, fontSize: "7.5px" }}>INVENTORY REPORT</span>
-          </div>
+          <span style={{ ...overline, color: C.text.faint, letterSpacing: "0.2em" }}>
+            www.gasarabianservices.com
+          </span>
         )}
       </div>
 
-      {/* Main Title Block */}
-      <div style={{
-        padding: "36px 0",
-        flexGrow: 1,
-        display: "flex",
-        flexDirection: "column",
-        justifyContent: "center"
-      }}>
-        <div style={{
-          backgroundColor: C.brand.primary,
-          padding: "35px 30px",
-          borderRadius: "8px",
-          position: "relative",
-          boxShadow: "0 4px 15px rgba(27,58,92,0.15)",
+      {/* Title block (template: teal overline, white + teal two-tone title) */}
+      <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+        <span style={{
+          ...overline, color: C.brand.accent, fontSize: "10px",
+          letterSpacing: "0.35em", display: "block", marginBottom: "14px",
         }}>
-          {/* Gold Decorative Tag */}
-          <div style={{ position: "absolute", top: 0, left: "30px", height: "4px", width: "80px", backgroundColor: C.brand.accent }}></div>
-          
-          <span style={{ ...overline, color: C.brand.accent, fontSize: "10px", display: "block", marginBottom: "8px" }}>
-            {cover.reportingPeriod || `${reportMeta.quarter} ${reportMeta.year}`} Audit Cycle
-          </span>
-          <h1 style={{
-            fontSize: "28px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.white,
-            letterSpacing: "-0.02em", lineHeight: 1.2, margin: 0,
-          }}>
-            {cover.reportTitle || "Inventory Verification & Reconciliation Report"}
-          </h1>
-          {cover.reportSubtitle && (
-            <p style={{ fontSize: "12px", color: C.text.faint, marginTop: "10px", lineHeight: 1.5, margin: "8px 0 0" }}>
-              {cover.reportSubtitle}
-            </p>
-          )}
-        </div>
-
-        <p style={{ fontSize: "10.5px", color: C.text.secondary, marginTop: "24px", lineHeight: 1.6, maxWidth: "520px" }}>
-          This report presents the verified physical inventory position, outlines root-cause analysis for
-          variances, and establishes prioritized actions for organizational management review. It covers 
-          financial value audits, organizational ownership profiles, supplier performance metrics, and key risks.
+          Inventory Audit Report · {period}
+        </span>
+        <h1 style={{
+          fontFamily: TYPOGRAPHY.headingFamily,
+          fontSize: "42px", fontWeight: TYPOGRAPHY.weights.bold,
+          letterSpacing: "-0.015em", lineHeight: 1.12, margin: 0,
+        }}>
+          {white && <span style={{ color: C.brand.white, display: "block" }}>{white}</span>}
+          <span style={{ color: C.brand.accent, display: "block" }}>{teal}</span>
+        </h1>
+        <p style={{ fontSize: "12px", color: C.text.faint, marginTop: "18px", lineHeight: 1.65, maxWidth: "420px" }}>
+          {cover.reportSubtitle ||
+            "A structured report for quarterly reconciliation reporting across divisions, suppliers and org codes."}
         </p>
+        <div style={{ height: "3px", width: "56px", backgroundColor: C.brand.accent, borderRadius: "2px", marginTop: "26px" }} />
       </div>
 
-      {/* Bottom Metadata & Sign-off Block */}
+      {/* Prepared-by block (template bottom composition) */}
       <div>
-        <div style={{
-          borderTop: `2px solid ${C.brand.accent}`,
-          paddingTop: "20px",
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "14px 28px",
-          backgroundColor: C.panel,
-          padding: "16px 20px",
-          borderRadius: "6px",
-          border: `1px solid ${C.border}`,
-        }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 28px", paddingTop: "18px", borderTop: `1px solid rgba(255,255,255,0.14)` }}>
           {[
-            ["Target Facility / Location", reportMeta.location || "Default Warehouse"],
+            ["Prepared By", cover.preparedBy || "GAS Arabian Services"],
             ["Audited Entity", cover.clientName || "All Divisions"],
-            ["Prepared By", cover.preparedBy || "Lead Audit Team"],
-            ["Execution Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
+            ["Facility / Location", reportMeta.location || "Kingdom of Saudi Arabia"],
+            ["Report Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
           ].map(([label, value]) => (
             <div key={label}>
-              <span style={{ ...overline, display: "block", fontSize: "7.5px", color: C.text.muted }}>{label}</span>
-              <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, display: "block", marginTop: "2px" }}>
+              <span style={{ ...overline, display: "block", fontSize: "7.5px", color: C.brand.accent }}>{label}</span>
+              <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.brand.white, display: "block", marginTop: "3px" }}>
                 {value}
               </span>
             </div>
           ))}
         </div>
 
+        <div style={{ marginTop: "22px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <span style={{ fontSize: "9px", color: C.text.faint }}>
+            GAS Arabian Services — Kingdom of Saudi Arabia · www.gasarabianservices.com
+          </span>
+        </div>
+
         {cover.confidentialityStatement && (
           <div style={{
-            marginTop: "20px", padding: "10px 14px", borderRadius: "6px",
-            backgroundColor: C.status.warnSoft, borderLeft: `4px solid ${C.brand.accent}`,
+            marginTop: "14px", padding: "9px 13px", borderRadius: "5px",
+            backgroundColor: "rgba(255,255,255,0.06)", borderLeft: `3px solid ${C.brand.accent}`,
           }}>
-            <p style={{ fontSize: "9px", color: "#8a6d3b", lineHeight: 1.5, fontWeight: TYPOGRAPHY.weights.semibold, margin: 0 }}>
+            <p style={{ fontSize: "8.5px", color: C.text.faint, lineHeight: 1.5, margin: 0 }}>
               {cover.confidentialityStatement}
             </p>
           </div>
@@ -506,56 +552,91 @@ function CoverBody({ cover, reportMeta }: { cover: CoverPageData; reportMeta: Re
 }
 
 function TableOfContentsBody({ sections }: { sections: ReportSection[] }) {
-  // Exclude cover and itself from the table of contents list if wanted, but standard is displaying pages 2+
-  const list = sections.filter(s => s.type !== "cover" && s.type !== "toc");
-  
+  // Cover (page 1), the ToC itself (page 2) and the closing page are not listed.
+  const list = sections.filter(s => s.type !== "cover" && s.type !== "toc" && s.type !== "backcover");
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
-      <div>
-        <Commentary text="The following register outlines the structure of the inventory analysis report. Each section is dynamically backed by audit evidence, parsed ledger lines, and statistical metrics." />
-        
-        <div style={{ marginTop: "20px", display: "flex", flexDirection: "column", gap: "10px" }}>
+    <div style={{ display: "flex", height: "100%", gap: "26px" }}>
+      {/* Left column: contents register */}
+      <div style={{ flexGrow: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", flexGrow: 1 }}>
           {list.map((section, index) => {
             // Page offset: Cover (1), ToC (2) -> Section page index is index + 3
-            const pageNum = index + 3; 
+            const pageNum = index + 3;
             return (
               <div key={section.id} style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "baseline",
-                padding: "4px 0",
-                borderBottom: `1px dashed ${C.border}`,
+                gap: "10px",
+                padding: "5px 0",
+                borderBottom: `1px solid ${C.borderSoft}`,
               }}>
-                <div style={{ display: "flex", gap: "10px", alignItems: "baseline" }}>
-                  <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.accent, width: "20px" }}>
+                <div style={{ display: "flex", gap: "12px", alignItems: "baseline", minWidth: 0 }}>
+                  <span style={{
+                    fontFamily: TYPOGRAPHY.headingFamily,
+                    fontSize: "10px", fontWeight: TYPOGRAPHY.weights.semibold,
+                    color: C.brand.accent, width: "22px", flexShrink: 0,
+                  }}>
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>
-                    {section.title}
-                  </span>
-                  <span style={{ fontSize: "9.5px", color: C.text.muted, fontStyle: "italic", marginLeft: "10px" }}>
-                    — {section.description}
-                  </span>
+                  <div style={{ minWidth: 0 }}>
+                    <span style={{
+                      fontFamily: TYPOGRAPHY.headingFamily,
+                      fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold,
+                      color: C.brand.primary, display: "block",
+                    }}>
+                      {section.title}
+                    </span>
+                    <span style={{ fontSize: "8.5px", color: C.text.muted, display: "block", marginTop: "1px" }}>
+                      {section.description}
+                    </span>
+                  </div>
                 </div>
-                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, fontVariantNumeric: "tabular-nums" }}>
-                  Page {pageNum}
+                <span style={{
+                  fontSize: "10px", fontWeight: TYPOGRAPHY.weights.semibold,
+                  color: C.text.secondary, fontVariantNumeric: "tabular-nums", flexShrink: 0,
+                }}>
+                  {String(pageNum).padStart(2, "0")}
                 </span>
               </div>
             );
           })}
         </div>
+
+        <div style={{
+          border: `1px solid ${C.border}`,
+          borderRadius: "6px",
+          padding: "11px 14px",
+          backgroundColor: C.panel,
+          marginTop: "14px",
+        }}>
+          <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "4px" }}>Audit Verification Scope</span>
+          <p style={{ fontSize: "9px", color: C.text.secondary, margin: 0, lineHeight: 1.45 }}>
+            All sections in this report have been cross-checked by the automated QA Engine. Visual evidence, data
+            completeness, and numerical reconciliations match the inventory transactions logged during this audit cycle.
+          </p>
+        </div>
       </div>
 
+      {/* Right: full-height navy tagline panel (template composition) */}
       <div style={{
-        border: `1px solid ${C.border}`,
+        width: "192px", flexShrink: 0,
+        backgroundColor: C.brand.primary,
+        backgroundImage: `linear-gradient(175deg, ${C.brand.primary} 0%, ${C.brand.dark} 100%)`,
         borderRadius: "6px",
-        padding: "12px 16px",
-        backgroundColor: C.panel,
+        padding: "34px 24px",
+        display: "flex", flexDirection: "column", justifyContent: "flex-start",
       }}>
-        <span style={{ ...overline, color: C.brand.primary, display: "block", marginBottom: "4px" }}>Audit Verification Scope</span>
-        <p style={{ fontSize: "9.5px", color: C.text.secondary, margin: 0, lineHeight: 1.45 }}>
-          All sections in this report have been cross-checked by the automated QA Engine. Visual evidence, data completeness, and numerical reconciliations match the inventory transactions logged during this audit cycle.
-        </p>
+        <div style={{ height: "3px", width: "34px", backgroundColor: C.brand.accent, borderRadius: "2px", marginBottom: "20px" }} />
+        <span style={{
+          fontFamily: TYPOGRAPHY.headingFamily,
+          fontSize: "16px", fontWeight: TYPOGRAPHY.weights.semibold,
+          lineHeight: 1.45,
+        }}>
+          <span style={{ color: C.brand.white }}>Reporting built on accuracy,</span>{" "}
+          <span style={{ color: C.brand.accent }}>reconciled by design.</span>
+        </span>
       </div>
     </div>
   );
@@ -874,9 +955,18 @@ function RiskBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative
                 <strong style={{ color: C.brand.primary }}>Impact: </strong>{r.impact}
               </span>
               <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "2px", color: C.text.secondary }}>{r.explanation}</span>
-              <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "2px", color: C.brand.accent, fontWeight: TYPOGRAPHY.weights.bold }}>
+              <span style={{ ...bodyText, fontSize: "9.5px", display: "block", marginTop: "2px", color: C.brand.accentDark, fontWeight: TYPOGRAPHY.weights.bold }}>
                 → Action Plan: {r.action}
               </span>
+              {r.evidence && (
+                <span style={{
+                  display: "block", marginTop: "5px", paddingTop: "4px",
+                  borderTop: `1px solid ${C.borderSoft}`,
+                  fontSize: "8.5px", color: C.text.muted, fontStyle: "italic",
+                }}>
+                  Evidence: {r.evidence}
+                </span>
+              )}
             </div>
           ))}
           {risks.length > 4 && (
@@ -1066,6 +1156,31 @@ function TeamBody({ images }: { images: UploadedImage[] }) {
   );
 }
 
+/* ─── Back cover (template "Thank You" page) ─── */
+function BackCoverBody({ cover }: { cover: CoverPageData }) {
+  return (
+    <div style={{
+      display: "flex", flexDirection: "column", height: "100%",
+      alignItems: "center", justifyContent: "center", textAlign: "center",
+    }}>
+      <BrandMark logoUrl={cover.companyLogoUrl} dark />
+      <h1 style={{
+        fontFamily: TYPOGRAPHY.headingFamily,
+        fontSize: "30px", fontWeight: TYPOGRAPHY.weights.semibold,
+        color: C.brand.white, margin: "26px 0 0",
+      }}>
+        Thank You
+      </h1>
+      <p style={{ fontSize: "10px", color: C.text.faint, marginTop: "14px", lineHeight: 1.7 }}>
+        GAS Arabian Services — Kingdom of Saudi Arabia
+        <br />
+        www.gasarabianservices.com
+      </p>
+      <div style={{ height: "3px", width: "40px", backgroundColor: C.brand.accent, borderRadius: "2px", marginTop: "24px" }} />
+    </div>
+  );
+}
+
 /* ════════════════════════════════════════════════════════════════
    DOCUMENT ENTRYPOINT
    ════════════════════════════════════════════════════════════════ */
@@ -1077,10 +1192,16 @@ export function ExecutiveReportDocument({
   const totalPages = totalPagesOverride ?? enabled.length;
   const kicker = cover.reportingPeriod || `${reportMeta.quarter} ${reportMeta.year}`;
 
+  // "Section 0N" numbering counts only content sections (template style:
+  // cover, contents and back cover carry no section number).
+  const unnumbered = new Set(["cover", "toc", "backcover"]);
+  let sectionCounter = 0;
+
   return (
     <>
       {enabled.map((section, idx) => {
         const nextTitle = idx + 1 < enabled.length ? enabled[idx + 1].title : undefined;
+        const sectionIndex = unnumbered.has(section.type) ? undefined : ++sectionCounter;
         const pageProps = {
           sectionId: section.id,
           pageNumber: idx + 1,
@@ -1090,6 +1211,8 @@ export function ExecutiveReportDocument({
           description: section.description,
           notes: section.notes || undefined,
           nextTitle,
+          sectionIndex,
+          brandLogoUrl: cover.companyLogoUrl || undefined,
         };
 
         switch (section.type) {
@@ -1097,6 +1220,12 @@ export function ExecutiveReportDocument({
             return (
               <Page key={section.id} {...pageProps} isCover title={undefined} notes={undefined}>
                 <CoverBody cover={cover} reportMeta={reportMeta} />
+              </Page>
+            );
+          case "backcover":
+            return (
+              <Page key={section.id} {...pageProps} dark title={undefined} notes={undefined}>
+                <BackCoverBody cover={cover} />
               </Page>
             );
           case "toc":

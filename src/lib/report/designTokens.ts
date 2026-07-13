@@ -7,22 +7,26 @@
  */
 
 export const C = {
-  // Brand Colors (GAS Arabian Services design language)
+  // Brand Colors — taken directly from the GAS Arabian Services master
+  // report template (page 4 "Colour Palette & Typography" reference):
+  //   Primary Navy #12283C · Accent Teal #3FC9A4
+  //   Neutral Grey #AEB6C0 · Background #F3F5F7
   brand: {
-    primary: "#1B3A5C",    // Dark Navy
-    secondary: "#2E75B6",  // Corporate Blue
-    accent: "#C4A265",     // Premium Gold
-    dark: "#0D1B2A",       // Cover page background / headers
-    light: "#F4F6F8",      // Faint page/panel background
+    primary: "#12283C",    // Primary Navy (headings, cover background)
+    secondary: "#2E5771",  // Mid navy-slate (from the template's colour ramp)
+    accent: "#3FC9A4",     // Accent Teal (overlines, highlights, title accents)
+    accentDark: "#1E9B7C", // Darker teal for small text on white (contrast)
+    dark: "#0C1B2A",       // Deepest navy (cover gradient end)
+    light: "#F3F5F7",      // Template background tint
     white: "#FFFFFF",
   },
-  
+
   // Neutral Typography Colors
   text: {
-    primary: "#1A1A2E",    // Dark charcoal for body text
-    secondary: "#4A5568",  // Slate for subheadings and details
-    muted: "#718096",      // Cool gray for captions and footnotes
-    faint: "#A0AEC0",      // Light line borders or disabled states
+    primary: "#1A2733",    // Near-navy charcoal for body text
+    secondary: "#44546A",  // Slate for subheadings and details
+    muted: "#7A8694",      // Cool gray for captions and footnotes
+    faint: "#AEB6C0",      // Template Neutral Grey — borders / disabled
   },
 
   // Alert & Priority Status Colors (Premium tints)
@@ -40,13 +44,18 @@ export const C = {
   },
 
   // Structural Elements
-  border: "#E2E8F0",
-  borderSoft: "#F1F5F9",
-  panel: "#F8FAFC",
+  border: "#E1E6EB",
+  borderSoft: "#F3F5F7",
+  panel: "#F8FAFB",
 };
 
 export const TYPOGRAPHY = {
-  fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  // Template typography: Poppins — Headings · Inter — Body Text.
+  // next/font registers these under generated family names, so we reference
+  // the CSS variables; the browser resolves them in computed styles, which
+  // is what html2canvas reads during PDF export.
+  fontFamily: "var(--font-inter), Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  headingFamily: "var(--font-poppins), Poppins, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
   sizes: {
     title: "32px",
     sectionTitle: "20px",

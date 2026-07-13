@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.7] - 2026-07-13
+### Added
+- **Workflow Process Motion Card**: Added an interactive, animated process pipeline card to the Home Dashboard showcasing the flow: Upload data >> Validate date >> Dashboard >> Pre-report >> Report.
+- **Layout Rearrangement**: Placed the workflow process motion card above the recent activity logs card on the Home Dashboard page.
+
+### Files Modified
+- `src/app/(dashboard)/dashboard/page.tsx`
+
+---
+
 ## [1.1.6] - 2026-07-13
 ### Changed
 - **Login Screen Redesign**: Removed the brand values/marketing card from the login view and centered the "System Authentication" card for a cleaner, focused authentication interface.

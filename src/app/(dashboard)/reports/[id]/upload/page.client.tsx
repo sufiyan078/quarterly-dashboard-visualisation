@@ -20,10 +20,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   FileUp,
-  ShieldCheck,
-  Cpu,
   FileCheck2,
-  Info,
   Layers
 } from "lucide-react";
 
@@ -315,47 +312,6 @@ export default function UploadExcel() {
               >
                 Load Sample Test Files
               </button>
-            </div>
-          </div>
-
-          {/* Info Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="rounded-xl border border-indigo-500/15 bg-indigo-500/5 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="h-4 w-4 text-indigo-400 flex-shrink-0" />
-                <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">Privacy</span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">Files are parsed in-browser only. No data is uploaded to external servers.</p>
-            </div>
-            <div className="rounded-xl border border-emerald-500/15 bg-emerald-500/5 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <Cpu className="h-4 w-4 text-emerald-400 flex-shrink-0" />
-                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider">Engine</span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">Powered by SheetJS for high-performance, client-side Excel parsing.</p>
-            </div>
-            <div className="rounded-xl border border-amber-500/15 bg-amber-500/5 p-4 space-y-2">
-              <div className="flex items-center gap-2">
-                <AlertTriangle className="h-4 w-4 text-amber-400 flex-shrink-0" />
-                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider">Session</span>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed">Files exist in this browser session only. Refreshing clears the queue.</p>
-            </div>
-          </div>
-
-          {/* Required columns hint */}
-          <div className="rounded-xl border border-slate-800/60 bg-[#0c0e15]/40 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Info className="h-4 w-4 text-slate-500 flex-shrink-0" />
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Expected Column Structure</span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {["Item Code", "Description", "ERP Qty", "Physical Qty", "Unit Cost", "Supplier"].map(col => (
-                <span key={col} className="inline-flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 flex-shrink-0"></span>
-                  {col}
-                </span>
-              ))}
             </div>
           </div>
         </div>

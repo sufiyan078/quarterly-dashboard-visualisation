@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.5] - 2026-07-13
+### Changed
+- **Upload Drop Zone Resize**: Reduced the size of the "Drag & drop Excel files here" card to half its original height and padding, optimizing spacing and information density on the screen.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/upload/page.client.tsx`
+
+---
+
 ## [1.1.4] - 2026-07-13
 ### Changed
 - **Upload Screen Layout**: Repositioned the "Selected Files" card directly below the "Drag & drop Excel files here" card for a single-column layout.

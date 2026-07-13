@@ -262,7 +262,7 @@ export default function UploadExcel() {
           onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
           onDragLeave={() => setIsDragging(false)}
           onDrop={handleDrop}
-          className={`relative group rounded-2xl border-2 border-dashed transition-all duration-300 p-10 text-center cursor-pointer overflow-hidden ${
+          className={`relative group rounded-2xl border-2 border-dashed transition-all duration-300 p-6 text-center cursor-pointer overflow-hidden ${
             isDragging
               ? "border-indigo-500 bg-indigo-500/10 scale-[1.01]"
               : "border-slate-700 hover:border-indigo-500/60 bg-gradient-to-br from-[#0c0e15] to-[#0f1220]"
@@ -279,33 +279,33 @@ export default function UploadExcel() {
           {/* Background glow */}
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
 
-          <div className="relative flex flex-col items-center gap-4">
-            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
+          <div className="relative flex flex-col items-center gap-3">
+            <div className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all duration-300 ${
               isDragging
                 ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400"
                 : "bg-slate-900 border-slate-800 text-slate-400 group-hover:border-indigo-500/40 group-hover:text-indigo-400 group-hover:bg-indigo-500/10"
             }`}>
-              <UploadIcon className="h-7 w-7" />
+              <UploadIcon className="h-5 w-5" />
             </div>
 
             <div>
-              <h3 className="text-base font-bold text-white">
+              <h3 className="text-sm font-bold text-white">
                 {isDragging ? "Release to add files" : "Drag & drop Excel files here"}
               </h3>
-              <p className="text-xs text-slate-500 mt-1">or click anywhere in this area to browse</p>
+              <p className="text-[11px] text-slate-500 mt-0.5">or click anywhere in this area to browse</p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono">
-              <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">.xlsx only</span>
-              <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">max 20MB / file</span>
-              <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">50MB total</span>
+            <div className="flex flex-wrap items-center justify-center gap-1.5 text-[9px] font-mono">
+              <span className="px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">.xlsx only</span>
+              <span className="px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">max 20MB / file</span>
+              <span className="px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">50MB total</span>
             </div>
 
             <button
               id="load-test-files-btn"
               type="button"
               onClick={(e) => { e.stopPropagation(); loadSampleFilesForTesting(); }}
-              className="relative z-20 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold transition-all"
+              className="relative z-20 px-3 py-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-[11px] font-semibold transition-all"
             >
               Load Sample Test Files
             </button>

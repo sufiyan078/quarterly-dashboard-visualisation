@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.2] - 2026-07-13
+### Fixed
+- **Firebase Deploy**: Rebuilt production assets and redeployed files to Firebase Hosting to ensure that the previously introduced Firestore `setDoc` updates are successfully reflected in the production app.
+
+---
+
 ## [1.1.1] - 2026-07-13
 ### Fixed
 - **Resilient Firestore Operations**: Replaced `updateDoc` with `setDoc(docRef, ..., { merge: true })` across all steps (upload, validation, dashboard, pre-report, and builder phases). This resolves the `No document to update` Firebase error when finalizing the pre-report phase, ensuring that updates succeed even if document metadata is loaded in dynamic or transient sessions.

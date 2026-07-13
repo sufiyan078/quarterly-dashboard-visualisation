@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.4] - 2026-07-13
+### Changed
+- **Upload Screen Layout**: Repositioned the "Selected Files" card directly below the "Drag & drop Excel files here" card for a single-column layout.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/upload/page.client.tsx`
+
+---
+
 ## [1.1.3] - 2026-07-13
 ### Removed
 - **Upload Screen Cards**: Removed "Privacy", "Engine", "Session", and "Expected Column Structure" cards from the Excel Upload screen to simplify the interface layout.

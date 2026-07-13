@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.6] - 2026-07-13
+### Changed
+- **Login Screen Redesign**: Removed the brand values/marketing card from the login view and centered the "System Authentication" card for a cleaner, focused authentication interface.
+
+### Files Modified
+- `src/app/login/page.tsx`
+
+---
+
 ## [1.1.5] - 2026-07-13
 ### Changed
 - **Upload Drop Zone Resize**: Reduced the size of the "Drag & drop Excel files here" card to half its original height and padding, optimizing spacing and information density on the screen.

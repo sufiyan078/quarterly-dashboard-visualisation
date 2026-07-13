@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.1.8] - 2026-07-13
+### Added
+- **Morphing Card Stack UI**: Integrated a custom, physics-based interactive `MorphingCardStack` component under `src/components/ui/morphing-card-stack.tsx` supporting stack, grid, and list layouts.
+- **Tailwind Utility Helpers**: Created a centralized CSS class merging utility `src/lib/utils.ts` using `clsx` and `tailwind-merge`.
+- **Card Stack Demo Component**: Provided a full-fidelity demo wrapper in `src/components/ui/morphing-card-stack-demo.tsx`.
+
+### Files Modified
+- `src/components/ui/morphing-card-stack.tsx`
+- `src/components/ui/morphing-card-stack-demo.tsx`
+- `src/lib/utils.ts`
+
+---
+
 ## [1.1.7] - 2026-07-13
 ### Added
 - **Workflow Process Motion Card**: Added an interactive, animated process pipeline card to the Home Dashboard showcasing the flow: Upload data >> Validate date >> Dashboard >> Pre-report >> Report.

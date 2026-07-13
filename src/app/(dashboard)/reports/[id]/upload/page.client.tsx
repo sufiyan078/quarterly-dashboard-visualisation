@@ -254,172 +254,166 @@ export default function UploadExcel() {
         </div>
       )}
 
-      {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+      {/* Main Content Area */}
+      <div className="max-w-3xl mx-auto space-y-6 w-full">
 
-        {/* LEFT: Upload zone + info */}
-        <div className="lg:col-span-3 space-y-4">
+        {/* Drop Zone */}
+        <div
+          onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+          onDragLeave={() => setIsDragging(false)}
+          onDrop={handleDrop}
+          className={`relative group rounded-2xl border-2 border-dashed transition-all duration-300 p-10 text-center cursor-pointer overflow-hidden ${
+            isDragging
+              ? "border-indigo-500 bg-indigo-500/10 scale-[1.01]"
+              : "border-slate-700 hover:border-indigo-500/60 bg-gradient-to-br from-[#0c0e15] to-[#0f1220]"
+          }`}
+        >
+          <input
+            type="file"
+            multiple
+            accept=".xlsx"
+            onChange={handleFileChange}
+            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+          />
 
-          {/* Drop Zone */}
-          <div
-            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            className={`relative group rounded-2xl border-2 border-dashed transition-all duration-300 p-10 text-center cursor-pointer overflow-hidden ${
+          {/* Background glow */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
+
+          <div className="relative flex flex-col items-center gap-4">
+            <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
               isDragging
-                ? "border-indigo-500 bg-indigo-500/10 scale-[1.01]"
-                : "border-slate-700 hover:border-indigo-500/60 bg-gradient-to-br from-[#0c0e15] to-[#0f1220]"
-            }`}
-          >
-            <input
-              type="file"
-              multiple
-              accept=".xlsx"
-              onChange={handleFileChange}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            />
-
-            {/* Background glow */}
-            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent pointer-events-none" />
-
-            <div className="relative flex flex-col items-center gap-4">
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center border transition-all duration-300 ${
-                isDragging
-                  ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400"
-                  : "bg-slate-900 border-slate-800 text-slate-400 group-hover:border-indigo-500/40 group-hover:text-indigo-400 group-hover:bg-indigo-500/10"
-              }`}>
-                <UploadIcon className="h-7 w-7" />
-              </div>
-
-              <div>
-                <h3 className="text-base font-bold text-white">
-                  {isDragging ? "Release to add files" : "Drag & drop Excel files here"}
-                </h3>
-                <p className="text-xs text-slate-500 mt-1">or click anywhere in this area to browse</p>
-              </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono">
-                <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">.xlsx only</span>
-                <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">max 20MB / file</span>
-                <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">50MB total</span>
-              </div>
-
-              <button
-                id="load-test-files-btn"
-                type="button"
-                onClick={(e) => { e.stopPropagation(); loadSampleFilesForTesting(); }}
-                className="relative z-20 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold transition-all"
-              >
-                Load Sample Test Files
-              </button>
+                ? "bg-indigo-500/20 border-indigo-500/40 text-indigo-400"
+                : "bg-slate-900 border-slate-800 text-slate-400 group-hover:border-indigo-500/40 group-hover:text-indigo-400 group-hover:bg-indigo-500/10"
+            }`}>
+              <UploadIcon className="h-7 w-7" />
             </div>
+
+            <div>
+              <h3 className="text-base font-bold text-white">
+                {isDragging ? "Release to add files" : "Drag & drop Excel files here"}
+              </h3>
+              <p className="text-xs text-slate-500 mt-1">or click anywhere in this area to browse</p>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-2 text-[10px] font-mono">
+              <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">.xlsx only</span>
+              <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">max 20MB / file</span>
+              <span className="px-2 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">50MB total</span>
+            </div>
+
+            <button
+              id="load-test-files-btn"
+              type="button"
+              onClick={(e) => { e.stopPropagation(); loadSampleFilesForTesting(); }}
+              className="relative z-20 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs font-semibold transition-all"
+            >
+              Load Sample Test Files
+            </button>
           </div>
         </div>
 
-        {/* RIGHT: File list + proceed */}
-        <div className="lg:col-span-2">
-          <div className="rounded-2xl border border-slate-800 bg-gradient-to-b from-[#0c0e15] to-[#0f1120] p-5 flex flex-col gap-5 h-full">
+        {/* Selected Files Card */}
+        <div className="rounded-2xl border border-slate-800 bg-gradient-to-b from-[#0c0e15] to-[#0f1120] p-5 flex flex-col gap-5">
 
-            {/* Header */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-slate-400" />
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">Selected Files</h3>
-              </div>
-              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono ${
-                files.length > 0
-                  ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
-                  : "bg-slate-800 border-slate-700 text-slate-500"
-              }`}>
-                {files.length} file{files.length !== 1 ? "s" : ""}
-              </span>
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Layers className="h-4 w-4 text-slate-400" />
+              <h3 className="text-sm font-bold text-white uppercase tracking-wider">Selected Files</h3>
             </div>
-
-            {/* File List */}
-            <div className="flex-1 min-h-[200px]">
-              {files.length === 0 ? (
-                <div className="h-full flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-800 py-12">
-                  <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
-                    <FileUp className="h-5 w-5 text-slate-600" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-xs font-medium text-slate-500">No files selected yet</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">Drop files on the left to get started</p>
-                  </div>
-                </div>
-              ) : (
-                <ul className="space-y-2 overflow-y-auto max-h-[260px] pr-1">
-                  {files.map((file, idx) => (
-                    <li key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-900 hover:border-slate-800 transition-all group">
-                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-slate-200 truncate">{file.name}</p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          <span className="text-[10px] text-slate-500 font-mono">{formatBytes(file.size)}</span>
-                          <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400">
-                            <CheckCircle2 className="h-2.5 w-2.5" /> {file.status}
-                          </span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => removeFile(idx)}
-                        className="p-1 rounded-lg text-slate-600 hover:bg-red-500/10 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Stats bar (shown when files added) */}
-            {files.length > 0 && (
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-lg bg-slate-950/60 border border-slate-900 px-3 py-2 text-center">
-                  <span className="text-[9px] text-slate-500 uppercase block">Total Files</span>
-                  <span className="text-sm font-bold text-white font-mono">{files.length}</span>
-                </div>
-                <div className="rounded-lg bg-slate-950/60 border border-slate-900 px-3 py-2 text-center">
-                  <span className="text-[9px] text-slate-500 uppercase block">Total Size</span>
-                  <span className="text-sm font-bold text-white font-mono">{formatBytes(totalSize)}</span>
-                </div>
-              </div>
-            )}
-
-            {/* Proceed Button */}
-            <div className="pt-2 border-t border-slate-800/60">
-              <button
-                onClick={handleProceed}
-                disabled={isProcessing || files.length === 0}
-                className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-all shadow-lg disabled:cursor-not-allowed
-                  bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400
-                  disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none"
-              >
-                {isProcessing ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    Parsing files...
-                  </>
-                ) : (
-                  <>
-                    <FileCheck2 className="h-4 w-4" />
-                    Proceed to Validation
-                    <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
-              </button>
-              {files.length === 0 && (
-                <p className="text-[10px] text-slate-600 text-center mt-2">Add at least one .xlsx file to continue</p>
-              )}
-            </div>
-
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border font-mono ${
+              files.length > 0
+                ? "bg-indigo-500/10 border-indigo-500/30 text-indigo-400"
+                : "bg-slate-800 border-slate-700 text-slate-500"
+            }`}>
+              {files.length} file{files.length !== 1 ? "s" : ""}
+            </span>
           </div>
+
+          {/* File List */}
+          <div className="min-h-[140px]">
+            {files.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-dashed border-slate-800 py-8">
+                <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center">
+                  <FileUp className="h-4 w-4 text-slate-600" />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs font-medium text-slate-500">No files selected yet</p>
+                  <p className="text-[10px] text-slate-600 mt-0.5">Drop files above or click to browse</p>
+                </div>
+              </div>
+            ) : (
+              <ul className="space-y-2 overflow-y-auto max-h-[260px] pr-1">
+                {files.map((file, idx) => (
+                  <li key={idx} className="flex items-center gap-3 p-3 rounded-xl bg-slate-950/60 border border-slate-900 hover:border-slate-800 transition-all group">
+                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <FileSpreadsheet className="h-4 w-4 text-emerald-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-slate-200 truncate">{file.name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[10px] text-slate-500 font-mono">{formatBytes(file.size)}</span>
+                        <span className="inline-flex items-center gap-1 text-[9px] font-bold text-emerald-400">
+                          <CheckCircle2 className="h-2.5 w-2.5" /> {file.status}
+                        </span>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => removeFile(idx)}
+                      className="p-1 rounded-lg text-slate-600 hover:bg-red-500/10 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+
+          {/* Stats bar (shown when files added) */}
+          {files.length > 0 && (
+            <div className="grid grid-cols-2 gap-2">
+              <div className="rounded-lg bg-slate-950/60 border border-slate-900 px-3 py-2 text-center">
+                <span className="text-[9px] text-slate-500 uppercase block">Total Files</span>
+                <span className="text-sm font-bold text-white font-mono">{files.length}</span>
+              </div>
+              <div className="rounded-lg bg-slate-950/60 border border-slate-900 px-3 py-2 text-center">
+                <span className="text-[9px] text-slate-500 uppercase block">Total Size</span>
+                <span className="text-sm font-bold text-white font-mono">{formatBytes(totalSize)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Proceed Button */}
+          <div className="pt-2 border-t border-slate-800/60">
+            <button
+              onClick={handleProceed}
+              disabled={isProcessing || files.length === 0}
+              className="w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-3 text-sm font-bold text-white transition-all shadow-lg disabled:cursor-not-allowed
+                bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400
+                disabled:from-slate-800 disabled:to-slate-800 disabled:text-slate-500 disabled:shadow-none"
+            >
+              {isProcessing ? (
+                <>
+                  <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  Parsing files...
+                </>
+              ) : (
+                <>
+                  <FileCheck2 className="h-4 w-4" />
+                  Proceed to Validation
+                  <ArrowRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+            {files.length === 0 && (
+              <p className="text-[10px] text-slate-600 text-center mt-2">Add at least one .xlsx file to continue</p>
+            )}
+          </div>
+
         </div>
       </div>
 

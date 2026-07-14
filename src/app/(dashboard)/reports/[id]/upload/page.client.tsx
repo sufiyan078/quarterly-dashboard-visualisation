@@ -300,15 +300,6 @@ export default function UploadExcel() {
               <span className="px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">max 20MB / file</span>
               <span className="px-1.5 py-0.5 rounded border border-slate-800 bg-slate-900/60 text-slate-500">50MB total</span>
             </div>
-
-            <button
-              id="load-test-files-btn"
-              type="button"
-              onClick={(e) => { e.stopPropagation(); loadSampleFilesForTesting(); }}
-              className="relative z-20 px-3 py-1 bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-[11px] font-semibold transition-all"
-            >
-              Load Sample Test Files
-            </button>
           </div>
         </div>
 

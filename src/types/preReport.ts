@@ -52,7 +52,7 @@ export interface UploadedImage {
   name: string;
   url: string;
   caption: string;
-  category: 'company_logo' | 'client_logo' | 'warehouse' | 'inventory' | 'supporting';
+  category: string;
 }
 
 export interface ApprovalState {

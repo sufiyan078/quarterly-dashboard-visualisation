@@ -13,7 +13,7 @@ interface ImageManagerProps {
 
 export function ImageManager({ images, onImagesChange, registerPromise }: ImageManagerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedCategory, setSelectedCategory] = useState<UploadedImage['category']>('warehouse');
+  const [selectedCategory, setSelectedCategory] = useState<string>("Warehouse Photos");
   const [tempCaption, setTempCaption] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
 
@@ -46,7 +46,7 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
             id: Math.random().toString(36).substr(2, 9),
             name: file.name,
             url: compressedUrl,
-            caption: tempCaption.trim() || `Image representing ${selectedCategory.replace('_', ' ')}`,
+            caption: tempCaption.trim() || `Image representing ${selectedCategory}`,
             category: selectedCategory
           };
           onImagesChange([...images, newImg]);
@@ -73,7 +73,7 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
     onImagesChange(images.map(img => img.id === id ? { ...img, caption } : img));
   };
 
-  const updateCategory = (id: string, category: UploadedImage['category']) => {
+  const updateCategory = (id: string, category: string) => {
     onImagesChange(images.map(img => img.id === id ? { ...img, category } : img));
   };
 
@@ -137,17 +137,15 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-              Target Category
+              Add text
             </label>
-            <select
+            <input
+              type="text"
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value as UploadedImage['category'])}
-              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-350 outline-none focus:border-indigo-500/50 cursor-pointer"
-            >
-              <option value="warehouse">Warehouse Photos</option>
-              <option value="inventory">Inventory Stock Evidence</option>
-              <option value="supporting">Supporting Calculations</option>
-            </select>
+              onChange={(e) => setSelectedCategory(e.target.value)}
+              placeholder="e.g. Warehouse Photos"
+              className="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-350 outline-none focus:border-indigo-500/50 placeholder-slate-650"
+            />
           </div>
           <div>
             <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
@@ -245,15 +243,13 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-800/80 rounded px-2.5 py-1">
                       <Tag className="h-3.5 w-3.5 text-slate-500" />
-                      <select
+                      <input
+                        type="text"
                         value={img.category}
-                        onChange={(e) => updateCategory(img.id, e.target.value as UploadedImage['category'])}
-                        className="bg-transparent border-none text-[10px] text-slate-300 outline-none w-full cursor-pointer"
-                      >
-                        <option value="warehouse">Warehouse Photos</option>
-                        <option value="inventory">Inventory Stock Evidence</option>
-                        <option value="supporting">Supporting Calculations</option>
-                      </select>
+                        onChange={(e) => updateCategory(img.id, e.target.value)}
+                        className="bg-transparent border-none text-[10px] text-slate-300 outline-none w-full placeholder-slate-600"
+                        placeholder="Add category text..."
+                      />
                     </div>
 
                     <div className="flex items-center gap-1.5 bg-slate-900/60 border border-slate-800/80 rounded px-2.5 py-1">

@@ -91,7 +91,7 @@ export function runQA({
   }
 
   if (enabledSections.some(s => s.type === "team")) {
-    const evidencePhotos = images.filter(img => img.category === "warehouse" || img.category === "inventory" || img.category === "supporting");
+    const evidencePhotos = images.filter(img => img.category?.trim() !== "");
     if (evidencePhotos.length === 0) {
       issues.push({
         id: "narr-team-images",

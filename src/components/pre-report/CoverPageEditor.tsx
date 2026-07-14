@@ -20,6 +20,20 @@ export function CoverPageEditor({ cover, onCoverChange, registerPromise }: Cover
   };
 
   const handleLogoUpload = async (field: 'companyLogoUrl' | 'clientLogoUrl', file: File) => {
+    if (!file) return;
+    if (file.size === 0) {
+      alert("Selected logo file is empty (0 bytes).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Logo file exceeds the maximum 5MB size limit.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      alert("Unsupported file format. Please upload an image file (PNG, JPG, JPEG).");
+      return;
+    }
+
     const uploadPromise = (async () => {
       try {
         console.log(`[CoverPageEditor] Starting logo compression/upload for ${field}...`);

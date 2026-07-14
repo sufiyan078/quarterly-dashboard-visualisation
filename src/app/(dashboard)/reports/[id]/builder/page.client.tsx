@@ -172,6 +172,7 @@ export default function ReportBuilder() {
   }, [id]);
 
   const handleGeneratePdf = async () => {
+    if (isGenerating) return;
     if (!report) {
       setError("No report metadata loaded.");
       return;

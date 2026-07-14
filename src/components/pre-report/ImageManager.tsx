@@ -18,6 +18,25 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
   const [isDragActive, setIsDragActive] = useState(false);
 
   const handleImageUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size === 0) {
+      alert("Selected evidence file is empty (0 bytes).");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Evidence file exceeds the maximum 5MB size limit.");
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      alert("Unsupported file format. Please upload an image file (PNG, JPG, JPEG).");
+      return;
+    }
+    const isDuplicate = images.some(img => img.name === file.name);
+    if (isDuplicate) {
+      alert(`An evidence image named "${file.name}" has already been uploaded.`);
+      return;
+    }
+
     const uploadPromise = (async () => {
       try {
         console.log(`[ImageManager] Starting evidence image compression/upload for ${file.name}...`);

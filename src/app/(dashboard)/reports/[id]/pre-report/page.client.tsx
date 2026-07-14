@@ -489,6 +489,7 @@ export default function PreReportPage() {
   }, [narrative, metrics, items.length]);
 
   const handleSave = async (showNotification = true) => {
+    if (saving) return;
     setSaving(true);
     setError(null);
     if (showNotification) setSuccessMsg(null);
@@ -535,6 +536,7 @@ export default function PreReportPage() {
   };
 
   const handleApproveReport = async () => {
+    if (saving) return;
     setSaving(true);
     setError(null);
     try {

@@ -119,25 +119,6 @@ export default function LoginPage() {
               )}
               <span>Sign in with Google</span>
             </button>
-
-            <button
-              type="button"
-              id="bypass-auth-btn"
-              onClick={async () => {
-                setAuthError(null);
-                setIsSigningIn(true);
-                try {
-                  await loginWithMock();
-                  router.replace("/dashboard");
-                } catch (e: any) {
-                  setAuthError(e.message || "Bypass failed.");
-                  setIsSigningIn(false);
-                }
-              }}
-              className="flex w-full items-center justify-center gap-3 rounded-lg border border-slate-700 bg-slate-800/50 hover:bg-slate-800 text-slate-200 px-4 py-3 text-sm font-semibold transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <span>Bypass Auth (Dev Mode)</span>
-            </button>
           </div>
 
           <div className="mt-8 text-center">

@@ -6,6 +6,25 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.2.0] - 2026-07-14
+### Added
+- **GAS Arabian Services Master Template**: Integrated the official GAS Arabian Services master report design template.
+- **Custom Report Covers**: Full-bleed navy Cover Page and "Thank You / Contact Us" Back Cover Page.
+- **Table of Contents**: Structured Page 2 index with a branded navy sidebar and tagline panel.
+- **Header & Footer Branding**: Consistent page headers (brand mark + page number) and footers on content pages.
+- **Metadata Fields**: Added `suggestedOwner` and `suggestedTimeline` to recommendations, and detailed `evidence` supporting figures to risk findings.
+- **Dark-Page Isolation**: Implemented CSS encapsulation to protect navy page components from app theme overrides.
+
+### Files Modified
+- `src/components/pre-report/ExecutiveReportDocument.tsx`
+- `src/lib/report/designTokens.ts`
+- `src/lib/report/insightEngine.ts`
+- `src/types/preReport.ts`
+- `src/app/globals.css`
+- `src/app/layout.tsx`
+
+---
+
 ## [1.1.9] - 2026-07-13
 ### Changed
 - **Home Dashboard Integration**: Replaced the legacy process step pipeline with the newly integrated `MorphingCardStack` component (`DemoOne`) on the main dashboard home page. Refactored the UI classes to utilize standard project tailwind theme tokens.

@@ -495,16 +495,31 @@ export default function PreReportPage() {
 
     try {
       console.log("[ApprovalPipeline] Save Draft initiated.");
-      await waitForPendingOps();
+      try {
+        await waitForPendingOps();
+      } catch (pErr: any) {
+        const msg = pErr?.message || pErr?.toString() || "";
+        if (msg.includes("CoverPageEditor") || msg.includes("logo")) {
+          throw new Error(`Company or client logo upload failed: ${msg}`);
+        } else if (msg.includes("ImageManager") || msg.includes("image")) {
+          throw new Error(`Evidence image processing failed: ${msg}`);
+        } else {
+          throw new Error(`Pending upload operations failed: ${msg}`);
+        }
+      }
 
       const configToSave = preReportConfigRef.current;
       console.log("[ApprovalPipeline] Saving configuration to Firestore:", configToSave);
 
       const docRef = doc(db, "reports", id);
-      await setDoc(docRef, {
-        preReportConfig: configToSave,
-        updatedAt: new Date()
-      }, { merge: true });
+      try {
+        await setDoc(docRef, {
+          preReportConfig: configToSave,
+          updatedAt: new Date()
+        }, { merge: true });
+      } catch (fErr: any) {
+        throw new Error(`Firestore write failed: ${fErr.message || fErr.toString()}`);
+      }
 
       console.log("[ApprovalPipeline] Configuration saved successfully.");
       if (showNotification) {
@@ -513,7 +528,7 @@ export default function PreReportPage() {
       }
     } catch (err: any) {
       console.error("[ApprovalPipeline] Error saving pre-report config:", err);
-      setError(`Failed to save configuration: ${err.message || err.toString()}`);
+      setError(err.message || err.toString());
     } finally {
       setSaving(false);
     }
@@ -524,7 +539,18 @@ export default function PreReportPage() {
     setError(null);
     try {
       console.log("[ApprovalPipeline] Lock & Approve Report initiated.");
-      await waitForPendingOps();
+      try {
+        await waitForPendingOps();
+      } catch (pErr: any) {
+        const msg = pErr?.message || pErr?.toString() || "";
+        if (msg.includes("CoverPageEditor") || msg.includes("logo")) {
+          throw new Error(`Company or client logo upload failed: ${msg}`);
+        } else if (msg.includes("ImageManager") || msg.includes("image")) {
+          throw new Error(`Evidence image processing failed: ${msg}`);
+        } else {
+          throw new Error(`Pending upload operations failed: ${msg}`);
+        }
+      }
 
       const configToSave = preReportConfigRef.current;
       console.log("[ApprovalPipeline] Validating and approving configuration:", configToSave);
@@ -533,29 +559,33 @@ export default function PreReportPage() {
       const errors = qaIssues.filter(issue => issue.severity === "error");
       if (errors.length > 0) {
         console.warn("[ApprovalPipeline] Validation failed during approval:", errors);
-        throw new Error(`QA validation has critical errors: ${errors.map(e => e.message).join("; ")}`);
+        throw new Error(`Validation failed: ${errors.map(e => e.message).join("; ")}`);
       }
 
       console.log("[ApprovalPipeline] Approving configuration. Writing to Firestore...");
       const docRef = doc(db, "reports", id);
-      await setDoc(docRef, {
-        preReportConfig: {
-          ...configToSave,
-          approval: {
-            ...configToSave.approval,
-            readyForExport: true
-          }
-        },
-        // Promote highest step reached to 5 to unlock final PDF Builder stage
-        highestStepReached: 5,
-        updatedAt: new Date()
-      }, { merge: true });
+      try {
+        await setDoc(docRef, {
+          preReportConfig: {
+            ...configToSave,
+            approval: {
+              ...configToSave.approval,
+              readyForExport: true
+            }
+          },
+          // Promote highest step reached to 5 to unlock final PDF Builder stage
+          highestStepReached: 5,
+          updatedAt: new Date()
+        }, { merge: true });
+      } catch (fErr: any) {
+        throw new Error(`Lock transaction failed: Firestore write failed: ${fErr.message || fErr.toString()}`);
+      }
 
       console.log("[ApprovalPipeline] Approval successful. Navigating to PDF Builder.");
       router.push(`/reports/${id}/builder`);
     } catch (err: any) {
-      console.error("[ApprovalPipeline] Error saving approval status:", err);
-      setError(`Failed to lock and approve pre-report config: ${err.message || err.toString()}`);
+      console.error("[ApprovalPipeline] Error during lock & approve:", err);
+      setError(err.message || err.toString());
       setSaving(false);
     }
   };

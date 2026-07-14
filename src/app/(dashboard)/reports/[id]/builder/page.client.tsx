@@ -333,9 +333,8 @@ export default function ReportBuilder() {
 
 
 
-
   return (
-    <div className="space-y-8 max-w-4xl animate-in fade-in duration-300">
+    <div className="space-y-8 max-w-3xl mx-auto w-full animate-in fade-in duration-300">
       
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -356,7 +355,7 @@ export default function ReportBuilder() {
       </div>
 
       {/* Progress Steps Component */}
-      <div className="grid grid-cols-5 gap-2 sm:gap-4 max-w-3xl mx-auto border-b border-slate-800 pb-4 w-full">
+      <div className="grid grid-cols-5 gap-2 sm:gap-4 border-b border-slate-800 pb-4 w-full">
         {[
           { number: 1, label: "Upload Excel", path: "upload" },
           { number: 2, label: "Validate Data", path: "validate" },
@@ -411,91 +410,89 @@ export default function ReportBuilder() {
         </div>
       )}
 
-      <div className="max-w-3xl mx-auto">
-        <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/50 p-8 space-y-8 shadow-2xl">
-          {/* Header */}
-          <div className="flex items-start justify-between border-b border-slate-800/80 pb-6">
-            <div className="space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 uppercase tracking-widest">
-                <Award className="h-4 w-4 text-indigo-400" />
-                <span>Publish Cycle</span>
-              </div>
-              <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-                Compile the physical verification package. Marking this cycle as closed will archive records and restrict further file updates.
-              </p>
+      <div className="rounded-xl border border-slate-800 bg-[#0c0e15]/50 p-8 space-y-8 shadow-2xl">
+        {/* Header */}
+        <div className="flex items-start justify-between border-b border-slate-800/80 pb-6">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs font-bold text-indigo-400 uppercase tracking-widest">
+              <Award className="h-4 w-4 text-indigo-400" />
+              <span>Publish Cycle</span>
             </div>
+            <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
+              Compile the physical verification package. Marking this cycle as closed will archive records and restrict further file updates.
+            </p>
           </div>
+        </div>
 
-          {/* Document Export Package Section */}
-          <div className="space-y-4">
-            <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-              Document Export Package
-            </h4>
-            
-            <div className="space-y-3">
-              <div className="flex items-center justify-between p-4 rounded-lg bg-slate-950/80 border border-slate-900 text-xs hover:border-slate-800 transition-colors">
+        {/* Document Export Package Section */}
+        <div className="space-y-4">
+          <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+            Document Export Package
+          </h4>
+          
+          <div className="space-y-3">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-slate-950/80 border border-slate-900 text-xs hover:border-slate-800 transition-colors">
+              <div className="flex items-center gap-3">
+                <CheckSquare className="h-4 w-4 text-indigo-400" />
+                <div>
+                  <p className="font-semibold text-slate-200">Executive Narrative Report</p>
+                  <p className="text-[10px] text-slate-500 mt-1 leading-normal max-w-xl">
+                    {enabledSectionCount} sections configured in the Pre-Report stage — cover, executive summary, financial and organizational analysis, risks, opportunities, recommendations, and conclusion
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-900/50 px-2 py-1 rounded border border-slate-800/50">Pages 1–{enabledSectionCount}</span>
+            </div>
+
+            {personnelList.length > 0 && (
+              <div className="flex items-center justify-between p-4 rounded-lg bg-indigo-950/10 border border-indigo-900/30 text-xs hover:border-indigo-900/50 transition-colors">
                 <div className="flex items-center gap-3">
                   <CheckSquare className="h-4 w-4 text-indigo-400" />
                   <div>
-                    <p className="font-semibold text-slate-200">Executive Narrative Report</p>
-                    <p className="text-[10px] text-slate-500 mt-1 leading-normal max-w-xl">
-                      {enabledSectionCount} sections configured in the Pre-Report stage — cover, executive summary, financial and organizational analysis, risks, opportunities, recommendations, and conclusion
-                    </p>
+                    <p className="font-semibold text-indigo-300">Evidence & On-Site Personnel Ledger</p>
+                    <p className="text-[10px] text-indigo-455/80 mt-1 leading-normal max-w-xl">{personnelList.length} field workers listed with details & remarks</p>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-900/50 px-2 py-1 rounded border border-slate-800/50">Pages 1–{enabledSectionCount}</span>
+                <span className="text-[10px] font-bold text-indigo-400 uppercase bg-indigo-950/40 px-2 py-1 rounded border border-indigo-900/30">Appended (Page {totalPdfPages})</span>
               </div>
-
-              {personnelList.length > 0 && (
-                <div className="flex items-center justify-between p-4 rounded-lg bg-indigo-950/10 border border-indigo-900/30 text-xs hover:border-indigo-900/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <CheckSquare className="h-4 w-4 text-indigo-400" />
-                    <div>
-                      <p className="font-semibold text-indigo-300">Evidence & On-Site Personnel Ledger</p>
-                      <p className="text-[10px] text-indigo-450/80 mt-1 leading-normal max-w-xl">{personnelList.length} field workers listed with details & remarks</p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-bold text-indigo-400 uppercase bg-indigo-950/40 px-2 py-1 rounded border border-indigo-900/30">Appended (Page {totalPdfPages})</span>
-                </div>
-              )}
-            </div>
+            )}
           </div>
+        </div>
 
-          {/* Action buttons section */}
-          <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-800/80">
-            <button
-              onClick={handleGeneratePdf}
-              disabled={isGenerating}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-750 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-indigo-500/10 active:scale-[0.98]"
-            >
-              {isGenerating ? (
-                <>
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
-                  Compiling PDF...
-                </>
-              ) : (
-                <>
-                  <Printer className="h-4 w-4" />
-                  Generate PDF Package
-                </>
-              )}
-            </button>
+        {/* Action buttons section */}
+        <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-slate-800/80">
+          <button
+            onClick={handleGeneratePdf}
+            disabled={isGenerating}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-500 hover:bg-indigo-600 disabled:bg-indigo-750 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-indigo-500/10 active:scale-[0.98]"
+          >
+            {isGenerating ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
+                Compiling PDF...
+              </>
+            ) : (
+              <>
+                <Printer className="h-4 w-4" />
+                Generate PDF Package
+              </>
+            )}
+          </button>
 
-            <button
-              onClick={handleCloseAudit}
-              disabled={isClosing}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800/80 disabled:bg-slate-950 px-5 py-3 text-sm font-semibold text-slate-300 hover:text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed active:scale-[0.98]"
-            >
-              {isClosing ? (
-                "Closing Audit..."
-              ) : (
-                <>
-                  <Lock className="h-4 w-4" />
-                  Complete & Close Audit
-                </>
-              )}
-            </button>
-          </div>
+          <button
+            onClick={handleCloseAudit}
+            disabled={isClosing}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800/80 disabled:bg-slate-950 px-5 py-3 text-sm font-semibold text-slate-300 hover:text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed active:scale-[0.98]"
+          >
+            {isClosing ? (
+              "Closing Audit..."
+            ) : (
+              <>
+                <Lock className="h-4 w-4" />
+                Complete & Close Audit
+              </>
+            )}
+          </button>
         </div>
       </div>
 

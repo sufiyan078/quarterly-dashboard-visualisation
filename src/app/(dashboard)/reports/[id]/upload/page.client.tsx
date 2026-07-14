@@ -186,7 +186,7 @@ export default function UploadExcel() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <div className="space-y-6 max-w-3xl mx-auto w-full animate-in fade-in duration-300">
 
       {/* Header */}
       <div className="flex items-center gap-4">
@@ -204,7 +204,7 @@ export default function UploadExcel() {
       </div>
 
       {/* Progress Steps */}
-      <div className="grid grid-cols-5 gap-2 sm:gap-4 max-w-3xl mx-auto border-b border-slate-800/80 pb-4 w-full">
+      <div className="grid grid-cols-5 gap-2 sm:gap-4 border-b border-slate-800/80 pb-4 w-full">
         {[
           { number: 1, label: "Upload Excel", path: "upload" },
           { number: 2, label: "Validate Data", path: "validate" },
@@ -255,7 +255,7 @@ export default function UploadExcel() {
       )}
 
       {/* Main Content Area */}
-      <div className="max-w-3xl mx-auto space-y-6 w-full">
+      <div className="space-y-6 w-full">
 
         {/* Drop Zone */}
         <div

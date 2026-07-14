@@ -3,6 +3,7 @@ import { Users, UserCheck } from "lucide-react";
 import { PersonnelEntry } from "@/types/personnel";
 import { PersonnelCard } from "./PersonnelCard";
 import { PersonnelForm } from "./PersonnelForm";
+import { compressImage } from "@/lib/utils";
 
 interface EvidencePersonnelProps {
   personnelList: PersonnelEntry[];
@@ -33,14 +34,18 @@ export const EvidencePersonnel: React.FC<EvidencePersonnelProps> = ({
     setPersonnelList((prev) => prev.filter((p) => p.id !== id));
   };
 
-  const handleReplacePhoto = (id: string, file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPersonnelList((prev) =>
-        prev.map((p) => (p.id === id ? { ...p, photoUrl: reader.result as string } : p))
-      );
-    };
-    reader.readAsDataURL(file);
+  const handleReplacePhoto = async (id: string, file: File) => {
+    try {
+      // Compress to max 300px since personnel photos are displayed very small
+      const compressedUrl = await compressImage(file, 300, 0.7);
+      if (compressedUrl) {
+        setPersonnelList((prev) =>
+          prev.map((p) => (p.id === id ? { ...p, photoUrl: compressedUrl } : p))
+        );
+      }
+    } catch (err) {
+      console.error("Error compressing replaced photo:", err);
+    }
   };
 
   return (

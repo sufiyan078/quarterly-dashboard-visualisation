@@ -3,6 +3,7 @@
 import React, { useRef } from "react";
 import { Upload, X, Image as ImageIcon, Sparkles, Building, User, Calendar, ShieldAlert } from "lucide-react";
 import { CoverPageData } from "@/types/preReport";
+import { compressImage } from "@/lib/utils";
 
 interface CoverPageEditorProps {
   cover: CoverPageData;
@@ -17,14 +18,16 @@ export function CoverPageEditor({ cover, onCoverChange }: CoverPageEditorProps) 
     onCoverChange({ ...cover, [field]: value });
   };
 
-  const handleLogoUpload = (field: 'companyLogoUrl' | 'clientLogoUrl', file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
-        update(field, e.target.result as string);
+  const handleLogoUpload = async (field: 'companyLogoUrl' | 'clientLogoUrl', file: File) => {
+    try {
+      // Compress to max 400px since logos don't need to be huge
+      const compressedUrl = await compressImage(file, 400, 0.7);
+      if (compressedUrl) {
+        update(field, compressedUrl);
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error uploading/compressing logo:", err);
+    }
   };
 
   return (

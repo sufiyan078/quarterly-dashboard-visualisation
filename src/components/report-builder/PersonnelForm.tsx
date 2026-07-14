@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Camera, Upload, Plus } from "lucide-react";
 import { PersonnelEntry } from "@/types/personnel";
+import { compressImage } from "@/lib/utils";
 
 interface PersonnelFormProps {
   onAdd: (entry: Omit<PersonnelEntry, "id">) => void;
@@ -19,10 +20,10 @@ export const PersonnelForm: React.FC<PersonnelFormProps> = ({
   const [remarks, setRemarks] = useState("");
   const [photo, setPhoto] = useState<string | null>(null);
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // 5 MB size limit
+      // 5 MB size limit (pre-compression check)
       const maxSize = 5 * 1024 * 1024;
       if (file.size > maxSize) {
         onValidationError("File is too large. Maximum allowed size is 5 MB.");
@@ -44,11 +45,15 @@ export const PersonnelForm: React.FC<PersonnelFormProps> = ({
       }
 
       onValidationError(null);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhoto(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // Compress to max 300px since personnel photos are displayed very small
+        const compressedUrl = await compressImage(file, 300, 0.7);
+        if (compressedUrl) {
+          setPhoto(compressedUrl);
+        }
+      } catch (err) {
+        console.error("Error compressing personnel photo:", err);
+      }
     }
   };
 

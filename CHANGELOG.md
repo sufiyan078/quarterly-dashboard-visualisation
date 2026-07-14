@@ -5,6 +5,15 @@ All notable changes to the Inventory Analytics & Reporting Portal will be docume
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to Semantic Versioning.
 
 ---
+## [1.2.9] - 2026-07-14
+### Changed
+- **Consolidated Report Builder Interface**: Removed the auxiliary cards ("Signature Audit Blocks" and "Evidence & Personnel Ledger") and consolidated the core publishing controls into a single, prominent, centered "Publish Cycle" card. This card now houses the "Document Export Package" manifest.
+
+### Files Modified
+- `src/app/(dashboard)/reports/[id]/builder/page.client.tsx`
+- `CHANGELOG.md`
+
+---
 
 ## [1.2.1] - 2026-07-14
 ### Fixed

@@ -5,6 +5,19 @@ All notable changes to the Inventory Analytics & Reporting Portal will be docume
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to Semantic Versioning.
 
 ---
+## [1.3.0] - 2026-07-14
+### Added
+- **BKLitUI Pie Chart Integration**: Replaced the custom SVG donut chart inside the "Variance Share of Top Suppliers" card with a highly premium, animated `BKLitUI` composable Pie Chart component.
+- **Micro-Animations and Visuals**: Implemented entry scaling/fade transitions, dynamic translation offset and glow drop-shadow effects on slice hover, and a count-up text animation in the center of the pie chart.
+- **Component Isolation**: Created custom composable `PieChart`, `PieSlice`, and `PieCenter` components under `src/components/ui/bklitui-pie-chart.tsx`. Wrapped them in a local `BKLitSupplierDonutChart` component in `page.client.tsx` to preserve the layout, formatting, and colors of the supplier variance dataset, leaving other charts (like "Accuracy Breakdown") unaffected.
+
+### Files Modified
+- `src/components/ui/bklitui-pie-chart.tsx`
+- `src/app/(dashboard)/reports/[id]/dashboard/page.client.tsx`
+- `CHANGELOG.md`
+
+---
+
 ## [1.2.9] - 2026-07-14
 ### Changed
 - **Consolidated Report Builder Interface**: Removed the auxiliary cards ("Signature Audit Blocks" and "Evidence & Personnel Ledger") and consolidated the core publishing controls into a single, prominent, centered "Publish Cycle" card. This card now houses the "Document Export Package" manifest.

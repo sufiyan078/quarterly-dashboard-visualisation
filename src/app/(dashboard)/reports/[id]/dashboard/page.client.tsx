@@ -28,7 +28,6 @@ import {
   Building,
   UserCheck,
   BarChart3,
-  PieChart,
   Users,
   FileText,
   AlertCircle,
@@ -37,6 +36,7 @@ import {
   PanelLeftOpen
 } from "lucide-react";
 import { computeDashboardMetrics } from "@/lib/inventory/dashboardCalculations";
+import { PieChart, PieSlice, PieCenter } from "@/components/ui/bklitui-pie-chart";
 
 interface Report {
   title: string;
@@ -495,6 +495,79 @@ function SVGDonutChart({ data, title, subtitle, size = "sm", isCurrency = false 
   );
 }
 
+interface BKLitSupplierDonutChartProps {
+  data: DonutData[];
+  title: string;
+  subtitle?: string;
+  isCurrency?: boolean;
+}
+
+function BKLitSupplierDonutChart({ data, title, subtitle, isCurrency = false }: BKLitSupplierDonutChartProps) {
+  const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
+
+  const formatValue = (val: number) => {
+    if (isCurrency) {
+      if (val >= 1_000_000) return `SAR ${(val / 1_000_000).toFixed(1)}M`;
+      if (val >= 1_000) return `SAR ${(val / 1_000).toFixed(1)}K`;
+      return `SAR ${val.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+    } else {
+      if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+      if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+      return val.toLocaleString("en-US", { maximumFractionDigits: 0 });
+    }
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-800/80 bg-slate-950/20 p-5 flex flex-col h-full">
+      <div>
+        <h3 className="text-xs font-bold text-slate-450 uppercase tracking-widest">{title}</h3>
+        {subtitle && <p className="text-[10px] text-slate-500 mt-1">{subtitle}</p>}
+      </div>
+
+      <div className="flex-grow flex flex-col sm:flex-row items-center justify-center mt-6 gap-8">
+        <div className="relative flex items-center justify-center flex-shrink-0 w-36 h-36">
+          <PieChart
+            data={data}
+            innerRadius={55}
+            padAngle={0.02}
+            cornerRadius={4}
+          >
+            {data.map((_, index) => (
+              <PieSlice
+                key={index}
+                index={index}
+              />
+            ))}
+
+            <PieCenter
+              defaultLabel="TOTAL"
+              prefix="SAR "
+            />
+          </PieChart>
+        </div>
+
+        <div className="flex-grow space-y-2 text-xs w-full">
+          {data.map((item, idx) => (
+            <div key={idx} className="flex items-center justify-between py-1 border-b border-slate-900/40 last:border-0">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></span>
+                <span className="truncate" title={item.label}>{item.label}</span>
+              </div>
+              <div className="flex flex-col items-end flex-shrink-0 pl-3">
+                <span className="font-mono font-bold text-white">
+                  {((item.value / total) * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                  {formatValue(item.value)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface BarData {
   label: string;
@@ -1778,10 +1851,9 @@ export default function InventoryDashboard() {
                   }))}
                 />
 
-                <SVGDonutChart
+                <BKLitSupplierDonutChart
                   title="Variance Share of Top Suppliers"
                   subtitle="Top suppliers share of absolute variance risk"
-                  size="lg"
                   isCurrency={true}
                   data={[
                     { label: metrics.suppliers[0]?.supplier || "Supplier 1", value: metrics.suppliers[0]?.absoluteVarianceValue || 0, color: "#ef4444" },

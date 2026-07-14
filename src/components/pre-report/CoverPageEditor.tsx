@@ -8,9 +8,10 @@ import { compressImage } from "@/lib/utils";
 interface CoverPageEditorProps {
   cover: CoverPageData;
   onCoverChange: (cover: CoverPageData) => void;
+  registerPromise?: <T>(promise: Promise<T>) => Promise<T>;
 }
 
-export function CoverPageEditor({ cover, onCoverChange }: CoverPageEditorProps) {
+export function CoverPageEditor({ cover, onCoverChange, registerPromise }: CoverPageEditorProps) {
   const companyLogoRef = useRef<HTMLInputElement>(null);
   const clientLogoRef = useRef<HTMLInputElement>(null);
 
@@ -19,15 +20,24 @@ export function CoverPageEditor({ cover, onCoverChange }: CoverPageEditorProps) 
   };
 
   const handleLogoUpload = async (field: 'companyLogoUrl' | 'clientLogoUrl', file: File) => {
-    try {
-      // Compress to max 400px since logos don't need to be huge
-      const compressedUrl = await compressImage(file, 400, 0.7);
-      if (compressedUrl) {
-        update(field, compressedUrl);
+    const uploadPromise = (async () => {
+      try {
+        console.log(`[CoverPageEditor] Starting logo compression/upload for ${field}...`);
+        const compressedUrl = await compressImage(file, 400, 0.7);
+        if (compressedUrl) {
+          update(field, compressedUrl);
+          console.log(`[CoverPageEditor] Logo compression/upload finished for ${field}.`);
+        }
+      } catch (err) {
+        console.error(`[CoverPageEditor] Error uploading/compressing logo for ${field}:`, err);
+        throw err;
       }
-    } catch (err) {
-      console.error("Error uploading/compressing logo:", err);
+    })();
+
+    if (registerPromise) {
+      registerPromise(uploadPromise);
     }
+    await uploadPromise;
   };
 
   return (

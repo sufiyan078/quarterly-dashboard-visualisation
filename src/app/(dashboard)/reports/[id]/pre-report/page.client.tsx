@@ -66,12 +66,90 @@ export default function PreReportPage() {
   const previewContainerRef = useRef<HTMLDivElement>(null);
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null);
 
-  // Configuration States
-  const [sections, setSections] = useState<ReportSection[]>(DEFAULT_SECTIONS);
-  const [cover, setCover] = useState<CoverPageData>(DEFAULT_COVER);
-  const [content, setContent] = useState<EditableContent>(DEFAULT_CONTENT);
-  const [images, setImages] = useState<UploadedImage[]>([]);
-  const [approval, setApproval] = useState<ApprovalState>(DEFAULT_APPROVAL);
+  // Configuration States - Consolidated into a single canonical object
+  const [preReportConfig, setPreReportConfig] = useState<{
+    sections: ReportSection[];
+    cover: CoverPageData;
+    content: EditableContent;
+    images: UploadedImage[];
+    approval: ApprovalState;
+  }>({
+    sections: DEFAULT_SECTIONS,
+    cover: DEFAULT_COVER,
+    content: DEFAULT_CONTENT,
+    images: [],
+    approval: DEFAULT_APPROVAL,
+  });
+
+  // Getters for destructured fields so existing code works without changes
+  const { sections, cover, content, images, approval } = preReportConfig;
+
+  // Ref to always have access to the latest state inside async calls/effects
+  const preReportConfigRef = useRef(preReportConfig);
+  useEffect(() => {
+    preReportConfigRef.current = preReportConfig;
+  }, [preReportConfig]);
+
+  // State setter adapters that behave like standard React useState setters
+  const setSections = (valOrFn: ReportSection[] | ((prev: ReportSection[]) => ReportSection[])) => {
+    setPreReportConfig(prev => ({
+      ...prev,
+      sections: typeof valOrFn === 'function' ? valOrFn(prev.sections) : valOrFn
+    }));
+  };
+
+  const setCover = (valOrFn: CoverPageData | ((prev: CoverPageData) => CoverPageData)) => {
+    setPreReportConfig(prev => ({
+      ...prev,
+      cover: typeof valOrFn === 'function' ? valOrFn(prev.cover) : valOrFn
+    }));
+  };
+
+  const setContent = (valOrFn: EditableContent | ((prev: EditableContent) => EditableContent)) => {
+    setPreReportConfig(prev => ({
+      ...prev,
+      content: typeof valOrFn === 'function' ? valOrFn(prev.content) : valOrFn
+    }));
+  };
+
+  const setImages = (valOrFn: UploadedImage[] | ((prev: UploadedImage[]) => UploadedImage[])) => {
+    setPreReportConfig(prev => ({
+      ...prev,
+      images: typeof valOrFn === 'function' ? valOrFn(prev.images) : valOrFn
+    }));
+  };
+
+  const setApproval = (valOrFn: ApprovalState | ((prev: ApprovalState) => ApprovalState)) => {
+    setPreReportConfig(prev => ({
+      ...prev,
+      approval: typeof valOrFn === 'function' ? valOrFn(prev.approval) : valOrFn
+    }));
+  };
+
+  // Asynchronous operation tracker for pipeline locking/approvals
+  const activePromisesRef = useRef<Set<Promise<any>>>(new Set());
+  const [isPendingOps, setIsPendingOps] = useState(false);
+
+  const registerPromise = <T,>(promise: Promise<T>): Promise<T> => {
+    console.log("[ApprovalPipeline] Registering pending asynchronous operation:", promise);
+    activePromisesRef.current.add(promise);
+    setIsPendingOps(true);
+    const cleanUp = () => {
+      activePromisesRef.current.delete(promise);
+      setIsPendingOps(activePromisesRef.current.size > 0);
+      console.log(`[ApprovalPipeline] Asynchronous operation finished. Remaining pending: ${activePromisesRef.current.size}`);
+    };
+    promise.then(cleanUp, cleanUp);
+    return promise;
+  };
+
+  const waitForPendingOps = async () => {
+    if (activePromisesRef.current.size > 0) {
+      console.log(`[ApprovalPipeline] Waiting for ${activePromisesRef.current.size} pending asynchronous operations to complete...`);
+      await Promise.all(Array.from(activePromisesRef.current));
+      console.log("[ApprovalPipeline] All pending asynchronous operations completed.");
+    }
+  };
 
   useEffect(() => {
     if (!id || id === "placeholder") return;
@@ -98,21 +176,29 @@ export default function PreReportPage() {
           // Initialize configs if stored in Firestore
           if (reportData.preReportConfig) {
             const config = reportData.preReportConfig;
-            if (config.sections) setSections(mergeWithDefaultSections(config.sections));
-            if (config.cover) setCover(config.cover);
-            if (config.content) setContent(config.content);
-            if (config.images) setImages(config.images);
-            if (config.approval) setApproval(config.approval);
+            setPreReportConfig({
+              sections: config.sections ? mergeWithDefaultSections(config.sections) : DEFAULT_SECTIONS,
+              cover: config.cover || DEFAULT_COVER,
+              content: config.content || DEFAULT_CONTENT,
+              images: config.images || [],
+              approval: config.approval || DEFAULT_APPROVAL
+            });
           } else {
             // Prefill cover values from report base data
-            setCover({
-              ...DEFAULT_COVER,
-              reportTitle: reportData.title || `Q${reportData.quarter} Inventory Report`,
-              clientName: reportData.warehouseName || reportData.location || "Default Client",
-              reportingPeriod: `${reportData.quarter} ${reportData.year}`,
-              preparedBy: reportData.preparedBy || "",
-              checkedBy: reportData.checkedBy || "",
-              approvedBy: reportData.approvedBy || "",
+            setPreReportConfig({
+              sections: DEFAULT_SECTIONS,
+              cover: {
+                ...DEFAULT_COVER,
+                reportTitle: reportData.title || `Q${reportData.quarter} Inventory Report`,
+                clientName: reportData.warehouseName || reportData.location || "Default Client",
+                reportingPeriod: `${reportData.quarter} ${reportData.year}`,
+                preparedBy: reportData.preparedBy || "",
+                checkedBy: reportData.checkedBy || "",
+                approvedBy: reportData.approvedBy || "",
+              },
+              content: DEFAULT_CONTENT,
+              images: [],
+              approval: DEFAULT_APPROVAL
             });
           }
 
@@ -247,7 +333,8 @@ export default function PreReportPage() {
   }, [metrics, formattedRows, report, cover.clientName]);
 
   const qaIssues = useMemo(() => {
-    return runQA({
+    console.log("[ApprovalPipeline] Running QA Validation...");
+    const issues = runQA({
       sections,
       cover,
       content,
@@ -260,6 +347,8 @@ export default function PreReportPage() {
         location: report?.location || "",
       },
     });
+    console.log(`[ApprovalPipeline] QA Validation complete. Found ${issues.length} issue(s).`, issues);
+    return issues;
   }, [sections, cover, content, images, metrics, narrative, report]);
 
   // Compute Readiness Score for header display
@@ -367,15 +456,16 @@ export default function PreReportPage() {
   useEffect(() => {
     if (!narrative || items.length === 0) return;
 
+    const currentContent = preReportConfigRef.current.content;
     const legacyExec = /inventory verification audit, a total of/;
     const legacyRecs = /reconciliation review of high-risk items identified in Section 3/;
     const legacyObs = /Discrepancy rates are concentrated within specific warehouse divisions/;
     const legacyRemarks = /^Data verification is complete with standard tolerances\. The results present a true and fair view/;
 
-    const needsExec = !content.executiveSummary.trim() || legacyExec.test(content.executiveSummary);
-    const needsRecs = !content.recommendations.trim() || legacyRecs.test(content.recommendations);
-    const needsObs = !content.observations.trim() || legacyObs.test(content.observations);
-    const needsRemarks = !content.auditorRemarks.trim() || legacyRemarks.test(content.auditorRemarks);
+    const needsExec = !currentContent.executiveSummary.trim() || legacyExec.test(currentContent.executiveSummary);
+    const needsRecs = !currentContent.recommendations.trim() || legacyRecs.test(currentContent.recommendations);
+    const needsObs = !currentContent.observations.trim() || legacyObs.test(currentContent.observations);
+    const needsRemarks = !currentContent.auditorRemarks.trim() || legacyRemarks.test(currentContent.auditorRemarks);
 
     if (!needsExec && !needsRecs && !needsObs && !needsRemarks) return;
 
@@ -404,24 +494,26 @@ export default function PreReportPage() {
     if (showNotification) setSuccessMsg(null);
 
     try {
+      console.log("[ApprovalPipeline] Save Draft initiated.");
+      await waitForPendingOps();
+
+      const configToSave = preReportConfigRef.current;
+      console.log("[ApprovalPipeline] Saving configuration to Firestore:", configToSave);
+
       const docRef = doc(db, "reports", id);
       await setDoc(docRef, {
-        preReportConfig: {
-          sections,
-          cover,
-          content,
-          images,
-          approval
-        },
+        preReportConfig: configToSave,
         updatedAt: new Date()
       }, { merge: true });
+
+      console.log("[ApprovalPipeline] Configuration saved successfully.");
       if (showNotification) {
         setSuccessMsg("Pre-Report configuration saved successfully!");
         setTimeout(() => setSuccessMsg(null), 4500);
       }
     } catch (err: any) {
-      console.error("Error saving pre-report config:", err);
-      setError("Failed to save configuration.");
+      console.error("[ApprovalPipeline] Error saving pre-report config:", err);
+      setError(`Failed to save configuration: ${err.message || err.toString()}`);
     } finally {
       setSaving(false);
     }
@@ -429,16 +521,28 @@ export default function PreReportPage() {
 
   const handleApproveReport = async () => {
     setSaving(true);
+    setError(null);
     try {
+      console.log("[ApprovalPipeline] Lock & Approve Report initiated.");
+      await waitForPendingOps();
+
+      const configToSave = preReportConfigRef.current;
+      console.log("[ApprovalPipeline] Validating and approving configuration:", configToSave);
+
+      // Perform validation check
+      const errors = qaIssues.filter(issue => issue.severity === "error");
+      if (errors.length > 0) {
+        console.warn("[ApprovalPipeline] Validation failed during approval:", errors);
+        throw new Error(`QA validation has critical errors: ${errors.map(e => e.message).join("; ")}`);
+      }
+
+      console.log("[ApprovalPipeline] Approving configuration. Writing to Firestore...");
       const docRef = doc(db, "reports", id);
       await setDoc(docRef, {
         preReportConfig: {
-          sections,
-          cover,
-          content,
-          images,
+          ...configToSave,
           approval: {
-            ...approval,
+            ...configToSave.approval,
             readyForExport: true
           }
         },
@@ -446,10 +550,12 @@ export default function PreReportPage() {
         highestStepReached: 5,
         updatedAt: new Date()
       }, { merge: true });
+
+      console.log("[ApprovalPipeline] Approval successful. Navigating to PDF Builder.");
       router.push(`/reports/${id}/builder`);
     } catch (err: any) {
-      console.error("Error saving approval status:", err);
-      setError("Failed to lock and approve pre-report config.");
+      console.error("[ApprovalPipeline] Error saving approval status:", err);
+      setError(`Failed to lock and approve pre-report config: ${err.message || err.toString()}`);
       setSaving(false);
     }
   };
@@ -608,6 +714,7 @@ export default function PreReportPage() {
               <CoverPageEditor
                 cover={cover}
                 onCoverChange={setCover}
+                registerPromise={registerPromise}
               />
             )}
 
@@ -622,6 +729,7 @@ export default function PreReportPage() {
               <ImageManager
                 images={images}
                 onImagesChange={setImages}
+                registerPromise={registerPromise}
               />
             )}
 

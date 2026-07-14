@@ -8,31 +8,42 @@ import { compressImage } from "@/lib/utils";
 interface ImageManagerProps {
   images: UploadedImage[];
   onImagesChange: (images: UploadedImage[]) => void;
+  registerPromise?: <T>(promise: Promise<T>) => Promise<T>;
 }
 
-export function ImageManager({ images, onImagesChange }: ImageManagerProps) {
+export function ImageManager({ images, onImagesChange, registerPromise }: ImageManagerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedCategory, setSelectedCategory] = useState<UploadedImage['category']>('warehouse');
   const [tempCaption, setTempCaption] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
 
   const handleImageUpload = async (file: File) => {
-    try {
-      const compressedUrl = await compressImage(file, 800, 0.7);
-      if (compressedUrl) {
-        const newImg: UploadedImage = {
-          id: Math.random().toString(36).substr(2, 9),
-          name: file.name,
-          url: compressedUrl,
-          caption: tempCaption.trim() || `Image representing ${selectedCategory.replace('_', ' ')}`,
-          category: selectedCategory
-        };
-        onImagesChange([...images, newImg]);
-        setTempCaption(""); // reset
+    const uploadPromise = (async () => {
+      try {
+        console.log(`[ImageManager] Starting evidence image compression/upload for ${file.name}...`);
+        const compressedUrl = await compressImage(file, 800, 0.7);
+        if (compressedUrl) {
+          const newImg: UploadedImage = {
+            id: Math.random().toString(36).substr(2, 9),
+            name: file.name,
+            url: compressedUrl,
+            caption: tempCaption.trim() || `Image representing ${selectedCategory.replace('_', ' ')}`,
+            category: selectedCategory
+          };
+          onImagesChange([...images, newImg]);
+          setTempCaption(""); // reset
+          console.log(`[ImageManager] Evidence image compression/upload finished for ${file.name}.`);
+        }
+      } catch (err) {
+        console.error(`[ImageManager] Error uploading/compressing image ${file.name}:`, err);
+        throw err;
       }
-    } catch (err) {
-      console.error("Error uploading/compressing image:", err);
+    })();
+
+    if (registerPromise) {
+      registerPromise(uploadPromise);
     }
+    await uploadPromise;
   };
 
   const removeImage = (id: string) => {

@@ -314,15 +314,64 @@ function DonutStat({ label, ratePct, color }: { label: string; ratePct: number; 
 }
 
 /* ─── Brand mark (template header: logo block + wordmark) ─── */
-function BrandMark({ logoUrl, dark }: { logoUrl?: string; dark?: boolean }) {
+function BrandMark({ logoUrl, dark, large }: { logoUrl?: string; dark?: boolean; large?: boolean }) {
   if (logoUrl) {
-    return <img src={logoUrl} alt="GAS Arabian Services" style={{ maxHeight: "30px", objectFit: "contain" }} />;
+    return <img src={logoUrl} alt="GAS Arabian Services" style={{ maxHeight: large ? "76px" : "38px", objectFit: "contain" }} />;
   }
+
+  if (dark) {
+    const width = large ? "150px" : "84px";
+    const padding = large ? "8px 12px" : "4px 8px";
+    const gasSize = large ? "30px" : "16px";
+    const arabicSize = large ? "9px" : "5.5px";
+    const englishSize = large ? "8px" : "5px";
+    return (
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: "#0B2B47",
+        padding,
+        borderRadius: "2px",
+        textAlign: "center",
+        fontFamily: TYPOGRAPHY.headingFamily,
+        width,
+      }}>
+        <span style={{
+          color: "#FFFFFF",
+          fontSize: gasSize,
+          fontWeight: 900,
+          fontStyle: "italic",
+          letterSpacing: "0.02em",
+          lineHeight: "1.1",
+          display: "block"
+        }}>GAS</span>
+        <span style={{
+          color: "#FFFFFF",
+          fontSize: arabicSize,
+          fontWeight: 500,
+          lineHeight: "1",
+          display: "block",
+          margin: "2px 0"
+        }}>غاز العربية للخدمات</span>
+        <span style={{
+          color: "#FFFFFF",
+          fontSize: englishSize,
+          fontWeight: 700,
+          letterSpacing: "0.05em",
+          lineHeight: "1",
+          display: "block"
+        }}>GAS ARABIAN SERVICES</span>
+      </div>
+    );
+  }
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "7px" }}>
       <div style={{
-        backgroundColor: dark ? C.brand.white : C.brand.primary,
-        color: dark ? C.brand.primary : C.brand.white,
+        backgroundColor: C.brand.primary,
+        color: C.brand.white,
         fontFamily: TYPOGRAPHY.headingFamily,
         fontWeight: TYPOGRAPHY.weights.extrabold,
         fontSize: "11px", letterSpacing: "0.04em",
@@ -333,7 +382,7 @@ function BrandMark({ logoUrl, dark }: { logoUrl?: string; dark?: boolean }) {
       <span style={{
         fontFamily: TYPOGRAPHY.headingFamily,
         fontSize: "9px", fontWeight: TYPOGRAPHY.weights.semibold,
-        color: dark ? C.brand.white : C.brand.primary, lineHeight: 1.25,
+        color: C.brand.primary, lineHeight: 1.25,
       }}>
         GAS Arabian<br />Services
       </span>
@@ -374,7 +423,7 @@ function Page({
         display: "flex",
         flexDirection: "column",
         backgroundColor: isDark ? C.brand.primary : C.brand.white,
-        backgroundImage: isDark ? `linear-gradient(160deg, ${C.brand.primary} 0%, ${C.brand.dark} 100%)` : undefined,
+        backgroundImage: undefined,
         position: "relative",
         border: `1px solid ${isDark ? C.brand.primary : C.border}`,
         overflow: "hidden",
@@ -473,79 +522,144 @@ function splitTitleForCover(title: string): { white: string; teal: string } {
 function CoverBody({ cover, reportMeta }: { cover: CoverPageData; reportMeta: ReportMeta }) {
   const title = cover.reportTitle || "Physical Inventory Audit Report";
   const { white, teal } = splitTitleForCover(title);
-  const period = cover.reportingPeriod || `${reportMeta.quarter} ${reportMeta.year}`.trim();
+  const period = cover.reportingPeriod || [reportMeta?.quarter, reportMeta?.year].filter(Boolean).join(" ") || "Q2 2026";
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%", justifyContent: "space-between" }}>
-      {/* Top strip: brand mark left, client logo / site line right (template) */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-        <BrandMark logoUrl={cover.companyLogoUrl} dark />
-        {cover.clientLogoUrl ? (
-          <img src={cover.clientLogoUrl} alt="Client Logo" style={{ maxHeight: "34px", objectFit: "contain" }} />
-        ) : (
-          <span style={{ ...overline, color: C.text.faint, letterSpacing: "0.2em" }}>
+      {/* Black Accent Box */}
+      <div style={{
+        position: "absolute",
+        top: "550px",
+        bottom: 0,
+        left: "50%",
+        right: 0,
+        backgroundColor: "#000000",
+        zIndex: 1,
+      }} />
+
+      {/* Content Wrapper to overlay on top of Black Accent Box */}
+      <div style={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        justifyContent: "space-between",
+        position: "relative",
+        zIndex: 2,
+      }}>
+        {/* Top strip: brand mark left, URL right */}
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <BrandMark logoUrl={cover.companyLogoUrl} dark />
+          <span style={{
+            ...overline,
+            color: C.brand.white,
+            fontSize: "8px",
+            fontWeight: TYPOGRAPHY.weights.semibold,
+            letterSpacing: "0.15em",
+            textTransform: "uppercase"
+          }}>
             www.gasarabianservices.com
           </span>
-        )}
-      </div>
-
-      {/* Title block (template: teal overline, white + teal two-tone title) */}
-      <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
-        <span style={{
-          ...overline, color: C.brand.accent, fontSize: "10px",
-          letterSpacing: "0.35em", display: "block", marginBottom: "14px",
-        }}>
-          Inventory Audit Report · {period}
-        </span>
-        <h1 style={{
-          fontFamily: TYPOGRAPHY.headingFamily,
-          fontSize: "42px", fontWeight: TYPOGRAPHY.weights.bold,
-          letterSpacing: "-0.015em", lineHeight: 1.12, margin: 0,
-        }}>
-          {white && <span style={{ color: C.brand.white, display: "block" }}>{white}</span>}
-          <span style={{ color: C.brand.accent, display: "block" }}>{teal}</span>
-        </h1>
-        <p style={{ fontSize: "12px", color: C.text.faint, marginTop: "18px", lineHeight: 1.65, maxWidth: "420px" }}>
-          {cover.reportSubtitle ||
-            "A structured report for quarterly reconciliation reporting across divisions, suppliers and org codes."}
-        </p>
-        <div style={{ height: "3px", width: "56px", backgroundColor: C.brand.accent, borderRadius: "2px", marginTop: "26px" }} />
-      </div>
-
-      {/* Prepared-by block (template bottom composition) */}
-      <div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px 28px", paddingTop: "18px", borderTop: `1px solid rgba(255,255,255,0.14)` }}>
-          {[
-            ["Prepared By", cover.preparedBy || "GAS Arabian Services"],
-            ["Audited Entity", cover.clientName || "All Divisions"],
-            ["Facility / Location", reportMeta.location || "Kingdom of Saudi Arabia"],
-            ["Report Date", new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
-          ].map(([label, value]) => (
-            <div key={label}>
-              <span style={{ ...overline, display: "block", fontSize: "7.5px", color: C.brand.accent }}>{label}</span>
-              <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.brand.white, display: "block", marginTop: "3px" }}>
-                {value}
-              </span>
-            </div>
-          ))}
         </div>
 
-        <div style={{ marginTop: "22px", display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-          <span style={{ fontSize: "9px", color: C.text.faint }}>
-            GAS Arabian Services — Kingdom of Saudi Arabia · www.gasarabianservices.com
-          </span>
-        </div>
-
-        {cover.confidentialityStatement && (
-          <div style={{
-            marginTop: "14px", padding: "9px 13px", borderRadius: "5px",
-            backgroundColor: "rgba(255,255,255,0.06)", borderLeft: `3px solid ${C.brand.accent}`,
+        {/* Title block (template: teal overline, white + teal two-tone title) */}
+        <div style={{ flexGrow: 1, display: "flex", flexDirection: "column", justifyContent: "center" }}>
+          <span style={{
+            ...overline, color: C.brand.accent, fontSize: "10px",
+            letterSpacing: "0.35em", display: "block", marginBottom: "14px",
           }}>
-            <p style={{ fontSize: "8.5px", color: C.text.faint, lineHeight: 1.5, margin: 0 }}>
-              {cover.confidentialityStatement}
-            </p>
+            Inventory Audit Report · {period.toUpperCase()}
+          </span>
+          <h1 style={{
+            fontFamily: TYPOGRAPHY.headingFamily,
+            fontSize: "42px", fontWeight: TYPOGRAPHY.weights.extrabold,
+            letterSpacing: "-0.015em", lineHeight: 1.12, margin: 0,
+          }}>
+            {white && <span style={{ color: C.brand.white, display: "block" }}>{white}</span>}
+            <span style={{ color: C.brand.accent, display: "block" }}>{teal}</span>
+          </h1>
+          <p style={{ fontSize: "12px", color: C.text.faint, marginTop: "18px", lineHeight: 1.65, maxWidth: "450px" }}>
+            {cover.reportSubtitle ||
+              "A structured report for quarterly reconciliation reporting across divisions, suppliers and org codes."}
+          </p>
+          <div style={{ height: "3px", width: "56px", backgroundColor: C.brand.accent, borderRadius: "2px", marginTop: "26px" }} />
+        </div>
+
+        {/* Prepared-by & Certification block */}
+        <div>
+          <div style={{
+            borderTop: `1px solid ${C.brand.accent}`,
+            paddingTop: "20px",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end"
+          }}>
+            {/* Left Part: 2-column Metadata Grid */}
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: "180px 180px",
+              gap: "16px 24px"
+            }}>
+              <div>
+                <span style={{ ...overline, fontSize: "7.5px", color: C.brand.accent, display: "block" }}>Prepared By</span>
+                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.brand.white, display: "block", marginTop: "4px" }}>
+                  {cover.preparedBy || "GAS Arabian Services"}
+                </span>
+              </div>
+              <div>
+                <span style={{ ...overline, fontSize: "7.5px", color: C.brand.accent, display: "block" }}>Audited Entity</span>
+                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.brand.white, display: "block", marginTop: "4px" }}>
+                  {cover.clientName || "All Divisions"}
+                </span>
+              </div>
+              <div>
+                <span style={{ ...overline, fontSize: "7.5px", color: C.brand.accent, display: "block" }}>Facility / Location</span>
+                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.brand.white, display: "block", marginTop: "4px" }}>
+                  {reportMeta.location || "Kingdom of Saudi Arabia"}
+                </span>
+              </div>
+              <div>
+                <span style={{ ...overline, fontSize: "7.5px", color: C.brand.accent, display: "block" }}>Report Date</span>
+                <span style={{ fontSize: "11px", fontWeight: TYPOGRAPHY.weights.semibold, color: C.brand.white, display: "block", marginTop: "4px" }}>
+                  {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                </span>
+              </div>
+            </div>
+
+            {/* Right Part: Cert Badge */}
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
+              <span style={{ ...overline, fontSize: "7.5px", color: C.brand.accent, display: "block", marginBottom: "6px" }}>is certified by</span>
+              {cover.clientLogoUrl ? (
+                <img src={cover.clientLogoUrl} alt="Certification" style={{ maxHeight: "36px", objectFit: "contain" }} />
+              ) : (
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  backgroundColor: "#0B2B47",
+                  padding: "5px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid rgba(255,255,255,0.08)"
+                }}>
+                  <span style={{ fontSize: "7px", color: C.brand.accent, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em" }}>TRACE</span>
+                  <div style={{ width: "1px", height: "12px", backgroundColor: "rgba(255,255,255,0.2)" }} />
+                  <span style={{ fontSize: "7px", color: "#FFFFFF", fontWeight: "medium" }}>CERTIFIED</span>
+                </div>
+              )}
+            </div>
           </div>
-        )}
+
+          {/* Confidentiality Statement */}
+          {cover.confidentialityStatement && (
+            <div style={{
+              marginTop: "16px", padding: "8px 12px", borderRadius: "4px",
+              backgroundColor: "rgba(255,255,255,0.04)", borderLeft: `3px solid ${C.brand.accent}`,
+            }}>
+              <p style={{ fontSize: "8px", color: C.text.faint, lineHeight: 1.4, margin: 0 }}>
+                {cover.confidentialityStatement}
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1163,11 +1277,11 @@ function BackCoverBody({ cover }: { cover: CoverPageData }) {
       display: "flex", flexDirection: "column", height: "100%",
       alignItems: "center", justifyContent: "center", textAlign: "center",
     }}>
-      <BrandMark logoUrl={cover.companyLogoUrl} dark />
+      <BrandMark logoUrl={cover.companyLogoUrl} dark large />
       <h1 style={{
         fontFamily: TYPOGRAPHY.headingFamily,
         fontSize: "30px", fontWeight: TYPOGRAPHY.weights.semibold,
-        color: C.brand.white, margin: "26px 0 0",
+        color: C.brand.white, margin: "24px 0 0",
       }}>
         Thank You
       </h1>
@@ -1176,7 +1290,27 @@ function BackCoverBody({ cover }: { cover: CoverPageData }) {
         <br />
         www.gasarabianservices.com
       </p>
-      <div style={{ height: "3px", width: "40px", backgroundColor: C.brand.accent, borderRadius: "2px", marginTop: "24px" }} />
+
+      {/* Cert Badge */}
+      <div style={{ marginTop: "28px" }}>
+        {cover.clientLogoUrl ? (
+          <img src={cover.clientLogoUrl} alt="Certification" style={{ maxHeight: "36px", objectFit: "contain" }} />
+        ) : (
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            backgroundColor: "#0B2B47",
+            padding: "5px 8px",
+            borderRadius: "4px",
+            border: "1px solid rgba(255,255,255,0.08)"
+          }}>
+            <span style={{ fontSize: "7px", color: C.brand.accent, fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em" }}>TRACE</span>
+            <div style={{ width: "1px", height: "12px", backgroundColor: "rgba(255,255,255,0.2)" }} />
+            <span style={{ fontSize: "7px", color: "#FFFFFF", fontWeight: "medium" }}>CERTIFIED</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

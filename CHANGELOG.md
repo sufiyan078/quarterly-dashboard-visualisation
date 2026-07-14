@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ---
 
+## [1.2.1] - 2026-07-14
+### Fixed
+- **Firestore Document Size Limit Exception in Pre-Report Stage**: Integrated a client-side HTML5 Canvas image compression utility (`compressImage`) to resize and compress evidence images and logos before converting them to base64 strings. This prevents the Firestore document payload from exceeding the 1MB limit and resolves the "Failed to lock and approve pre-report config" error.
+
+### Files Modified
+- `src/lib/utils.ts`
+- `src/components/pre-report/ImageManager.tsx`
+- `src/components/pre-report/CoverPageEditor.tsx`
+- `src/components/report-builder/PersonnelForm.tsx`
+- `src/components/report-builder/EvidencePersonnel.tsx`
+
+---
+
 ## [1.2.0] - 2026-07-14
 ### Added
 - **GAS Arabian Services Master Template**: Integrated the official GAS Arabian Services master report design template.

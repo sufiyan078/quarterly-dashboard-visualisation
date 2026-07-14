@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 import { Upload, X, Tag, MessageSquare, Image as ImageIcon, Sparkles, MoveUp, MoveDown } from "lucide-react";
 import { UploadedImage } from "@/types/preReport";
+import { compressImage } from "@/lib/utils";
 
 interface ImageManagerProps {
   images: UploadedImage[];
@@ -15,22 +16,23 @@ export function ImageManager({ images, onImagesChange }: ImageManagerProps) {
   const [tempCaption, setTempCaption] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
 
-  const handleImageUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      if (e.target?.result) {
+  const handleImageUpload = async (file: File) => {
+    try {
+      const compressedUrl = await compressImage(file, 800, 0.7);
+      if (compressedUrl) {
         const newImg: UploadedImage = {
           id: Math.random().toString(36).substr(2, 9),
           name: file.name,
-          url: e.target.result as string,
+          url: compressedUrl,
           caption: tempCaption.trim() || `Image representing ${selectedCategory.replace('_', ' ')}`,
           category: selectedCategory
         };
         onImagesChange([...images, newImg]);
         setTempCaption(""); // reset
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error uploading/compressing image:", err);
+    }
   };
 
   const removeImage = (id: string) => {

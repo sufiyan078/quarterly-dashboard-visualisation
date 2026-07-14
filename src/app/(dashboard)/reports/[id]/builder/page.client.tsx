@@ -195,6 +195,13 @@ export default function ReportBuilder() {
           useCORS: true,
           logging: false,
           backgroundColor: "#ffffff",
+          // Explicitly set capture dimensions to the full A4 page size.
+          // Without these, html2canvas may cap at the viewport height and
+          // clip the bottom portion of pages taller than the screen.
+          width: page.scrollWidth,
+          height: page.scrollHeight,
+          windowWidth: page.scrollWidth,
+          windowHeight: page.scrollHeight,
         });
 
         const imgData = canvas.toDataURL("image/jpeg", 0.95);

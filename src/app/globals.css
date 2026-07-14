@@ -1316,6 +1316,25 @@ div.rounded-2xl {
 .pdf-report-page .bg-slate-50\/50, [data-theme="dark"] .pdf-report-page .bg-slate-50\/50, [data-theme="light"] .pdf-report-page .bg-slate-50\/50 { background-color: rgba(248, 250, 252, 0.5) !important; }
 .pdf-report-page .bg-white, [data-theme="dark"] .pdf-report-page .bg-white, [data-theme="light"] .pdf-report-page .bg-white { background-color: #ffffff !important; }
 
+/* ─── PDF tables: override global border-collapse rules ─── */
+/* Global `table { border-collapse: separate }` must not win over our
+   inline `table-layout: fixed; border-collapse: collapse`. The inline
+   style has higher specificity, but this rule makes the intent explicit
+   and protects against future reset stylesheets. */
+.pdf-report-page table {
+  table-layout: fixed !important;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+.pdf-report-page th,
+[data-theme="dark"] .pdf-report-page th,
+[data-theme="light"] .pdf-report-page th {
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
 /* Enforce indicator/accent text colors */
 .pdf-report-page .text-emerald-600, [data-theme="dark"] .pdf-report-page .text-emerald-600, [data-theme="light"] .pdf-report-page .text-emerald-600 { color: #059669 !important; }
 .pdf-report-page .text-red-500, [data-theme="dark"] .pdf-report-page .text-red-500, [data-theme="light"] .pdf-report-page .text-red-500 { color: #ef4444 !important; }

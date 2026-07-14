@@ -72,7 +72,7 @@ export function CoverPageEditor({ cover, onCoverChange, registerPromise }: Cover
         <div className="rounded-lg border border-slate-800/80 bg-slate-950/20 p-4 space-y-3 flex flex-col justify-between">
           <div>
             <span className="text-[9px] font-black text-slate-550 uppercase tracking-widest block">
-              Auditor Brand Identity
+              Company logo
             </span>
             <span className="text-[11px] text-slate-400 mt-1 block">
               Corporate identity logo of the auditor or service provider.
@@ -121,7 +121,7 @@ export function CoverPageEditor({ cover, onCoverChange, registerPromise }: Cover
         <div className="rounded-lg border border-slate-800/80 bg-slate-950/20 p-4 space-y-3 flex flex-col justify-between">
           <div>
             <span className="text-[9px] font-black text-slate-550 uppercase tracking-widest block">
-              Client Brand Identity
+              is certified by
             </span>
             <span className="text-[11px] text-slate-400 mt-1 block">
               Logo of the corporate client or target division being audited.

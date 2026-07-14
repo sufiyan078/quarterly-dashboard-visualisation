@@ -74,6 +74,8 @@ const thStyle: React.CSSProperties = {
   backgroundColor: C.brand.primary,
   borderBottom: `2px solid ${C.brand.accent}`,
   textAlign: "left",
+  whiteSpace: "nowrap",
+  overflow: "hidden",
 };
 
 const tdStyle: React.CSSProperties = {
@@ -81,9 +83,16 @@ const tdStyle: React.CSSProperties = {
   fontSize: TYPOGRAPHY.sizes.tableCell,
   color: C.text.primary,
   borderBottom: `1px solid ${C.borderSoft}`,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
 };
 
-const num: React.CSSProperties = { textAlign: "right", fontVariantNumeric: "tabular-nums" };
+/** Numeric cell — right-aligned, tabular figures, never wraps */
+const num: React.CSSProperties = {
+  textAlign: "right",
+  fontVariantNumeric: "tabular-nums",
+  whiteSpace: "nowrap",
+};
 
 /* ════════════════════════════════════════════════════════════════
    BUILDING BLOCKS
@@ -893,22 +902,32 @@ function HealthBody({ metrics, narrative }: { metrics: PreReportMetrics; narrati
 function DivisionsBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative: ReportNarrative }) {
   return (
     <NarrativeSectionBody narr={narrative.organizations}>
-      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      {/* wrapper: overflow hidden so fixed-layout table never bleeds outside A4 */}
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)", width: "100%" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <colgroup>
+            {/* Organization 28% | Lines 8% | ERP Value 18% | Verified 18% | Coverage 11% | Net Variance 17% */}
+            <col style={{ width: "28%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "18%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "17%" }} />
+          </colgroup>
           <thead>
             <tr>
               <th style={thStyle}>Organization</th>
               <th style={{ ...thStyle, ...num }}>Lines</th>
-              <th style={{ ...thStyle, ...num }}>ERP Value (SAR)</th>
-              <th style={{ ...thStyle, ...num }}>Verified (SAR)</th>
+              <th style={{ ...thStyle, ...num }}>ERP Value</th>
+              <th style={{ ...thStyle, ...num }}>Verified</th>
               <th style={{ ...thStyle, ...num }}>Coverage</th>
-              <th style={{ ...thStyle, ...num }}>Net Variance</th>
+              <th style={{ ...thStyle, ...num }}>Variance</th>
             </tr>
           </thead>
           <tbody>
             {metrics.divisions.slice(0, 9).map((div, idx) => (
               <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? C.brand.white : C.panel }}>
-                <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>{div.division}</td>
+                <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{div.division}</td>
                 <td style={{ ...tdStyle, ...num }}>{formatNumber(div.itemCount)}</td>
                 <td style={{ ...tdStyle, ...num }}>{formatNumber(div.erpValue)}</td>
                 <td style={{ ...tdStyle, ...num }}>{formatNumber(div.verifiedValue)}</td>
@@ -946,21 +965,29 @@ function SuppliersBody({ metrics, narrative }: { metrics: PreReportMetrics; narr
         ))}
       </div>
 
-      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)", width: "100%" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <colgroup>
+            {/* Supplier 30% | Lines 8% | ERP Value 20% | Abs Variance 22% | Match Rate 20% */}
+            <col style={{ width: "30%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "20%" }} />
+            <col style={{ width: "22%" }} />
+            <col style={{ width: "20%" }} />
+          </colgroup>
           <thead>
             <tr>
               <th style={thStyle}>Supplier</th>
               <th style={{ ...thStyle, ...num }}>Lines</th>
-              <th style={{ ...thStyle, ...num }}>ERP Value (SAR)</th>
-              <th style={{ ...thStyle, ...num }}>Abs. Variance (SAR)</th>
-              <th style={{ ...thStyle, ...num }}>Match Rate</th>
+              <th style={{ ...thStyle, ...num }}>ERP Value</th>
+              <th style={{ ...thStyle, ...num }}>Abs. Var.</th>
+              <th style={{ ...thStyle, ...num }}>Match %</th>
             </tr>
           </thead>
           <tbody>
             {metrics.suppliers.slice(0, 7).map((sup, idx) => (
               <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? C.brand.white : C.panel }}>
-                <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary }}>{sup.supplier}</td>
+                <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, color: C.brand.primary, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{sup.supplier}</td>
                 <td style={{ ...tdStyle, ...num }}>{formatNumber(sup.itemCount)}</td>
                 <td style={{ ...tdStyle, ...num }}>{formatNumber(sup.erpValue)}</td>
                 <td style={{ ...tdStyle, ...num, color: sup.absoluteVarianceValue > 0 ? C.status.bad : C.status.good, fontWeight: TYPOGRAPHY.weights.bold }}>
@@ -1092,16 +1119,25 @@ function RiskBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative
       )}
 
       <span style={{ ...overline, display: "block", marginBottom: "6px" }}>High-Variance Inventory Ledger (Top {Math.min(6, metrics.highestRiskItems.length)})</span>
-      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: "6px", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.01)", width: "100%" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
+          <colgroup>
+            {/* Item Code 14% | Description 30% | ERP Qty 12% | Phys Qty 12% | Diff 12% | Variance (SAR) 20% */}
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "30%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "20%" }} />
+          </colgroup>
           <thead>
             <tr>
-              <th style={thStyle}>Item Code</th>
+              <th style={thStyle}>Code</th>
               <th style={thStyle}>Description</th>
               <th style={{ ...thStyle, ...num }}>ERP Qty</th>
               <th style={{ ...thStyle, ...num }}>Phys Qty</th>
               <th style={{ ...thStyle, ...num }}>Diff</th>
-              <th style={{ ...thStyle, ...num }}>Variance (SAR)</th>
+              <th style={{ ...thStyle, ...num }}>Variance</th>
             </tr>
           </thead>
           <tbody>
@@ -1113,8 +1149,8 @@ function RiskBody({ metrics, narrative }: { metrics: PreReportMetrics; narrative
 
               return (
                 <tr key={idx} style={{ backgroundColor: idx % 2 === 0 ? C.brand.white : C.panel }}>
-                  <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, fontFamily: "Consolas, monospace", color: C.brand.primary, fontSize: "9px" }}>{item.itemCode || "N/A"}</td>
-                  <td style={{ ...tdStyle, maxWidth: "160px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <td style={{ ...tdStyle, fontWeight: TYPOGRAPHY.weights.bold, fontFamily: "Consolas, monospace", color: C.brand.primary, fontSize: "9px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.itemCode || "N/A"}</td>
+                  <td style={{ ...tdStyle, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {item.description || "N/A"}
                   </td>
                   <td style={{ ...tdStyle, ...num }}>{formatNumber(eq)}</td>

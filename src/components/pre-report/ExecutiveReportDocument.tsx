@@ -124,12 +124,12 @@ function FactCard({ label, value, tone }: { label: string; value: string; tone?:
       minWidth: 0,
       boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
     }}>
-      <span style={{ ...overline, display: "block", color: C.text.muted, fontSize: "8px" }}>{label}</span>
+      <span style={{ ...overline, display: "block", color: C.text.muted, fontSize: "8px", lineHeight: "1.2" }}>{label}</span>
       <span style={{
-        display: "block", marginTop: "4px", fontSize: "15px",
+        display: "block", marginTop: "4px", fontSize: "15px", lineHeight: "1.2",
         fontWeight: TYPOGRAPHY.weights.extrabold, color, letterSpacing: "-0.01em",
         fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap",
-        overflow: "hidden", textOverflow: "ellipsis",
+        overflow: "visible",
       }}>
         {value}
       </span>
@@ -283,7 +283,7 @@ function HealthGauge({ score }: { score: number }) {
         </svg>
         <span style={{
           position: "absolute", bottom: "0", left: "0", right: "0", textAlign: "center",
-          fontSize: "20px", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.primary,
+          fontSize: "20px", lineHeight: "1.1", fontWeight: TYPOGRAPHY.weights.extrabold, color: C.brand.primary,
         }}>
           {score}
         </span>

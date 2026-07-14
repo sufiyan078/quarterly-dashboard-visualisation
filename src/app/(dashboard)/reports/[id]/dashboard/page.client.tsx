@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import { computeDashboardMetrics } from "@/lib/inventory/dashboardCalculations";
 import { PieChart, PieSlice, PieCenter } from "@/components/ui/bklitui-pie-chart";
+import { NotchedRadialGauge } from "@/components/ui/notched-radial-gauge";
 
 interface Report {
   title: string;
@@ -569,6 +570,72 @@ function BKLitSupplierDonutChart({ data, title, subtitle, isCurrency = false }: 
   );
 }
 
+interface BKLitAccuracyDonutChartProps {
+  data: DonutData[];
+  title: string;
+  subtitle?: string;
+}
+
+function BKLitAccuracyDonutChart({ data, title, subtitle }: BKLitAccuracyDonutChartProps) {
+  const total = data.reduce((sum, item) => sum + item.value, 0) || 1;
+
+  const formatValue = (val: number) => {
+    if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+    if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+    return val.toLocaleString("en-US", { maximumFractionDigits: 0 });
+  };
+
+  return (
+    <div className="rounded-xl border border-slate-800/80 bg-slate-950/20 p-5 flex flex-col h-full">
+      <div>
+        <h3 className="text-xs font-bold text-slate-450 uppercase tracking-widest">{title}</h3>
+        {subtitle && <p className="text-[10px] text-slate-500 mt-1">{subtitle}</p>}
+      </div>
+
+      <div className="flex-grow flex flex-col sm:flex-row items-center justify-center mt-6 gap-8">
+        <div className="relative flex items-center justify-center flex-shrink-0 w-36 h-36">
+          <PieChart
+            data={data}
+            innerRadius={55}
+            padAngle={0.02}
+            cornerRadius={4}
+          >
+            {data.map((_, index) => (
+              <PieSlice
+                key={index}
+                index={index}
+              />
+            ))}
+
+            <PieCenter
+              defaultLabel="TOTAL"
+            />
+          </PieChart>
+        </div>
+
+        <div className="flex-grow space-y-2 text-xs w-full">
+          {data.map((item, idx) => (
+            <div key={idx} className="flex items-center justify-between py-1 border-b border-slate-900/40 last:border-0">
+              <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ backgroundColor: item.color }}></span>
+                <span className="truncate" title={item.label}>{item.label}</span>
+              </div>
+              <div className="flex flex-col items-end flex-shrink-0 pl-3">
+                <span className="font-mono font-bold text-white">
+                  {((item.value / total) * 100).toFixed(1)}%
+                </span>
+                <span className="text-[10px] text-slate-500 font-mono mt-0.5">
+                  {formatValue(item.value)}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 interface BarData {
   label: string;
   value: number;
@@ -675,6 +742,161 @@ function SVGVerticalBarChart({ data, title, subtitle, height = 220 }: SVGVertica
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ─── BKLit Grouped Vertical Bar Chart ────────────────────────────────────────
+// Two-series grouped bar chart matching the dashboard design system.
+// Uses the same spring-feel hover, tooltip, and card style as all other charts.
+
+interface GroupedBarSeries {
+  key: string;
+  label: string;
+  color: string;
+}
+
+interface GroupedBarDataPoint {
+  group: string;
+  values: Record<string, number>;
+}
+
+interface BKLitGroupedBarChartProps {
+  title: string;
+  subtitle?: string;
+  data: GroupedBarDataPoint[];
+  series: GroupedBarSeries[];
+  height?: number;
+  formatValue?: (v: number) => string;
+}
+
+function BKLitGroupedBarChart({
+  title,
+  subtitle,
+  data,
+  series,
+  height = 240,
+  formatValue,
+}: BKLitGroupedBarChartProps) {
+  const [tooltip, setTooltip] = React.useState<{ x: number; y: number; point: GroupedBarDataPoint } | null>(null);
+
+  const allValues = data.flatMap(d => series.map(s => d.values[s.key] ?? 0));
+  const maxVal = Math.max(...allValues, 1);
+
+  const fmt = formatValue ?? ((v: number) => v.toLocaleString("en-US", { maximumFractionDigits: 0 }));
+
+  return (
+    <div className="rounded-xl border border-slate-800/80 bg-slate-950/20 p-5 flex flex-col h-full" style={{ position: "relative" }}>
+      {/* Header */}
+      <div>
+        <h3 className="text-xs font-bold text-slate-450 uppercase tracking-widest">{title}</h3>
+        {subtitle && <p className="text-[10px] text-slate-500 mt-1">{subtitle}</p>}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center gap-5 mt-3 mb-1">
+        {series.map(s => (
+          <div key={s.key} className="flex items-center gap-1.5">
+            <span className="h-2.5 w-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: s.color }} />
+            <span className="text-[10px] text-slate-400 font-medium">{s.label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Chart area */}
+      <div
+        className="relative flex items-end gap-3 pt-4 pb-2 overflow-x-auto"
+        style={{ height: `${height}px`, minHeight: `${height}px` }}
+      >
+        {data.map((point, gi) => (
+          <div
+            key={gi}
+            className="flex flex-col items-center flex-1 min-w-[48px] h-full justify-end"
+            onMouseEnter={e => {
+              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+              const parent = (e.currentTarget.closest(".rounded-xl") as HTMLElement)?.getBoundingClientRect();
+              if (parent) {
+                setTooltip({
+                  x: rect.left - parent.left + rect.width / 2,
+                  y: rect.top - parent.top,
+                  point,
+                });
+              }
+            }}
+            onMouseLeave={() => setTooltip(null)}
+          >
+            {/* Two bars side-by-side */}
+            <div className="flex items-end gap-[3px] w-full h-full justify-center">
+              {series.map(s => {
+                const val = point.values[s.key] ?? 0;
+                const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+                return (
+                  <div
+                    key={s.key}
+                    className="flex-1 group relative flex flex-col justify-end"
+                    style={{ height: "100%", maxWidth: "28px" }}
+                  >
+                    <div
+                      className="w-full rounded-t-sm transition-all duration-500 ease-out cursor-pointer group-hover:brightness-125"
+                      style={{
+                        height: `${Math.max(3, pct)}%`,
+                        backgroundColor: s.color,
+                        opacity: 0.9,
+                        transformOrigin: "bottom",
+                        transition: "height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s",
+                      }}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* X-Axis label */}
+            <span className="text-[9px] text-slate-400 mt-2 font-mono text-center truncate w-full" title={point.group}>
+              {point.group}
+            </span>
+          </div>
+        ))}
+
+        {/* Tooltip */}
+        {tooltip && (
+          <div
+            className="absolute z-30 pointer-events-none"
+            style={{
+              left: `${Math.min(tooltip.x, 260)}px`,
+              top: `${Math.max(0, tooltip.y - 8)}px`,
+              transform: "translate(-50%, -100%)",
+            }}
+          >
+            <div className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 shadow-2xl text-[11px] font-mono min-w-[160px] space-y-1.5">
+              <div className="text-slate-300 font-bold border-b border-slate-800 pb-1.5 mb-1">
+                Division: {tooltip.point.group}
+              </div>
+              {series.map(s => (
+                <div key={s.key} className="flex justify-between items-center gap-4">
+                  <span className="flex items-center gap-1.5">
+                    <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: s.color }} />
+                    <span className="text-slate-400">{s.label}</span>
+                  </span>
+                  <span className="font-bold text-white">{fmt(tooltip.point.values[s.key] ?? 0)}</span>
+                </div>
+              ))}
+              {/* Difference row */}
+              {series.length === 2 && (() => {
+                const diff = (tooltip.point.values[series[0].key] ?? 0) - (tooltip.point.values[series[1].key] ?? 0);
+                return (
+                  <div className="flex justify-between items-center gap-4 border-t border-slate-800 pt-1.5 mt-0.5">
+                    <span className="text-slate-500">Difference</span>
+                    <span className={`font-bold ${diff < 0 ? "text-rose-400" : diff > 0 ? "text-emerald-400" : "text-slate-400"}`}>
+                      {diff > 0 ? "+" : ""}{fmt(diff)}
+                    </span>
+                  </div>
+                );
+              })()}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -987,6 +1209,22 @@ export default function InventoryDashboard() {
       if (unique.length >= 10) break;
     }
     return unique;
+  }, [computedItems]);
+
+  // Per-division Physical Count vs System On Hand quantity aggregation
+  // Pure aggregation of existing fields — no new calculations.
+  const divisionQtyData = useMemo(() => {
+    const map: Record<string, { physicalCount: number; systemOnHand: number }> = {};
+    for (const item of computedItems) {
+      const div = (item.org || "Others").trim();
+      if (!map[div]) map[div] = { physicalCount: 0, systemOnHand: 0 };
+      map[div].physicalCount += item.physicalQty ?? 0;
+      map[div].systemOnHand += item.erpQty ?? 0;
+    }
+    // Sort by systemOnHand descending (mirrors the division sort order)
+    return Object.entries(map)
+      .map(([group, vals]) => ({ group, values: { physicalCount: vals.physicalCount, systemOnHand: vals.systemOnHand } }))
+      .sort((a, b) => b.values.systemOnHand - a.values.systemOnHand);
   }, [computedItems]);
 
   const matchRateVal = computedItems.length > 0
@@ -1455,56 +1693,18 @@ export default function InventoryDashboard() {
               {/* Guages & Rings Row */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="md:col-span-1">
-                  <div className={`flex flex-col items-center justify-center p-6 rounded-xl border border-slate-800/80 bg-slate-950/20 relative overflow-hidden h-full ${
-                    metrics.inventoryHealthScore >= 95 ? "bg-emerald-500/5" :
-                    metrics.inventoryHealthScore >= 85 ? "bg-indigo-500/5" :
-                    metrics.inventoryHealthScore >= 70 ? "bg-amber-500/5" : "bg-rose-500/5"
-                  }`}>
-                    <div className="relative w-36 h-20 flex items-end justify-center">
-                      <svg className="w-36 h-36 absolute -top-4" viewBox="0 0 120 120">
-                        <path d="M 10 70 A 50 50 0 0 1 110 70" fill="none" stroke="#1e293b" strokeWidth="9" strokeLinecap="round" />
-                        <path
-                          d="M 10 70 A 50 50 0 0 1 110 70"
-                          fill="none"
-                          stroke={
-                            metrics.inventoryHealthScore >= 95 ? "#10b981" :
-                            metrics.inventoryHealthScore >= 85 ? "#6366f1" :
-                            metrics.inventoryHealthScore >= 70 ? "#f59e0b" : "#ef4444"
-                          }
-                          strokeWidth="9"
-                          strokeLinecap="round"
-                          strokeDasharray={Math.PI * 50}
-                          strokeDashoffset={Math.PI * 50 - (Math.min(100, Math.max(0, metrics.inventoryHealthScore)) / 100) * (Math.PI * 50)}
-                          className="transition-all duration-1000 ease-out"
-                        />
-                      </svg>
-                      <div className="flex flex-col items-center z-10">
-                        <span className="text-3xl font-extrabold text-white leading-none tracking-tight">{metrics.inventoryHealthScore}</span>
-                        <span className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-wider">Health Score</span>
-                      </div>
-                    </div>
-                    <div className="mt-2 text-center">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                        metrics.inventoryHealthScore >= 95 ? "bg-emerald-500/10 text-emerald-400" :
-                        metrics.inventoryHealthScore >= 85 ? "bg-indigo-500/10 text-indigo-400" :
-                        metrics.inventoryHealthScore >= 70 ? "bg-amber-500/10 text-amber-400" : "bg-rose-500/10 text-rose-400"
-                      }`}>
-                        {metrics.inventoryHealthStatus}
-                      </span>
-                      <p className="text-[10px] text-slate-500 mt-2 max-w-[200px] leading-relaxed">
-                        Composite health index based on count accuracy, verification coverage, and financial variance.
-                      </p>
-                    </div>
+                  <div className="flex flex-col items-center justify-center p-6 rounded-xl border border-slate-800/80 bg-slate-950/20 relative overflow-hidden h-full">
+                    <NotchedRadialGauge score={metrics.inventoryHealthScore} />
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <SVGDonutChart
+                  <BKLitAccuracyDonutChart
                     title="Accuracy Breakdown"
                     subtitle="Percentage of verified line items by discrepancy category"
                     data={[
-                      { label: "Matches (Zero Variance)", value: matchRateVal, color: "#6366f1" },
-                      { label: "Shortage (Negative Variance)", value: shortageRateVal, color: "#f43f5e" },
+                      { label: "Matches (Zero Variance)", value: matchRateVal, color: "#10b981" },
+                      { label: "Shortage (Negative Variance)", value: shortageRateVal, color: "#ef4444" },
                       { label: "Excess (Positive Variance)", value: excessRateVal, color: "#60a5fa" }
                     ]}
                   />
@@ -1794,6 +1994,18 @@ export default function InventoryDashboard() {
                   </table>
                 </div>
               </div>
+
+              {/* Physical Count vs System On Hand by Division */}
+              <BKLitGroupedBarChart
+                title="Physical Count vs System On Hand by Division"
+                subtitle="Comparison of ERP System Quantity and Physically Counted Quantity across all operational divisions."
+                data={divisionQtyData}
+                series={[
+                  { key: "physicalCount", label: "Physical Count", color: "#10b981" },
+                  { key: "systemOnHand",  label: "System On Hand",  color: "#60a5fa" },
+                ]}
+                height={260}
+              />
 
             </div>
           )}

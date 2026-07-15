@@ -86,3 +86,34 @@ export const LAYOUT = {
     right: "68px",
   }
 };
+
+/* ════════════════════════════════════════════════════════════════
+   CLIENT BLUEPRINT THEME (Physical_Inventory_Verification_Report)
+   Dark navy landscape presentation deck: navy pages, blue info
+   cards, white typography, gold accents. All raw hex for
+   html2canvas compatibility.
+   ════════════════════════════════════════════════════════════════ */
+
+export const DARK = {
+  pageBg: "#0C1D38",        // deep navy page background
+  pageBgEnd: "#0B1A32",     // subtle gradient end
+  card: "#122A4D",          // blue information card
+  cardSoft: "#102544",      // slightly darker card / table rows
+  cardBorder: "#1F3D68",    // card outline
+  divider: "#2A4570",       // header rule / hairlines
+  tableHeader: "#16304F",   // table header row background
+  tableBorder: "#1E3A5F",   // table hairlines
+
+  gold: "#D9A93C",          // kickers, labels, page numbers, table headers
+  goldSoft: "#E0B434",      // progress bars
+  white: "#FFFFFF",
+  text: "#E8EEF7",          // primary body text
+  dim: "#8FA3C0",           // captions, subtitles, footers
+  faint: "#5E7396",         // faintest annotations
+
+  green: "#3CCB8B",         // positive values / coverage bars
+  greenDeep: "#1F8F5F",     // filled chips
+  orange: "#F0603A",        // risk values / variance bars
+  blue: "#4A90E2",          // neutral series / excess
+  red: "#FF6B4A",           // strong negatives in tables
+};

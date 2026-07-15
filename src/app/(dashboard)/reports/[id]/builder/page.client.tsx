@@ -23,7 +23,9 @@ import {
   ReportSection, CoverPageData, EditableContent, UploadedImage, ApprovalState,
   DEFAULT_COVER, DEFAULT_CONTENT, mergeWithDefaultSections
 } from "@/types/preReport";
-import { ExecutiveReportDocument } from "@/components/pre-report/ExecutiveReportDocument";
+import {
+  ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
+} from "@/components/pre-report/ClientReportDocument";
 import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
 
 interface Report {
@@ -185,11 +187,15 @@ export default function ReportBuilder() {
       // Temporarily show the template off-screen
       element.style.display = "block";
 
-      const pdf = new jsPDF("p", "mm", "a4");
       const pages = element.children;
+      // Page orientation follows each rendered page's aspect ratio, so the
+      // landscape report deck and any portrait appendix pages coexist.
+      const firstPage = pages[0] as HTMLElement;
+      const pdf = new jsPDF(firstPage && firstPage.scrollWidth >= firstPage.scrollHeight ? "l" : "p", "mm", "a4");
 
       for (let i = 0; i < pages.length; i++) {
         const page = pages[i] as HTMLElement;
+        const isLandscape = page.scrollWidth >= page.scrollHeight;
         const canvas = await html2canvas(page, {
           scale: 2, // Retain high resolution for typography
           useCORS: true,
@@ -205,12 +211,12 @@ export default function ReportBuilder() {
         });
 
         const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        
+
         if (i > 0) {
-          pdf.addPage();
+          pdf.addPage("a4", isLandscape ? "l" : "p");
         }
-        // A4 size is 210mm x 297mm
-        pdf.addImage(imgData, "JPEG", 0, 0, 210, 297);
+        // A4 is 210mm x 297mm (portrait) / 297mm x 210mm (landscape)
+        pdf.addImage(imgData, "JPEG", 0, 0, isLandscape ? 297 : 210, isLandscape ? 210 : 297);
       }
 
       // Hide the template block again
@@ -336,7 +342,8 @@ export default function ReportBuilder() {
   });
 
   const enabledSectionCount = pdfSections.filter(s => s.enabled).length;
-  const totalPdfPages = enabledSectionCount + (personnelList.length > 0 ? 1 : 0);
+  const documentPageCount = countClientReportPages(pdfSections, pdfImages);
+  const totalPdfPages = documentPageCount + (personnelList.length > 0 ? 1 : 0);
 
 
 
@@ -444,11 +451,11 @@ export default function ReportBuilder() {
                 <div>
                   <p className="font-semibold text-slate-200">Executive Narrative Report</p>
                   <p className="text-[10px] text-slate-500 mt-1 leading-normal max-w-xl">
-                    {enabledSectionCount} sections configured in the Pre-Report stage — cover, executive summary, financial and organizational analysis, risks, opportunities, recommendations, and conclusion
+                    {enabledSectionCount} sections configured in the Pre-Report stage — cover, executive insights, portfolio overview, division and supplier analysis, workforce, financial risk, registry, proofs, and closing page
                   </p>
                 </div>
               </div>
-              <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-900/50 px-2 py-1 rounded border border-slate-800/50">Pages 1–{enabledSectionCount}</span>
+              <span className="text-[10px] font-bold text-slate-500 uppercase bg-slate-900/50 px-2 py-1 rounded border border-slate-800/50">Pages 1–{documentPageCount}</span>
             </div>
 
             {personnelList.length > 0 && (
@@ -509,20 +516,21 @@ export default function ReportBuilder() {
           id="pdf-report-template"
           style={{
             display: "none",
-            width: "794px",
+            width: `${CLIENT_PAGE_W}px`,
             fontFamily: "system-ui, -apple-system, sans-serif",
-            backgroundColor: "#ffffff",
-            color: "#0f172a",
+            backgroundColor: "#0C1D38",
+            color: "#E8EEF7",
           }}
         >
-          {/* Executive narrative report pages (shared with Pre-Report preview) */}
-          <ExecutiveReportDocument
+          {/* Client-blueprint report pages (shared with Pre-Report preview) */}
+          <ClientReportDocument
             sections={pdfSections}
             cover={pdfCover}
             content={pdfContent}
             images={pdfImages}
             metrics={extendedMetrics}
             narrative={narrative}
+            rows={formattedRows}
             reportMeta={{ quarter: report.quarter, year: report.year, location: report.location }}
             totalPagesOverride={totalPdfPages}
           />

@@ -1284,11 +1284,11 @@ div.rounded-2xl {
 .pdf-report-page h2, [data-theme="dark"] .pdf-report-page h2, [data-theme="light"] .pdf-report-page h2 { color: #1e293b !important; }
 .pdf-report-page h3, [data-theme="dark"] .pdf-report-page h3, [data-theme="light"] .pdf-report-page h3 { color: #334155 !important; }
 .pdf-report-page h4, [data-theme="dark"] .pdf-report-page h4, [data-theme="light"] .pdf-report-page h4 { color: #475569 !important; }
-.pdf-report-page p, [data-theme="dark"] .pdf-report-page p, [data-theme="light"] .pdf-report-page p { color: #334155 !important; }
+.pdf-report-page:not(.pdf-report-page--deck) p, [data-theme="dark"] .pdf-report-page:not(.pdf-report-page--deck) p, [data-theme="light"] .pdf-report-page:not(.pdf-report-page--deck) p { color: #334155 !important; }
 .pdf-report-page span, [data-theme="dark"] .pdf-report-page span, [data-theme="light"] .pdf-report-page span { color: inherit; }
 .pdf-report-page div, [data-theme="dark"] .pdf-report-page div, [data-theme="light"] .pdf-report-page div { color: inherit; }
-.pdf-report-page td, [data-theme="dark"] .pdf-report-page td, [data-theme="light"] .pdf-report-page td { color: #334155 !important; }
-.pdf-report-page th, [data-theme="dark"] .pdf-report-page th, [data-theme="light"] .pdf-report-page th { color: #475569 !important; }
+.pdf-report-page:not(.pdf-report-page--deck) td, [data-theme="dark"] .pdf-report-page:not(.pdf-report-page--deck) td, [data-theme="light"] .pdf-report-page:not(.pdf-report-page--deck) td { color: #334155 !important; }
+.pdf-report-page:not(.pdf-report-page--deck) th, [data-theme="dark"] .pdf-report-page:not(.pdf-report-page--deck) th, [data-theme="light"] .pdf-report-page:not(.pdf-report-page--deck) th { color: #475569 !important; }
 
 /* Override slate utility colors for elements inside the PDF report */
 .pdf-report-page .text-slate-900, [data-theme="dark"] .pdf-report-page .text-slate-900, [data-theme="light"] .pdf-report-page .text-slate-900 { color: #0f172a !important; }
@@ -1328,9 +1328,9 @@ div.rounded-2xl {
   width: 100% !important;
   overflow: hidden !important;
 }
-.pdf-report-page th,
-[data-theme="dark"] .pdf-report-page th,
-[data-theme="light"] .pdf-report-page th {
+.pdf-report-page:not(.pdf-report-page--deck) th,
+[data-theme="dark"] .pdf-report-page:not(.pdf-report-page--deck) th,
+[data-theme="light"] .pdf-report-page:not(.pdf-report-page--deck) th {
   white-space: nowrap !important;
   overflow: hidden !important;
 }
@@ -1367,5 +1367,48 @@ div.rounded-2xl {
 [data-theme="dark"] .pdf-report-page.pdf-report-page--dark p,
 [data-theme="light"] .pdf-report-page.pdf-report-page--dark p {
   color: #AEB6C0 !important;
+}
+
+/* ─── Client blueprint deck pages: dark navy landscape theme.
+   Text/table colors are all inline styles; these rules defeat the
+   white-page enforcement and app-theme element overrides so the
+   inline values win in both app themes. ─── */
+.pdf-report-page.pdf-report-page--deck,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck {
+  background-color: #0C1D38 !important;
+  color: #E8EEF7 !important;
+}
+.pdf-report-page.pdf-report-page--deck h1,
+.pdf-report-page.pdf-report-page--deck h2,
+.pdf-report-page.pdf-report-page--deck h3,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck h1,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck h2,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck h3,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck h1,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck h2,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck h3 {
+  color: #FFFFFF !important;
+}
+.pdf-report-page.pdf-report-page--deck p,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck p,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck p {
+  color: inherit;
+}
+.pdf-report-page.pdf-report-page--deck th,
+.pdf-report-page.pdf-report-page--deck td,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck th,
+[data-theme="dark"] .pdf-report-page.pdf-report-page--deck td,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck th,
+[data-theme="light"] .pdf-report-page.pdf-report-page--deck td {
+  color: inherit;
+}
+/* Neutralize app-wide table sizing rules inside deck pages so the
+   compact inline paddings/heights are respected. */
+.pdf-report-page--deck thead th,
+.pdf-report-page--deck tbody td {
+  padding: 8px 12px !important;
+  height: auto !important;
+  border-bottom: none;
 }
 

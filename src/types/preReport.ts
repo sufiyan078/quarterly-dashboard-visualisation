@@ -1,20 +1,28 @@
 export type ReportSectionType =
   | 'cover'
   | 'toc'
-  | 'executive'
-  | 'kpi'            // Inventory Overview (facts grid)
-  | 'financial'      // Financial Overview
-  | 'health'         // Inventory Health
-  | 'divisions'      // Organization Analysis
-  | 'suppliers'      // Supplier Analysis
-  | 'distribution'   // Inventory Distribution
-  | 'validation'     // Validation Summary
-  | 'risk'           // Key Risks & risk assessment
-  | 'opportunities'  // Business Opportunities
-  | 'recommendations'// Consolidated Recommendations
-  | 'conclusion'     // Executive Conclusion
-  | 'team'           // Personnel & Evidence appendix
-  | 'backcover'      // Template "Thank You" closing page
+  | 'executive'      // Executive Insights & Summary (client p.2)
+  | 'kpi'            // Portfolio Overview — Inventory Health & Accuracy (client p.3)
+  | 'coverage'       // Coverage & Variance — Division Coverage & Supplier Risk (client p.4)
+  | 'financial'      // (legacy) Financial Overview
+  | 'health'         // (legacy) Inventory Health
+  | 'divisions'      // Division Analysis — Reconciliation Performance (client p.5)
+  | 'divisionItems'  // Division Items Mapped & Risk Table (client p.6)
+  | 'workbooks'      // Workbook Ingestion & Count Comparison (client p.7)
+  | 'suppliers'      // Supplier Analysis — Supplier Risk Overview (client p.8)
+  | 'suppliersAll'   // All Suppliers Breakdown (client p.9)
+  | 'workforce'      // Workforce Analysis — Count Team Performance (client p.10)
+  | 'leaderboard'    // Physical Count Team Leaderboard (client p.11)
+  | 'distribution'   // (legacy) Inventory Distribution
+  | 'validation'     // Full Registry — Reconciliation Registry Overview (client p.14)
+  | 'risk'           // Financial Risk — High-Risk Discrepancy Analysis (client p.12)
+  | 'riskItems'      // Top 10 High-Risk Discrepancy Items (client p.13)
+  | 'actionItems'    // Items Requiring Action (client p.15)
+  | 'opportunities'  // (legacy) Business Opportunities
+  | 'recommendations'// (legacy) Consolidated Recommendations
+  | 'conclusion'     // (legacy) Executive Conclusion
+  | 'team'           // Proofs & Site Photographs (dynamic, client p.16, skipped when empty)
+  | 'backcover'      // Thank You closing page
   | 'custom';
 
 export interface ReportSection {
@@ -63,23 +71,30 @@ export interface ApprovalState {
   readyForExport: boolean;
 }
 
+/**
+ * Default flow mirrors the client-approved reference report
+ * (Physical_Inventory_Verification_Report.pdf) page-for-page.
+ * The Proofs section expands to as many pages as uploaded images
+ * require and is skipped entirely when no images exist.
+ */
 export const DEFAULT_SECTIONS: ReportSection[] = [
-  { id: 'cover', title: 'Cover Page', type: 'cover', enabled: true, order: 0, description: 'Report title, metadata, and branding', notes: '' },
-  { id: 'toc', title: 'Table of Contents', type: 'toc', enabled: true, order: 1, description: 'Report contents, sections, and page references', notes: '' },
-  { id: 'executive', title: 'Executive Summary', type: 'executive', enabled: true, order: 2, description: 'The complete inventory position in one page for senior management', notes: '' },
-  { id: 'kpi', title: 'Inventory Overview', type: 'kpi', enabled: true, order: 3, description: 'Scale of the inventory: lines, value, organizations, and suppliers', notes: '' },
-  { id: 'financial', title: 'Financial Overview', type: 'financial', enabled: true, order: 4, description: 'Book value versus verified value, variances, and financial exposure', notes: '' },
-  { id: 'health', title: 'Inventory Health', type: 'health', enabled: true, order: 5, description: 'Composite health score, accuracy, and verification coverage', notes: '' },
-  { id: 'divisions', title: 'Organization Analysis', type: 'divisions', enabled: true, order: 6, description: 'Value, accuracy, and variance by organization', notes: '' },
-  { id: 'suppliers', title: 'Supplier Analysis', type: 'suppliers', enabled: true, order: 7, description: 'Supplier dependency, concentration, and variance exposure', notes: '' },
-  { id: 'distribution', title: 'Inventory Distribution', type: 'distribution', enabled: true, order: 8, description: 'How value and volume are spread across the operation', notes: '' },
-  { id: 'validation', title: 'Validation Summary', type: 'validation', enabled: true, order: 9, description: 'Data quality flags and reporting confidence', notes: '' },
-  { id: 'risk', title: 'Key Risks', type: 'risk', enabled: true, order: 10, description: 'Data-supported business risks and the high-variance item ledger', notes: '' },
-  { id: 'opportunities', title: 'Business Opportunities', type: 'opportunities', enabled: true, order: 11, description: 'Positive findings and improvement opportunities', notes: '' },
-  { id: 'recommendations', title: 'Recommendations', type: 'recommendations', enabled: true, order: 12, description: 'Prioritized management actions with reasons and expected benefits', notes: '' },
-  { id: 'conclusion', title: 'Executive Conclusion', type: 'conclusion', enabled: true, order: 13, description: 'Overall assessment, audit readiness, and sign-off', notes: '' },
-  { id: 'team', title: 'Personnel & Evidence', type: 'team', enabled: true, order: 14, description: 'On-site audit team and verification evidence', notes: '' },
-  { id: 'backcover', title: 'Closing Page', type: 'backcover', enabled: true, order: 15, description: 'Branded thank-you page closing the report', notes: '' },
+  { id: 'cover', title: 'Physical Inventory Verification Report', type: 'cover', enabled: true, order: 0, description: 'Cover page with report date and health score', notes: '' },
+  { id: 'executive', title: 'Executive Insights & Summary', type: 'executive', enabled: true, order: 1, description: 'Headline KPIs, operational concentration, and key observations', notes: '' },
+  { id: 'kpi', title: 'Inventory Health & Accuracy', type: 'kpi', enabled: true, order: 2, description: 'Portfolio overview: valuation, verification, health score, and accuracy breakdown', notes: '' },
+  { id: 'coverage', title: 'Division Coverage & Supplier Risk', type: 'coverage', enabled: true, order: 3, description: 'Coverage rate by cost center, top suppliers by variance, and count progress', notes: '' },
+  { id: 'divisions', title: 'Reconciliation Performance by Division', type: 'divisions', enabled: true, order: 4, description: 'Division analysis: scope, highlights, and net operational variance', notes: '' },
+  { id: 'divisionItems', title: 'Division Items Mapped & Risk Table', type: 'divisionItems', enabled: true, order: 5, description: 'Item catalog distribution by cost center and top variance divisions', notes: '' },
+  { id: 'workbooks', title: 'Workbook Ingestion & Count Comparison', type: 'workbooks', enabled: true, order: 6, description: 'Ingested worksheet statistics and physical vs system quantities', notes: '' },
+  { id: 'suppliers', title: 'Supplier Risk Overview', type: 'suppliers', enabled: true, order: 7, description: 'Supplier analysis: mapped entities, exposure, and variance share', notes: '' },
+  { id: 'suppliersAll', title: 'All Suppliers Breakdown', type: 'suppliersAll', enabled: true, order: 8, description: 'Detailed inventory analytics for all resolved supplier entities', notes: '' },
+  { id: 'workforce', title: 'Count Team Performance', type: 'workforce', enabled: true, order: 9, description: 'Workforce analysis: active counters, productivity, and accuracy', notes: '' },
+  { id: 'leaderboard', title: 'Physical Count Team Leaderboard', type: 'leaderboard', enabled: true, order: 10, description: 'Verification speed and accuracy metrics for field counters', notes: '' },
+  { id: 'risk', title: 'High-Risk Discrepancy Analysis', type: 'risk', enabled: true, order: 11, description: 'Financial risk: absolute exposure and where it concentrates', notes: '' },
+  { id: 'riskItems', title: 'Top 10 High-Risk Discrepancy Items', type: 'riskItems', enabled: true, order: 12, description: 'Item rows representing the highest financial vulnerability', notes: '' },
+  { id: 'validation', title: 'Reconciliation Registry Overview', type: 'validation', enabled: true, order: 13, description: 'Full registry: filtered stats and action-required summary', notes: '' },
+  { id: 'actionItems', title: 'Items Requiring Action', type: 'actionItems', enabled: true, order: 14, description: 'High-risk open items requiring management follow-up', notes: '' },
+  { id: 'team', title: 'Proofs & Site Photographs', type: 'team', enabled: true, order: 15, description: 'Uploaded proof photographs; expands to extra pages, skipped when empty', notes: '' },
+  { id: 'backcover', title: 'Thank You', type: 'backcover', enabled: true, order: 16, description: 'Closing page', notes: '' },
 ];
 
 /**
@@ -92,10 +107,13 @@ export const DEFAULT_SECTIONS: ReportSection[] = [
 export function mergeWithDefaultSections(saved: ReportSection[] | undefined): ReportSection[] {
   if (!saved || saved.length === 0) return DEFAULT_SECTIONS;
 
-  // Legacy (pre-storytelling) schema: rebuild from defaults, carrying over
-  // the user's enabled flags and notes for sections that still exist.
-  const isCurrentSchema = saved.some(s => s.id === 'conclusion');
-  if (!isCurrentSchema) {
+  // Configs saved before the client-blueprint flow (identified by the
+  // absence of the 'coverage' section) are rebuilt on the fixed client
+  // page sequence. Enabled flags and notes carry over for sections that
+  // still exist; sections not in the blueprint are dropped from the flow
+  // (their renderers remain available via custom re-adding).
+  const isClientSchema = saved.some(s => s.id === 'coverage');
+  if (!isClientSchema) {
     const savedById = new Map(saved.map(s => [s.id, s]));
     const merged = DEFAULT_SECTIONS.map(def => {
       const prev = savedById.get(def.id);
@@ -106,18 +124,13 @@ export function mergeWithDefaultSections(saved: ReportSection[] | undefined): Re
     return merged;
   }
 
-  // Current schema: keep the user's list (order, titles, customizations)
-  // but union in any default sections introduced after their config was
-  // saved (e.g. 'toc', 'backcover'), inserted at their default position
-  // relative to the sections the user already has.
+  // Client schema: keep the user's list but union in any newly introduced
+  // default sections at their blueprint position.
   const savedIds = new Set(saved.map(s => s.id));
   const result = [...saved].sort((a, b) => a.order - b.order);
 
   for (const def of DEFAULT_SECTIONS) {
     if (savedIds.has(def.id)) continue;
-
-    // Find the default section that precedes `def` and exists in the saved
-    // list; insert right after it (or at the start if none).
     const defIdx = DEFAULT_SECTIONS.findIndex(d => d.id === def.id);
     let insertAt = 0;
     for (let i = defIdx - 1; i >= 0; i--) {

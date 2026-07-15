@@ -22,7 +22,9 @@ import { CoverPageEditor } from "@/components/pre-report/CoverPageEditor";
 import { ContentEditor } from "@/components/pre-report/ContentEditor";
 import { ImageManager } from "@/components/pre-report/ImageManager";
 import { ApprovalGatedChecklist } from "@/components/pre-report/ApprovalGatedChecklist";
-import { ExecutiveReportDocument } from "@/components/pre-report/ExecutiveReportDocument";
+import {
+  ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
+} from "@/components/pre-report/ClientReportDocument";
 import { runQA } from "@/lib/report/qaEngine";
 
 interface Report {
@@ -603,6 +605,7 @@ export default function PreReportPage() {
 
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
   const enabledSections = sortedSections.filter(s => s.enabled);
+  const documentPageCount = countClientReportPages(sections, images);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -842,8 +845,8 @@ export default function PreReportPage() {
             {/* Canvas Container keeping scale wrapper responsive */}
             <div
               style={{
-                width: `${794 * zoom}px`,
-                height: `${(enabledSections.length * 1123 + (enabledSections.length - 1) * 32) * zoom}px`,
+                width: `${CLIENT_PAGE_W * zoom}px`,
+                height: `${(documentPageCount * CLIENT_PAGE_H + Math.max(0, documentPageCount - 1) * 32) * zoom}px`,
                 position: "relative",
               }}
               className="transition-all duration-300"
@@ -852,20 +855,21 @@ export default function PreReportPage() {
                 style={{
                   transform: `scale(${zoom})`,
                   transformOrigin: "top left",
-                  width: "794px",
+                  width: `${CLIENT_PAGE_W}px`,
                   position: "absolute",
                   top: 0,
                   left: 0,
                 }}
                 className="flex flex-col gap-8"
               >
-                <ExecutiveReportDocument
+                <ClientReportDocument
                   sections={sections}
                   cover={cover}
                   content={content}
                   images={images}
                   metrics={metrics}
                   narrative={narrative}
+                  rows={formattedRows}
                   reportMeta={{
                     quarter: report?.quarter || "",
                     year: report?.year || "",
@@ -879,7 +883,7 @@ export default function PreReportPage() {
           {/* Live Sync Footer Alert */}
           <div className="flex items-center justify-between text-[10px] text-slate-550 px-1 font-mono">
             <span>* Document is synchronized in real-time</span>
-            <span>A4 Portrait Layout (794px × 1123px)</span>
+            <span>A4 Landscape Layout ({CLIENT_PAGE_W}px × {CLIENT_PAGE_H}px)</span>
           </div>
 
         </div>

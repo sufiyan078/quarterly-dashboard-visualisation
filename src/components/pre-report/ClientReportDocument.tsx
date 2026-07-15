@@ -108,10 +108,10 @@ function KpiCard({ label, value, caption, color = DARK.white, valueSize = "19px"
       <span style={{ ...cardLabel, display: "block" }}>{label}</span>
       <span style={{
         fontFamily: F, display: "block", marginTop: "8px", fontSize: valueSize,
-        fontWeight: 800, color, whiteSpace: "nowrap", overflow: "hidden",
-        textOverflow: "ellipsis", fontVariantNumeric: "tabular-nums",
+        fontWeight: 800, color, whiteSpace: "nowrap",
+        fontVariantNumeric: "tabular-nums",
       }}>
-        {value}
+        {trunc(value, 26)}
       </span>
       {caption && <span style={{ ...dimCaption, display: "block", marginTop: "6px" }}>{caption}</span>}
     </div>
@@ -160,9 +160,9 @@ function BarRow({ label, valueLabel, ratio, color }: {
     <div style={{ display: "flex", alignItems: "center", gap: "12px", marginBottom: "11px" }}>
       <span style={{
         fontFamily: F, fontSize: "10px", fontWeight: 700, color: DARK.white,
-        width: "150px", flexShrink: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis",
+        width: "150px", flexShrink: 0, whiteSpace: "nowrap",
       }}>
-        {label}
+        {trunc(label, 26)}
       </span>
       <div style={{ flexGrow: 1, height: "13px", borderRadius: "3px", backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${width}%`, borderRadius: "3px", backgroundColor: color }} />
@@ -230,6 +230,14 @@ const td: React.CSSProperties = {
 
 const money = (n: number, dp = 2) =>
   `SAR ${Number(n || 0).toLocaleString("en-US", { minimumFractionDigits: dp === 0 ? 0 : 2, maximumFractionDigits: dp })}`;
+
+/** JS truncation instead of CSS text-overflow: html2canvas renders text
+    slightly below its browser baseline, so any `overflow: hidden` on the
+    text's own element clips glyph bottoms in the exported PDF. */
+const trunc = (s: any, max: number) => {
+  const str = String(s ?? "");
+  return str.length > max ? str.slice(0, max - 1).trimEnd() + "…" : str;
+};
 
 const signedMoney = (n: number) =>
   `${n < 0 ? "-" : n > 0 ? "+" : ""}SAR ${Math.abs(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -427,7 +435,7 @@ function ExecutivePage({ metrics, narrative, content }: {
   const observations: string[] = [];
   observations.push(`Inventory health is calculated at ${metrics.healthScore} (${metrics.inventoryHealthStatus}).`);
   if (metrics.remainingLines > 0) {
-    observations.push(`Unverified stock represents ${fmtSAR(unverifiedValue)} across ${metrics.remainingLines.toLocaleString()} remaining items.`);
+    observations.push(`Unverified stock represents ${fmtSAR(unverifiedValue)} across ${metrics.remainingLines.toLocaleString("en-US")} remaining items.`);
   }
   observations.push(`Audit opinion: “${metrics.auditConclusion.split(" - ")[0]}”.`);
   for (const r of narrative.risks.slice(0, 2)) {
@@ -467,8 +475,8 @@ function ExecutivePage({ metrics, narrative, content }: {
             ))}
           </div>
           {content.executiveSummary?.trim() && (
-            <p style={{ fontFamily: F, fontSize: "9.5px", color: DARK.dim, lineHeight: 1.5, margin: "6px 0 0", whiteSpace: "pre-line", maxHeight: "150px", overflow: "hidden" }}>
-              {content.executiveSummary.split("\n\n")[0]}
+            <p style={{ fontFamily: F, fontSize: "9.5px", color: DARK.dim, lineHeight: 1.5, margin: "6px 0 0", whiteSpace: "pre-line" }}>
+              {trunc(content.executiveSummary.split("\n\n")[0], 420)}
             </p>
           )}
         </div>
@@ -527,7 +535,7 @@ function PortfolioPage({ metrics, stats }: { metrics: PreReportMetrics; stats: R
                     <span style={{ fontFamily: F, fontSize: "11.5px", fontWeight: 700, color: DARK.white }}>{l.label}</span>
                   </div>
                   <span style={{ ...dimCaption, fontSize: "10px", display: "block", marginLeft: "21px", marginTop: "3px" }}>
-                    {fmtPct((l.count / totalCat) * 100)} · {l.count.toLocaleString()} item{l.count === 1 ? "" : "s"}
+                    {fmtPct((l.count / totalCat) * 100)} · {l.count.toLocaleString("en-US")} item{l.count === 1 ? "" : "s"}
                   </span>
                 </div>
               ))}
@@ -590,21 +598,21 @@ function CoveragePage({ metrics }: { metrics: PreReportMetrics }) {
           <div style={{ width: "300px", flexShrink: 0 }}>
             <span style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 700, color: DARK.white, display: "block" }}>Verified Count Lines</span>
             <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.white, display: "block", marginTop: "4px" }}>
-              {metrics.verifiedLines.toLocaleString()} / {metrics.totalLines.toLocaleString()}
+              {metrics.verifiedLines.toLocaleString("en-US")} / {metrics.totalLines.toLocaleString("en-US")}
             </span>
             <div style={{ height: "12px", borderRadius: "3px", backgroundColor: "rgba(255,255,255,0.08)", overflow: "hidden", marginTop: "8px" }}>
               <div style={{ height: "100%", width: `${Math.max(2, lineRate * 100)}%`, backgroundColor: DARK.goldSoft, borderRadius: "3px" }} />
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", marginTop: "5px" }}>
-              <span style={dimCaption}>Remaining: {metrics.remainingLines.toLocaleString()} lines</span>
+              <span style={dimCaption}>Remaining: {metrics.remainingLines.toLocaleString("en-US")} lines</span>
               <span style={dimCaption}>Rate: {fmtPct(lineRate * 100)}</span>
             </div>
           </div>
           <div style={{ minWidth: 0 }}>
             <span style={{ fontFamily: F, fontSize: "10.5px", fontWeight: 800, color: DARK.gold, display: "block" }}>Verification Analysis</span>
             <p style={{ fontFamily: F, fontSize: "10.5px", color: DARK.text, lineHeight: 1.55, margin: "6px 0 0" }}>
-              Physical inventory audit has covered {metrics.verifiedLines.toLocaleString()} unique catalog entries out of {metrics.totalLines.toLocaleString()}.
-              Total quantities verified reach {metrics.verifiedQuantity.toLocaleString()} units out of {metrics.totalQuantity.toLocaleString()}.
+              Physical inventory audit has covered {metrics.verifiedLines.toLocaleString("en-US")} unique catalog entries out of {metrics.totalLines.toLocaleString("en-US")}.
+              Total quantities verified reach {metrics.verifiedQuantity.toLocaleString("en-US")} units out of {metrics.totalQuantity.toLocaleString("en-US")}.
             </p>
           </div>
         </div>
@@ -664,7 +672,7 @@ function DivisionItemsPage({ metrics }: { metrics: PreReportMetrics }) {
     <div style={{ display: "flex", gap: "16px", height: "100%" }}>
       <Panel
         title="Division Items Mapped"
-        subtitle={largest ? `Total item catalog counts under cost centers · ${largest.division} (${largest.itemCount.toLocaleString()} items) shown as a callout since it dwarfs the rest` : "Total item catalog counts under cost centers"}
+        subtitle={largest ? `Total item catalog counts under cost centers · ${largest.division} (${largest.itemCount.toLocaleString("en-US")} items) shown as a callout since it dwarfs the rest` : "Total item catalog counts under cost centers"}
         style={{ flex: 1.35, display: "flex", flexDirection: "column" }}
       >
         {largest && (
@@ -674,7 +682,7 @@ function DivisionItemsPage({ metrics }: { metrics: PreReportMetrics }) {
           }}>
             <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 800, color: DARK.gold, display: "block" }}>{largest.division}</span>
             <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.white, display: "block", marginTop: "4px" }}>
-              {largest.itemCount.toLocaleString()}
+              {largest.itemCount.toLocaleString("en-US")}
             </span>
           </div>
         )}
@@ -696,12 +704,12 @@ function DivisionItemsPage({ metrics }: { metrics: PreReportMetrics }) {
           <div style={{ display: "flex", gap: "20px" }}>
             {[
               ["Perfect Coverage", `${perfect} / ${metrics.divisions.length}`, "Divisions @ 100%", DARK.white],
-              ["Highest Volume", largest?.division || "—", largest ? `${largest.itemCount.toLocaleString()} items` : "", DARK.white],
+              ["Highest Volume", largest?.division || "—", largest ? `${largest.itemCount.toLocaleString("en-US")} items` : "", DARK.white],
               ["Highest Risk", metrics.highestRiskDivision || "—", riskDiv ? fmtSAR(Math.abs(riskDiv.varianceValue)) : "", DARK.white],
             ].map(([label, value, cap, color]) => (
               <div key={label as string} style={{ flex: 1, minWidth: 0 }}>
                 <span style={{ ...cardLabel, fontSize: "8px", color: DARK.dim }}>{label}</span>
-                <span style={{ fontFamily: F, fontSize: "16px", fontWeight: 800, color: color as string, display: "block", marginTop: "8px", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{value}</span>
+                <span style={{ fontFamily: F, fontSize: "16px", fontWeight: 800, color: color as string, display: "block", marginTop: "8px", whiteSpace: "nowrap" }}>{trunc(value, 14)}</span>
                 <span style={{ ...dimCaption, fontSize: "8.5px", display: "block", marginTop: "5px" }}>{cap}</span>
               </div>
             ))}
@@ -722,7 +730,7 @@ function DivisionItemsPage({ metrics }: { metrics: PreReportMetrics }) {
               {topVariance.map((d) => (
                 <tr key={d.division}>
                   <td style={td}>{d.division}</td>
-                  <td style={td}>{d.itemCount.toLocaleString()}</td>
+                  <td style={td}>{d.itemCount.toLocaleString("en-US")}</td>
                   <td style={td}>{fmtPct(d.coverageRate)}</td>
                   <td style={{ ...td, color: d.varianceValue < 0 ? DARK.red : DARK.green, fontWeight: 800 }}>
                     {signedMoney(d.varianceValue).replace(".00", "")}
@@ -762,7 +770,7 @@ function WorkbooksPage({ metrics, stats }: { metrics: PreReportMetrics; stats: R
             {sheets.map((s) => (
               <tr key={s.subDivision}>
                 <td style={td}>{s.subDivision}</td>
-                <td style={td}>{s.itemCount.toLocaleString()}</td>
+                <td style={td}>{s.itemCount.toLocaleString("en-US")}</td>
                 <td style={td}>{fmtSAR(s.erpValue)}</td>
                 <td style={td}>{fmtSAR(s.verifiedValue)}</td>
                 <td style={{ ...td, color: DARK.green }}>{fmtPct(s.coverageRate)}</td>
@@ -789,9 +797,9 @@ function WorkbooksPage({ metrics, stats }: { metrics: PreReportMetrics; stats: R
             }}>
               <span style={{ fontFamily: F, fontSize: "13px", fontWeight: 800, color: DARK.gold }}>{largest[0]}</span>
               <span style={{ ...dimCaption }}>Physical Count</span>
-              <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.green }}>{largest[1].phys.toLocaleString()}</span>
+              <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.green }}>{largest[1].phys.toLocaleString("en-US")}</span>
               <span style={{ ...dimCaption, marginTop: "6px" }}>System On Hand</span>
-              <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.blue }}>{largest[1].sys.toLocaleString()}</span>
+              <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.blue }}>{largest[1].sys.toLocaleString("en-US")}</span>
             </div>
           )}
           <div style={{ flexGrow: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
@@ -871,8 +879,8 @@ function SuppliersPage({ metrics }: { metrics: PreReportMetrics }) {
               {legend.map((l) => (
                 <div key={l.label} style={{ display: "flex", alignItems: "center", gap: "9px", marginBottom: "11px", minWidth: 0 }}>
                   <span style={{ width: "9px", height: "9px", borderRadius: "50%", backgroundColor: l.color, flexShrink: 0 }} />
-                  <span style={{ fontFamily: F, fontSize: "9.5px", color: DARK.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                    {l.label} — {fmtPct((l.value / totalAbs) * 100)} · {fmtSAR(l.value)}
+                  <span style={{ fontFamily: F, fontSize: "9.5px", color: DARK.text, whiteSpace: "nowrap" }}>
+                    {trunc(l.label, 22)} — {fmtPct((l.value / totalAbs) * 100)} · {fmtSAR(l.value)}
                   </span>
                 </div>
               ))}
@@ -902,7 +910,7 @@ function SuppliersAllPage({ metrics }: { metrics: PreReportMetrics }) {
         {list.map((s) => (
           <tr key={s.supplier}>
             <td style={{ ...td, fontWeight: 700, color: DARK.white }}>{s.supplier}</td>
-            <td style={td}>{s.itemCount.toLocaleString()}</td>
+            <td style={td}>{s.itemCount.toLocaleString("en-US")}</td>
             <td style={td}>{money(s.erpValue)}</td>
             <td style={{ ...td, color: s.coverageRate >= 90 ? DARK.green : s.coverageRate >= 50 ? DARK.gold : DARK.orange }}>
               {fmtPct(s.coverageRate)}
@@ -934,8 +942,8 @@ function WorkforcePage({ metrics }: { metrics: PreReportMetrics }) {
 
       <div style={{ display: "flex", gap: "14px" }}>
         <KpiCard label="Active Counters" value={String(counters.length)} caption="Physical count specialists" />
-        <KpiCard label="Top Counter" value={top?.name || "—"} color={DARK.green} caption={top ? `${top.itemsCounted.toLocaleString()} items counted` : undefined} valueSize="16px" />
-        <KpiCard label="Lines Attributed" value={totalCounted.toLocaleString()} caption="Count lines with a named counter" />
+        <KpiCard label="Top Counter" value={top?.name || "—"} color={DARK.green} caption={top ? `${top.itemsCounted.toLocaleString("en-US")} items counted` : undefined} valueSize="16px" />
+        <KpiCard label="Lines Attributed" value={totalCounted.toLocaleString("en-US")} caption="Count lines with a named counter" />
         <KpiCard label="Average Accuracy" value={fmtPct(avgAccuracy)} color={avgAccuracy >= 95 ? DARK.green : DARK.gold} caption="Mean zero-variance rate across team" />
       </div>
 
@@ -944,7 +952,7 @@ function WorkforcePage({ metrics }: { metrics: PreReportMetrics }) {
           <BarRow
             key={c.name}
             label={c.name}
-            valueLabel={`${c.itemsCounted.toLocaleString()} · ${fmtPct(c.productivityRate)}`}
+            valueLabel={`${c.itemsCounted.toLocaleString("en-US")} · ${fmtPct(c.productivityRate)}`}
             ratio={totalCounted > 0 ? c.itemsCounted / Math.max(counters[0]?.itemsCounted || 1, 1) : 0}
             color={DARK.blue}
           />
@@ -983,8 +991,8 @@ function LeaderboardPage({ metrics }: { metrics: PreReportMetrics }) {
           <tr key={c.name}>
             <td style={td}>{i + 1}</td>
             <td style={{ ...td, fontWeight: 800, color: DARK.white }}>{c.name}</td>
-            <td style={td}>{c.itemsCounted.toLocaleString()}</td>
-            <td style={td}>{c.verifiedQty.toLocaleString()}</td>
+            <td style={td}>{c.itemsCounted.toLocaleString("en-US")}</td>
+            <td style={td}>{c.verifiedQty.toLocaleString("en-US")}</td>
             <td style={td}>{money(c.verifiedValue)}</td>
             <td style={td}>{fmtPct(c.productivityRate)}</td>
             <td style={{ ...td, color: c.accuracyRate >= 95 ? DARK.green : c.accuracyRate >= 80 ? DARK.gold : DARK.red }}>
@@ -1001,7 +1009,7 @@ function RiskPage({ metrics, narrative }: { metrics: PreReportMetrics; narrative
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
       <WWWCards
-        what={`Identified absolute financial risk of ${fmtSAR(metrics.totalRiskValue)} across ${metrics.totalLines.toLocaleString()} inventory line items.`}
+        what={`Identified absolute financial risk of ${fmtSAR(metrics.totalRiskValue)} across ${metrics.totalLines.toLocaleString("en-US")} inventory line items.`}
         where="Concentrated within high-variance line items across divisions."
         why="Provides core write-off analysis to proactively isolate high-risk asset records and support financial provisioning."
       />
@@ -1061,14 +1069,14 @@ function RiskItemsPage({ metrics }: { metrics: PreReportMetrics }) {
           const v = item.varianceValue ?? 0;
           return (
             <tr key={i}>
-              <td style={{ ...td, maxWidth: "330px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {(item.itemCode || "N/A")} — {(item.description || "N/A")}
+              <td style={{ ...td, whiteSpace: "nowrap" }}>
+                {trunc(`${item.itemCode || "N/A"} — ${item.description || "N/A"}`, 52)}
               </td>
-              <td style={{ ...td, maxWidth: "140px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                {item.supplier || item.supplierName || item.detectedSupplierName || "Others"}
+              <td style={{ ...td, whiteSpace: "nowrap" }}>
+                {trunc(item.supplier || item.supplierName || item.detectedSupplierName || "Others", 22)}
               </td>
               <td style={td}>{item.org || "—"}</td>
-              <td style={td}>{(item.erpQty ?? 0).toLocaleString()} / {(item.physicalQty ?? 0).toLocaleString()}</td>
+              <td style={td}>{(item.erpQty ?? 0).toLocaleString("en-US")} / {(item.physicalQty ?? 0).toLocaleString("en-US")}</td>
               <td style={{ ...td, color: v < 0 ? DARK.red : DARK.green, fontWeight: 800 }}>{signedMoney(v)}</td>
               <td style={{ ...td, color: DARK.orange, fontWeight: 800, letterSpacing: "0.06em" }}>
                 {(item.status || "open").toUpperCase()}
@@ -1086,13 +1094,13 @@ function RegistryPage({ metrics, stats }: { metrics: PreReportMetrics; stats: Re
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
       <WWWCards
-        what={`Displaying detailed reconciliation registry for ${metrics.totalLines.toLocaleString()} matching items.`}
+        what={`Displaying detailed reconciliation registry for ${metrics.totalLines.toLocaleString("en-US")} matching items.`}
         where="Spanning all worksheets, warehouse cost organizations, and suppliers."
         why="Provides the ultimate trace utility for individual discrepancies, with sortable, filterable, multi-field query support."
       />
 
       <div style={{ display: "flex", gap: "14px" }}>
-        <KpiCard label="Filtered Items" value={metrics.totalLines.toLocaleString()} />
+        <KpiCard label="Filtered Items" value={metrics.totalLines.toLocaleString("en-US")} />
         <KpiCard label="Action Required" value={String(stats.actionItems.length)} color={DARK.gold} />
         <KpiCard label="Filtered Abs Risk" value={fmtSAR(metrics.totalRiskValue)} color={DARK.orange} />
         <KpiCard label="Filtered Net Variance" value={signedMoney(metrics.varianceValue).replace(".00", "")} color={DARK.orange} />
@@ -1105,7 +1113,7 @@ function RegistryPage({ metrics, stats }: { metrics: PreReportMetrics; stats: Re
               flex: 1, minWidth: 0, border: `1px solid ${DARK.cardBorder}`, borderRadius: "6px",
               backgroundColor: DARK.cardSoft, padding: "12px 14px",
             }}>
-              <span style={{ fontFamily: F, fontSize: "9.5px", color: DARK.dim, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "block" }}>{f}</span>
+              <span style={{ fontFamily: F, fontSize: "9.5px", color: DARK.dim, whiteSpace: "nowrap", display: "block" }}>{trunc(f, 30)}</span>
             </div>
           ))}
         </div>
@@ -1148,13 +1156,13 @@ function ActionItemsPage({ stats }: { stats: ReturnType<typeof useDisplayStats> 
                 return (
                   <tr key={i}>
                     <td style={td}>{r.itemCode || "N/A"}</td>
-                    <td style={{ ...td, maxWidth: "180px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {r.supplier || "Others"}
+                    <td style={{ ...td, whiteSpace: "nowrap" }}>
+                      {trunc(r.supplier || "Others", 24)}
                     </td>
                     <td style={td}>{r.org || "—"}</td>
-                    <td style={td}>{(r.erpQty ?? 0).toLocaleString()}/{(r.physicalQty ?? 0).toLocaleString()}</td>
+                    <td style={td}>{(r.erpQty ?? 0).toLocaleString("en-US")}/{(r.physicalQty ?? 0).toLocaleString("en-US")}</td>
                     <td style={{ ...td, color: (r.differenceQty ?? 0) < 0 ? DARK.red : DARK.green }}>
-                      {(r.differenceQty ?? 0) > 0 ? "+" : ""}{(r.differenceQty ?? 0).toLocaleString()}
+                      {(r.differenceQty ?? 0) > 0 ? "+" : ""}{(r.differenceQty ?? 0).toLocaleString("en-US")}
                     </td>
                     <td style={td}>{money(r.unitCost ?? 0)}</td>
                     <td style={{ ...td, color: v < 0 ? DARK.red : DARK.green, fontWeight: 800 }}>{signedMoney(v)}</td>
@@ -1190,9 +1198,8 @@ function ProofsPage({ images }: { images: UploadedImage[] }) {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginTop: "8px" }}>
             <span style={{
               fontFamily: F, fontSize: "9px", color: DARK.text, whiteSpace: "nowrap",
-              overflow: "hidden", textOverflow: "ellipsis",
             }}>
-              {img.caption || img.name || "Site photograph"}
+              {trunc(img.caption || img.name || "Site photograph", 36)}
             </span>
             {img.category && (
               <span style={{

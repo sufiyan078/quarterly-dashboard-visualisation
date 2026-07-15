@@ -218,9 +218,9 @@ function buildOverview(input: NarrativeInput, m: PreReportMetrics, d: DerivedSta
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const situation = `During the Q${input.quarter || "4"} ${input.year} audit cycle, a comprehensive physical inventory verification was executed across the ${input.location || "Gas Arabian Services"} facilities. The program scope encompassed ${m.totalLines.toLocaleString()} individual inventory line items, representing a total ledger book value of ${fmtSAR(m.totalInventoryValue)} across ${d.orgCount} organizational divisions and ${d.supplierCount} primary supplier networks. This audit serves as a critical internal control mechanism to validate asset custody and align physical stock with the ERP general ledger.`;
+  const situation = `During the Q${input.quarter || "4"} ${input.year} audit cycle, a comprehensive physical inventory verification was executed across the ${input.location || "Gas Arabian Services"} facilities. The program scope encompassed ${m.totalLines.toLocaleString("en-US")} individual inventory line items, representing a total ledger book value of ${fmtSAR(m.totalInventoryValue)} across ${d.orgCount} organizational divisions and ${d.supplierCount} primary supplier networks. This audit serves as a critical internal control mechanism to validate asset custody and align physical stock with the ERP general ledger.`;
 
-  const complication = `Our analysis indicates an average value per inventory line of ${fmtSAR(d.avgItemValue)}, highlighting that stock accuracy is highly sensitive to individual record variances. While physical count coverage achieved ${fmtPct(m.coverageRate)} of total book value, the verification team identified ${d.zeroValueLines.toLocaleString()} active line items that are stocked physically but carry zero unit cost valuation in the ERP ledger, creating a structural blind spot in asset valuation.`;
+  const complication = `Our analysis indicates an average value per inventory line of ${fmtSAR(d.avgItemValue)}, highlighting that stock accuracy is highly sensitive to individual record variances. While physical count coverage achieved ${fmtPct(m.coverageRate)} of total book value, the verification team identified ${d.zeroValueLines.toLocaleString("en-US")} active line items that are stocked physically but carry zero unit cost valuation in the ERP ledger, creating a structural blind spot in asset valuation.`;
 
   const implication = `From a management consulting perspective, these unvalued lines understate total capital employed and expose the organization to compliance and tax risks. Furthermore, a high concentration of inventory value within key divisions indicates that any localized inventory control breakdown will have immediate, material impacts on corporate financial statements. Corrective actions must prioritize ERP database valuation updates and division-level custody reviews.`;
 
@@ -228,7 +228,7 @@ function buildOverview(input: NarrativeInput, m: PreReportMetrics, d: DerivedSta
 
   if (m.totalLines > 0) {
     insights.push(
-      `${m.matchedItems.toLocaleString()} of ${m.totalLines.toLocaleString()} lines (${fmtPct(m.matchRate)}) reconciled exactly between the ERP ledger and the physical count.`
+      `${m.matchedItems.toLocaleString("en-US")} of ${m.totalLines.toLocaleString("en-US")} lines (${fmtPct(m.matchRate)}) reconciled exactly between the ERP ledger and the physical count.`
     );
   }
   if (d.topDivisionShare >= 40) {
@@ -242,12 +242,12 @@ function buildOverview(input: NarrativeInput, m: PreReportMetrics, d: DerivedSta
   }
   if (d.valuationCoverage < 95 && d.zeroValueLines > 0) {
     insights.push(
-      `${fmtPct(100 - d.valuationCoverage)} of lines carry no unit cost in the ERP — including ${d.zeroValueLines.toLocaleString()} lines with stock on hand — and are therefore invisible to every value-based figure in this report.`
+      `${fmtPct(100 - d.valuationCoverage)} of lines carry no unit cost in the ERP — including ${d.zeroValueLines.toLocaleString("en-US")} lines with stock on hand — and are therefore invisible to every value-based figure in this report.`
     );
     recs.push({
       id: "rec-valuation",
       title: "Map Unit-Cost Records for ERP Database Integrity",
-      reason: `${d.zeroValueLines.toLocaleString()} physically stocked lines have no recorded unit cost, rendering their variance exposure invisible.`,
+      reason: `${d.zeroValueLines.toLocaleString("en-US")} physically stocked lines have no recorded unit cost, rendering their variance exposure invisible.`,
       benefit: "Establish complete valuation coverage and remove balance sheet blind spots.",
       priority: d.zeroValueLines > m.totalLines * 0.1 ? "High" : "Medium",
     });
@@ -321,7 +321,7 @@ function buildHealth(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
 
   const situation = `The composite inventory health index is established at ${m.healthScore} out of 100, which corresponds to a performance classification of "${m.inventoryHealthStatus}". This index serves as a key indicator of the maturity of the inventory control framework, synthesizing count accuracy, value coverage, data quality, aging exposure, and reconciliation progress.`;
 
-  const complication = `The baseline physical count accuracy is recorded at ${fmtPct(m.matchRate)}, meaning ${m.matchedItems.toLocaleString()} lines matched exactly while ${m.mismatchedItems.toLocaleString()} lines exhibited quantity discrepancies. Crucially, the presence of ${m.remainingLines.toLocaleString()} unverified lines (representing ${fmtPct(pct(m.remainingLines, m.totalLines))} of total lines) represents an unmitigated risk where asset value is reported without direct physical confirmation.`;
+  const complication = `The baseline physical count accuracy is recorded at ${fmtPct(m.matchRate)}, meaning ${m.matchedItems.toLocaleString("en-US")} lines matched exactly while ${m.mismatchedItems.toLocaleString("en-US")} lines exhibited quantity discrepancies. Crucially, the presence of ${m.remainingLines.toLocaleString("en-US")} unverified lines (representing ${fmtPct(pct(m.remainingLines, m.totalLines))} of total lines) represents an unmitigated risk where asset value is reported without direct physical confirmation.`;
 
   const implication = `A count accuracy of ${fmtPct(m.matchRate)} is ${m.matchRate >= 95 ? "satisfactory, but continuous monitoring is required to prevent control drift" : "sub-optimal, falling short of the 95% industry standard required for automated operations"}. The unverified lines represent pockets of high risk in the warehouse, where obsolete, damaged, or pilfered stock could go undetected. Management must enforce strict cycle-counting regimens and assign clear responsibility for completing outstanding physical counts.`;
 
@@ -337,7 +337,7 @@ function buildHealth(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
   }
   if (m.remainingLines > 0) {
     insights.push(
-      `${m.remainingLines.toLocaleString()} lines recorded no physical count during the exercise and remain unverified.`
+      `${m.remainingLines.toLocaleString("en-US")} lines recorded no physical count during the exercise and remain unverified.`
     );
   }
 
@@ -354,7 +354,7 @@ function buildHealth(m: PreReportMetrics, d: DerivedStats): SectionNarrative {
     recs.push({
       id: "rec-coverage",
       title: "Complete Outstanding Physical Counts for Unverified Stock",
-      reason: `${m.remainingLines.toLocaleString()} line items were left uncounted, representing a material audit blind spot.`,
+      reason: `${m.remainingLines.toLocaleString("en-US")} line items were left uncounted, representing a material audit blind spot.`,
       benefit: "Achieve complete physical verification coverage and prevent auditor qualifications.",
       priority: m.remainingLines / m.totalLines > 0.2 ? "High" : "Medium",
     });
@@ -419,7 +419,7 @@ function buildSuppliers(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
     : "No supplier-level attribution data is available.";
 
   const complication = m.suppliers.length > 0
-    ? `The audit identified material variance patterns concentrated in specific supplier segments. Notably, ${m.highestRiskSupplier || "specific suppliers"} accounts for the largest absolute variance of ${fmtSAR(m.suppliers.find(s => s.supplier === m.highestRiskSupplier)?.absoluteVarianceValue || 0)}. Furthermore, the presence of ${d.othersSupplierLines.toLocaleString()} lines classified under 'Others' indicates incomplete supplier attribution in the database.`
+    ? `The audit identified material variance patterns concentrated in specific supplier segments. Notably, ${m.highestRiskSupplier || "specific suppliers"} accounts for the largest absolute variance of ${fmtSAR(m.suppliers.find(s => s.supplier === m.highestRiskSupplier)?.absoluteVarianceValue || 0)}. Furthermore, the presence of ${d.othersSupplierLines.toLocaleString("en-US")} lines classified under 'Others' indicates incomplete supplier attribution in the database.`
     : "";
 
   const implication = m.suppliers.length > 0
@@ -448,13 +448,13 @@ function buildSuppliers(m: PreReportMetrics, d: DerivedStats): SectionNarrative 
     const rs = m.suppliers.find((s) => s.supplier === m.highestRiskSupplier);
     if (rs && rs.absoluteVarianceValue > 0) {
       insights.push(
-        `${m.highestRiskSupplier} shows the largest absolute variance (${fmtSAR(rs.absoluteVarianceValue)} across ${rs.itemCount.toLocaleString()} lines, matching at ${fmtPct(rs.matchingRate)}).`
+        `${m.highestRiskSupplier} shows the largest absolute variance (${fmtSAR(rs.absoluteVarianceValue)} across ${rs.itemCount.toLocaleString("en-US")} lines, matching at ${fmtPct(rs.matchingRate)}).`
       );
     }
   }
   if (d.othersSupplierLines > 0 && m.totalLines > 0 && d.othersSupplierLines / m.totalLines > 0.1) {
     insights.push(
-      `${d.othersSupplierLines.toLocaleString()} lines (${fmtPct(pct(d.othersSupplierLines, m.totalLines))}) could not be attributed to a named supplier and are grouped under “Others”, limiting supplier-level accountability.`
+      `${d.othersSupplierLines.toLocaleString("en-US")} lines (${fmtPct(pct(d.othersSupplierLines, m.totalLines))}) could not be attributed to a named supplier and are grouped under “Others”, limiting supplier-level accountability.`
     );
     recs.push({
       id: "rec-supplier-mapping",
@@ -518,10 +518,10 @@ function buildValidation(m: PreReportMetrics, d: DerivedStats): SectionNarrative
   const insights: string[] = [];
   const recs: Recommendation[] = [];
 
-  const situation = `Automated validation checks were performed across all ${m.totalLines.toLocaleString()} database records to assess the structural integrity of the inventory master file. Data hygiene is the foundational requirement for inventory traceability, automated procurement, and dependable financial reporting.`;
+  const situation = `Automated validation checks were performed across all ${m.totalLines.toLocaleString("en-US")} database records to assess the structural integrity of the inventory master file. Data hygiene is the foundational requirement for inventory traceability, automated procurement, and dependable financial reporting.`;
 
   const complication = d.warningLines > 0
-    ? `The validation engine flagged ${d.warningLines.toLocaleString()} lines (${fmtPct(d.warningRate)}) with record errors or missing fields. The flagged database anomalies include ${d.missingCodeCount.toLocaleString()} missing item codes, ${d.missingDescCount.toLocaleString()} missing descriptions, and ${d.unclassifiedSupplierCount.toLocaleString()} lines missing supplier attribution.`
+    ? `The validation engine flagged ${d.warningLines.toLocaleString("en-US")} lines (${fmtPct(d.warningRate)}) with record errors or missing fields. The flagged database anomalies include ${d.missingCodeCount.toLocaleString("en-US")} missing item codes, ${d.missingDescCount.toLocaleString("en-US")} missing descriptions, and ${d.unclassifiedSupplierCount.toLocaleString("en-US")} lines missing supplier attribution.`
     : "The validation engine completed with zero flags, confirming exceptional master-data discipline.";
 
   const implication = d.warningLines > 0
@@ -531,16 +531,16 @@ function buildValidation(m: PreReportMetrics, d: DerivedStats): SectionNarrative
   const commentary = `${situation}\n\n${complication}\n\n${implication}`;
 
   if (d.missingCodeCount > 0) {
-    insights.push(`${d.missingCodeCount.toLocaleString()} lines are missing an item code, which prevents reliable cross-period tracking of those items.`);
+    insights.push(`${d.missingCodeCount.toLocaleString("en-US")} lines are missing an item code, which prevents reliable cross-period tracking of those items.`);
   }
   if (d.missingDescCount > 0) {
-    insights.push(`${d.missingDescCount.toLocaleString()} lines have no description, reducing traceability during physical verification.`);
+    insights.push(`${d.missingDescCount.toLocaleString("en-US")} lines have no description, reducing traceability during physical verification.`);
   }
   if (d.unclassifiedSupplierCount > 0) {
-    insights.push(`${d.unclassifiedSupplierCount.toLocaleString()} lines lack a resolvable supplier and were classified under “Others”.`);
+    insights.push(`${d.unclassifiedSupplierCount.toLocaleString("en-US")} lines lack a resolvable supplier and were classified under “Others”.`);
   }
   if (d.missingOrgCount > 0) {
-    insights.push(`${d.missingOrgCount.toLocaleString()} lines are missing an organization/unit assignment.`);
+    insights.push(`${d.missingOrgCount.toLocaleString("en-US")} lines are missing an organization/unit assignment.`);
   }
   if (d.warningLines === 0) {
     insights.push("The absence of validation warnings supports a high level of confidence in the figures presented in this report.");
@@ -558,7 +558,7 @@ function buildValidation(m: PreReportMetrics, d: DerivedStats): SectionNarrative
     recs.push({
       id: "rec-data-quality",
       title: "Correct Residual Master Data Warnings",
-      reason: `${d.warningLines.toLocaleString()} inventory lines carry residual master data validation errors.`,
+      reason: `${d.warningLines.toLocaleString("en-US")} inventory lines carry residual master data validation errors.`,
       benefit: "Achieve a completely clean master data file ahead of the next count cycle.",
       priority: "Low",
     });
@@ -589,7 +589,7 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
       id: "risk-accuracy",
       title: "Low Inventory Record Accuracy",
       level: m.matchRate < 80 ? "High" : "Medium",
-      impact: `${m.mismatchedItems.toLocaleString()} of ${m.totalLines.toLocaleString()} lines (${fmtPct(100 - m.matchRate)}) failed to reconcile.`,
+      impact: `${m.mismatchedItems.toLocaleString("en-US")} of ${m.totalLines.toLocaleString("en-US")} lines (${fmtPct(100 - m.matchRate)}) failed to reconcile.`,
       explanation: `A physical count accuracy of ${fmtPct(m.matchRate)} is below the 95% threshold required to support automated warehouse planning, leading to frequent manual workarounds.`,
       action: "Deploy targeted training and establish daily cycle-counting in the lowest-performing organizations.",
     });
@@ -620,7 +620,7 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
       title: "Limited Verification Audit Coverage",
       level: m.coverageRate < 50 ? "High" : "Medium",
       impact: `Only ${fmtPct(m.coverageRate)} of book value was physically verified in the current cycle.`,
-      explanation: `${m.remainingLines.toLocaleString()} line items were not counted; their reported valuation rests on ERP data without visual confirmation.`,
+      explanation: `${m.remainingLines.toLocaleString("en-US")} line items were not counted; their reported valuation rests on ERP data without visual confirmation.`,
       action: "Schedule a catch-up verification cycle or formally carry over uncounted lines into the next count list.",
     });
   }
@@ -629,7 +629,7 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
       id: "risk-zero-value",
       title: "Unvalued ERP Stock Records",
       level: "Medium",
-      impact: `${d.zeroValueLines.toLocaleString()} stocked lines (${fmtPct(pct(d.zeroValueLines, m.totalLines))}) carry zero unit cost in the system.`,
+      impact: `${d.zeroValueLines.toLocaleString("en-US")} stocked lines (${fmtPct(pct(d.zeroValueLines, m.totalLines))}) carry zero unit cost in the system.`,
       explanation: `Stock items without recorded unit costs understate corporate asset values and mask true financial variance exposures.`,
       action: "Instruct the Finance department to map and populate unit costs for all stocked items in the ERP database.",
     });
@@ -658,12 +658,12 @@ function buildRisks(m: PreReportMetrics, d: DerivedStats): RiskFinding[] {
   // Attach the concrete figures each finding rests on (traceability).
   const evidenceById: Record<string, string> = {
     "risk-exposure": `Gross variance ${fmtSAR(m.totalRiskValue)} = shortages ${fmtSAR(m.totalShortageValue)} + excesses ${fmtSAR(m.totalExcessValue)}, against a book value of ${fmtSAR(m.totalInventoryValue)}.`,
-    "risk-accuracy": `${m.matchedItems.toLocaleString()} matched vs ${m.mismatchedItems.toLocaleString()} mismatched of ${m.totalLines.toLocaleString()} counted lines (${fmtPct(m.matchRate)} accuracy).`,
+    "risk-accuracy": `${m.matchedItems.toLocaleString("en-US")} matched vs ${m.mismatchedItems.toLocaleString("en-US")} mismatched of ${m.totalLines.toLocaleString("en-US")} counted lines (${fmtPct(m.matchRate)} accuracy).`,
     "risk-supplier": `${d.topSupplierName} holds ≈${fmtSAR(m.totalInventoryValue * (d.topSupplierShare / 100))} (${fmtPct(d.topSupplierShare)}) of total book value.`,
     "risk-concentration": `${d.topDivisionName} holds ≈${fmtSAR(m.totalInventoryValue * (d.topDivisionShare / 100))} (${fmtPct(d.topDivisionShare)}) of total book value.`,
-    "risk-coverage": `Verified ${fmtSAR(m.verifiedValue)} of ${fmtSAR(m.totalInventoryValue)} book value; ${m.remainingLines.toLocaleString()} lines recorded no physical count.`,
-    "risk-zero-value": `${d.zeroValueLines.toLocaleString()} stocked lines with zero unit cost out of ${m.totalLines.toLocaleString()} total lines.`,
-    "risk-data-quality": `${d.warningLines.toLocaleString()} flagged lines (${fmtPct(d.warningRate)}): ${d.missingCodeCount} missing codes, ${d.missingDescCount} missing descriptions, ${d.unclassifiedSupplierCount} unattributed suppliers, ${d.missingOrgCount} missing org units.`,
+    "risk-coverage": `Verified ${fmtSAR(m.verifiedValue)} of ${fmtSAR(m.totalInventoryValue)} book value; ${m.remainingLines.toLocaleString("en-US")} lines recorded no physical count.`,
+    "risk-zero-value": `${d.zeroValueLines.toLocaleString("en-US")} stocked lines with zero unit cost out of ${m.totalLines.toLocaleString("en-US")} total lines.`,
+    "risk-data-quality": `${d.warningLines.toLocaleString("en-US")} flagged lines (${fmtPct(d.warningRate)}): ${d.missingCodeCount} missing codes, ${d.missingDescCount} missing descriptions, ${d.unclassifiedSupplierCount} unattributed suppliers, ${d.missingOrgCount} missing org units.`,
     "risk-aging": `Aged stock: 1–3 years ${fmtSAR(m.aging.slowMovingValue)}, over 3 years ${fmtSAR(m.aging.deadStockValue)}; indicated provision ${fmtSAR(m.provisionAmount)}.`,
   };
 
@@ -779,9 +779,9 @@ function buildExecutiveSummary(
   const period = `${input.quarter} ${input.year}`.trim();
   const location = input.location || "Gas Arabian Services facilities";
 
-  const p1 = `This executive report details the findings and strategic recommendations from the ${period} physical inventory verification program conducted at the ${location}. The audit validated a total of ${m.totalLines.toLocaleString()} inventory lines representing a general ledger book value of ${fmtSAR(m.totalInventoryValue)}. Out of this population, physical verification successfully covered ${fmtSAR(m.verifiedValue)} in assets, corresponding to a valuation coverage rate of ${fmtPct(m.coverageRate)}.`;
+  const p1 = `This executive report details the findings and strategic recommendations from the ${period} physical inventory verification program conducted at the ${location}. The audit validated a total of ${m.totalLines.toLocaleString("en-US")} inventory lines representing a general ledger book value of ${fmtSAR(m.totalInventoryValue)}. Out of this population, physical verification successfully covered ${fmtSAR(m.verifiedValue)} in assets, corresponding to a valuation coverage rate of ${fmtPct(m.coverageRate)}.`;
 
-  const p2 = `The reconciliation process yielded a physical count accuracy of ${fmtPct(m.matchRate)}, with ${m.matchedItems.toLocaleString()} lines matching exactly and ${m.mismatchedItems.toLocaleString()} lines showing variance. The net variance stands at ${m.netVariance < 0 ? "negative " : m.netVariance > 0 ? "positive " : ""}... ${fmtSAR(m.netVariance)}, within a gross absolute financial exposure of ${fmtSAR(m.totalRiskValue)} (${fmtPct(d.riskRatio)} of book value). The composite inventory health index is calculated at ${m.healthScore} out of 100, which classifies the operational control environment as "${m.inventoryHealthStatus}".`;
+  const p2 = `The reconciliation process yielded a physical count accuracy of ${fmtPct(m.matchRate)}, with ${m.matchedItems.toLocaleString("en-US")} lines matching exactly and ${m.mismatchedItems.toLocaleString("en-US")} lines showing variance. The net variance stands at ${m.netVariance < 0 ? "negative " : m.netVariance > 0 ? "positive " : ""}... ${fmtSAR(m.netVariance)}, within a gross absolute financial exposure of ${fmtSAR(m.totalRiskValue)} (${fmtPct(d.riskRatio)} of book value). The composite inventory health index is calculated at ${m.healthScore} out of 100, which classifies the operational control environment as "${m.inventoryHealthStatus}".`;
 
   const p3 = `A total of ${risks.length} material business risks were identified during the analysis, led by "${risks[0]?.title || "Financial Exposure"}" (${risks[0]?.level || "High"}). To address these findings and prevent profit leakage, we have formulated ${recs.length} prioritized management recommendations. Immediate action must focus on executing a targeted reconciliation of high-variance lines, cleansing flagged master data, and updating unvalued ERP records.`;
 
@@ -799,10 +799,10 @@ function buildConclusion(
 ): ExecutiveConclusion {
   const paragraphs: string[] = [];
 
-  const p1 = `The ${m.totalLines.toLocaleString()}-line inventory, valued at ${fmtSAR(m.totalInventoryValue)}, closes the current cycle with a composite health index of ${m.healthScore}/100 ("${m.inventoryHealthStatus}"). While count accuracy reached ${fmtPct(m.matchRate)} and value coverage was established at ${fmtPct(m.coverageRate)}, the gross financial exposure of ${fmtSAR(m.totalRiskValue)} highlights significant potential for control improvements.`;
+  const p1 = `The ${m.totalLines.toLocaleString("en-US")}-line inventory, valued at ${fmtSAR(m.totalInventoryValue)}, closes the current cycle with a composite health index of ${m.healthScore}/100 ("${m.inventoryHealthStatus}"). While count accuracy reached ${fmtPct(m.matchRate)} and value coverage was established at ${fmtPct(m.coverageRate)}, the gross financial exposure of ${fmtSAR(m.totalRiskValue)} highlights significant potential for control improvements.`;
 
   const p2 = d.warningLines > 0
-    ? `Data quality validation indicates that while the ledger is functional, data-cleansing is required. A warning rate of ${fmtPct(d.warningRate)} (${d.warningLines.toLocaleString()} lines) and the presence of ${d.zeroValueLines.toLocaleString()} unvalued stocked lines limit the accuracy of procurement systems. Cleaning these records is a prerequisite for subsequent automation.`
+    ? `Data quality validation indicates that while the ledger is functional, data-cleansing is required. A warning rate of ${fmtPct(d.warningRate)} (${d.warningLines.toLocaleString("en-US")} lines) and the presence of ${d.zeroValueLines.toLocaleString("en-US")} unvalued stocked lines limit the accuracy of procurement systems. Cleaning these records is a prerequisite for subsequent automation.`
     : "Data hygiene has emerged as a key strength in this cycle, with all lines passing automated verification and confirming complete master-data integrity.";
 
   const p3 = `To mitigate the ${risks.length} identified risks and capitalize on ${ops.length} key operational opportunities, management should execute the ${recs.length} recommended corrective actions in order of priority, beginning with the critical and high-priority items.`;

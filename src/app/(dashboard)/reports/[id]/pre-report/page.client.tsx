@@ -25,6 +25,7 @@ import { ApprovalGatedChecklist } from "@/components/pre-report/ApprovalGatedChe
 import {
   ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
 } from "@/components/pre-report/ClientReportDocument";
+import { buildReportAnalytics } from "@/lib/report/analytics";
 import { runQA } from "@/lib/report/qaEngine";
 
 interface Report {
@@ -302,25 +303,13 @@ export default function PreReportPage() {
     });
   }, [items]);
 
-  // Run dynamic metrics calculation
-  const metrics: PreReportMetrics = useMemo(() => {
-    const baseMetrics = computeDashboardMetrics(formattedRows, agingRecords);
-
-    const matchedItems = formattedRows.filter(item => item.erpQty === item.physicalQty).length;
-    const mismatchedItems = formattedRows.length - matchedItems;
-    const matchRate = formattedRows.length > 0 ? (matchedItems / formattedRows.length) * 100 : 100;
-
-    return {
-      ...baseMetrics,
-      totalItems: baseMetrics.totalLines,
-      matchRate,
-      matchedItems,
-      mismatchedItems,
-      totalRiskValue: baseMetrics.totalFinancialRisk,
-      healthScore: baseMetrics.inventoryHealthScore,
-      netVariance: baseMetrics.varianceValue
-    };
-  }, [formattedRows, agingRecords]);
+  // Shared analytics object — the single source of truth consumed by the
+  // dashboard, the pre-report preview, and the final PDF (no duplicate KPIs).
+  const reportAnalytics = useMemo(
+    () => buildReportAnalytics(formattedRows, agingRecords),
+    [formattedRows, agingRecords]
+  );
+  const metrics: PreReportMetrics = reportAnalytics.metrics;
 
   // Generate the executive narrative
   const narrative = useMemo(() => {
@@ -870,6 +859,7 @@ export default function PreReportPage() {
                   metrics={metrics}
                   narrative={narrative}
                   rows={formattedRows}
+                  analytics={reportAnalytics}
                   reportMeta={{
                     quarter: report?.quarter || "",
                     year: report?.year || "",

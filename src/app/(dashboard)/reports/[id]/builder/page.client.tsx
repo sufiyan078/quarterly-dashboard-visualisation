@@ -26,6 +26,7 @@ import {
 import {
   ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
 } from "@/components/pre-report/ClientReportDocument";
+import { buildReportAnalytics, validateReportAnalytics } from "@/lib/report/analytics";
 import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
 
 interface Report {
@@ -178,6 +179,18 @@ export default function ReportBuilder() {
     setMessage(null);
     setError(null);
 
+    // Consistency gate: the report may only be generated when the shared
+    // analytics object passes cross-validation, guaranteeing the PDF can
+    // never contradict the dashboard.
+    const consistencyErrors = validateReportAnalytics(reportAnalytics);
+    if (consistencyErrors.length > 0) {
+      setError(
+        `Report generation blocked — dashboard/report consistency check failed: ${consistencyErrors.join(" ")}`
+      );
+      setIsGenerating(false);
+      return;
+    }
+
     try {
       const element = document.getElementById("pdf-report-template");
       if (!element) {
@@ -292,28 +305,10 @@ export default function ReportBuilder() {
       };
     });
 
-  // Run dynamic metrics calculation
-  const metrics = computeDashboardMetrics(formattedRows, agingRecords);
-
-  const matchedItemsCount = items.filter(item => {
-    const erpQty = item.erpQty !== undefined ? item.erpQty : 0;
-    const physicalQty = item.physicalQty !== undefined ? item.physicalQty : 0;
-    return erpQty === physicalQty;
-  }).length;
-
-  const matchRateVal = items.length > 0 ? (matchedItemsCount / items.length) * 100 : 100;
-
-  // Extended metrics shape shared with the pre-report preview
-  const extendedMetrics: PreReportMetrics = {
-    ...metrics,
-    totalItems: metrics.totalLines,
-    matchRate: matchRateVal,
-    matchedItems: matchedItemsCount,
-    mismatchedItems: items.length - matchedItemsCount,
-    totalRiskValue: metrics.totalFinancialRisk,
-    healthScore: metrics.inventoryHealthScore,
-    netVariance: metrics.varianceValue,
-  };
+  // Shared analytics object — the single source of truth consumed by the
+  // dashboard, the pre-report preview, and the final PDF (no duplicate KPIs).
+  const reportAnalytics = buildReportAnalytics(formattedRows, agingRecords);
+  const extendedMetrics: PreReportMetrics = reportAnalytics.metrics;
 
   // Resolve the pre-report configuration saved at step 4 (with fallbacks
   // for reports that never visited the pre-report stage).
@@ -531,6 +526,7 @@ export default function ReportBuilder() {
             metrics={extendedMetrics}
             narrative={narrative}
             rows={formattedRows}
+            analytics={reportAnalytics}
             reportMeta={{ quarter: report.quarter, year: report.year, location: report.location }}
             totalPagesOverride={totalPdfPages}
           />

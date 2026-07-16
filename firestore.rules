@@ -1,8 +1,79 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
+
+    // Mirrors src/lib/adminConfig.ts — keep both lists in sync.
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in [
+          'work.sufiyan.ahmed078@gmail.com',
+          'anwar.ali41@gmail.com'
+        ];
+    }
+
+    function isAnonymousDev() {
+      return request.auth != null
+        && request.auth.token.firebase.sign_in_provider == 'anonymous';
+    }
+
+    // Approved = admin, anonymous dev session, or a user whose profile
+    // document has been approved by an administrator. Accounts created
+    // before the approval workflow (no status field) keep their access.
+    function isApproved() {
+      return request.auth != null && (
+        isAdmin()
+        || isAnonymousDev()
+        || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid))
+          && (
+            !('status' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data)
+            || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved'
+          )
+        )
+      );
+    }
+
+    // ── User profiles & approval workflow ──
+    match /users/{userId} {
+      // Users may read their own profile; admins may read all
+      // (pending request list, login history).
+      allow read: if request.auth != null
+        && (request.auth.uid == userId || isAdmin());
+
+      // A signed-in user may create their own profile document
+      // (this is how a pending access request is registered).
+      allow create: if request.auth != null && request.auth.uid == userId;
+
+      // Users may update their own profile but can NEVER change their
+      // own status or role — only administrators can approve/reject.
+      allow update: if isAdmin() || (
+        request.auth != null
+        && request.auth.uid == userId
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status', 'role'])
+      );
+
+      allow delete: if isAdmin();
+    }
+
+    // ── Administrative audit data (activity logs, login history,
+    //    approval history) — admin accounts only ──
+    match /activityLogs/{docId} {
+      allow read, write: if isAdmin();
+    }
+    match /adminAudit/{docId} {
+      allow read, write: if isAdmin();
+    }
+
+    // ── Application data — approved accounts only.
+    //    Protected collections are excluded here because overlapping
+    //    match blocks are OR'd: without the exclusions this rule would
+    //    override the stricter rules above. ──
+    match /{collection}/{document=**} {
+      allow read, write: if isApproved()
+        && collection != 'users'
+        && collection != 'activityLogs'
+        && collection != 'adminAudit';
     }
   }
 }

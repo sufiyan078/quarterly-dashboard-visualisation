@@ -9,6 +9,9 @@ import {
   signInAnonymously 
 } from "firebase/auth";
 import { auth, googleProvider, db, doc, getDoc, setDoc } from "../lib/firebase";
+import { isAdminEmail } from "../lib/adminConfig";
+
+export type ApprovalStatus = "pending" | "approved" | "rejected";
 
 export interface UserProfile {
   uid: string;
@@ -16,6 +19,9 @@ export interface UserProfile {
   email: string;
   photoUrl: string;
   role: "admin" | "auditor" | "viewer";
+  /** Approval workflow: new Google accounts start as "pending" and may
+      not use the application until an administrator approves them. */
+  status: ApprovalStatus;
   createdAt: string;
   lastLoginAt: string;
 }
@@ -24,6 +30,10 @@ interface AuthContextType {
   user: User | null;
   profile: UserProfile | null;
   loading: boolean;
+  /** True only for the configured administrator accounts. */
+  isAdmin: boolean;
+  /** True when the signed-in account may use the application. */
+  isApproved: boolean;
   loginWithGoogle: () => Promise<void>;
   loginWithMock: () => Promise<void>;
   logout: () => Promise<void>;
@@ -33,6 +43,8 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  isAdmin: false,
+  isApproved: false,
   loginWithGoogle: async () => {},
   loginWithMock: async () => {},
   logout: async () => {},
@@ -67,6 +79,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           email: "work.sufiyan.ahmed078@gmail.com",
           photoUrl: "",
           role: "admin",
+          status: "approved",
           createdAt: new Date().toISOString(),
           lastLoginAt: new Date().toISOString(),
         };
@@ -106,6 +119,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             const updatedProfile: UserProfile = {
               ...existingData,
               lastLoginAt: currentTime,
+              // Accounts created before the approval workflow have no
+              // status field; they keep their existing access.
+              status: existingData.status || "approved",
               // Fallback fields in case profile data was incomplete
               name: firebaseUser.displayName || existingData.name || "User",
               photoUrl: firebaseUser.photoURL || existingData.photoUrl || "",
@@ -114,19 +130,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             await setDoc(userDocRef, { lastLoginAt: currentTime }, { merge: true });
             setProfile(updatedProfile);
           } else {
-            // Determine role based on email address (or default for anonymous users)
+            // First sign-in for this account.
             const email = firebaseUser.email || "";
-            const adminEmails = ["work.sufiyan.ahmed078@gmail.com", "anwar.ali41@gmail.com"];
-            const isAdmin = adminEmails.includes(email.toLowerCase());
-            // Anonymous dev users get admin role; real users default to viewer
-            const role = (isAdmin || firebaseUser.isAnonymous) ? "admin" : "viewer";
+            const admin = isAdminEmail(email);
+            // Administrators and anonymous dev sessions are auto-approved;
+            // every other new Google account starts as a PENDING request
+            // and must be approved by an administrator before gaining access.
+            const autoApproved = admin || firebaseUser.isAnonymous;
 
             const newProfile: UserProfile = {
               uid: firebaseUser.uid,
               name: firebaseUser.displayName || (firebaseUser.isAnonymous ? "Mock Auditor" : "User"),
               email: firebaseUser.email || (firebaseUser.isAnonymous ? "work.sufiyan.ahmed078@gmail.com" : ""),
               photoUrl: firebaseUser.photoURL || "",
-              role,
+              role: (admin || firebaseUser.isAnonymous) ? "admin" : "viewer",
+              status: autoApproved ? "approved" : "pending",
               createdAt: currentTime,
               lastLoginAt: currentTime,
             };
@@ -137,17 +155,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
           console.error("Error fetching or creating user profile:", error);
           const email = firebaseUser.email || "";
-          const adminEmails = ["work.sufiyan.ahmed078@gmail.com", "anwar.ali41@gmail.com"];
-          const isAdmin = adminEmails.includes(email.toLowerCase());
-          const role = (isAdmin || firebaseUser.isAnonymous) ? "admin" : "viewer";
-          
-          // Fallback minimal profile to let user use the app
+          const admin = isAdminEmail(email);
+
+          // Fallback minimal profile. Non-admin accounts stay pending here
+          // so a Firestore outage can never bypass the approval gate.
           setProfile({
             uid: firebaseUser.uid,
             name: firebaseUser.displayName || (firebaseUser.isAnonymous ? "Mock Auditor" : "User"),
             email: firebaseUser.email || (firebaseUser.isAnonymous ? "work.sufiyan.ahmed078@gmail.com" : ""),
             photoUrl: firebaseUser.photoURL || "",
-            role,
+            role: (admin || firebaseUser.isAnonymous) ? "admin" : "viewer",
+            status: (admin || firebaseUser.isAnonymous) ? "approved" : "pending",
             createdAt: new Date().toISOString(),
             lastLoginAt: new Date().toISOString(),
           });
@@ -161,8 +179,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, []);
 
+  const isAdmin = !!profile && (profile.role === "admin" || isAdminEmail(profile.email));
+  const isApproved = !!profile && (profile.status === "approved" || isAdmin);
+
   return (
-    <AuthContext.Provider value={{ user, profile, loading, loginWithGoogle, loginWithMock, logout }}>
+    <AuthContext.Provider value={{ user, profile, loading, isAdmin, isApproved, loginWithGoogle, loginWithMock, logout }}>
       {children}
     </AuthContext.Provider>
   );

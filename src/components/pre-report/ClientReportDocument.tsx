@@ -7,6 +7,7 @@ import {
 import {
   ReportNarrative, PreReportMetrics, fmtSAR, fmtPct,
 } from "@/lib/report/insightEngine";
+import { ReportAnalytics, buildReportAnalytics } from "@/lib/report/analytics";
 import { DARK, TYPOGRAPHY } from "@/lib/report/designTokens";
 
 /* ════════════════════════════════════════════════════════════════
@@ -41,6 +42,9 @@ interface ClientReportDocumentProps {
   /** Raw formatted rows (already produced by the existing pipeline);
       used only for display-time grouping. Optional. */
   rows?: any[];
+  /** Shared analytics object (single source of truth for every KPI).
+      When omitted it is derived from `rows` with the same formulas. */
+  analytics?: ReportAnalytics;
   /** Extra pages the host appends after this document (e.g. the
       builder's personnel appendix) so footers number correctly. */
   totalPagesOverride?: number;
@@ -177,10 +181,11 @@ function BarRow({ label, valueLabel, ratio, color }: {
   );
 }
 
-function Donut({ segments, size = 150, thickness = 26, centerTop, centerBottom }: {
+function Donut({ segments, size = 150, thickness = 26, centerTop, centerBottom, centerColor = DARK.green, centerTopSize = "24px" }: {
   segments: { value: number; color: string }[];
   size?: number; thickness?: number;
   centerTop?: string; centerBottom?: string;
+  centerColor?: string; centerTopSize?: string;
 }) {
   const total = Math.max(segments.reduce((s, x) => s + x.value, 0), 0.0001);
   const r = (size - thickness) / 2;
@@ -209,8 +214,8 @@ function Donut({ segments, size = 150, thickness = 26, centerTop, centerBottom }
         position: "absolute", inset: 0, display: "flex", flexDirection: "column",
         alignItems: "center", justifyContent: "center", transform: "none",
       }}>
-        {centerTop && <span style={{ fontFamily: F, fontSize: "24px", fontWeight: 800, color: DARK.green }}>{centerTop}</span>}
-        {centerBottom && <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 800, letterSpacing: "0.1em", color: DARK.white, textTransform: "uppercase", marginTop: "2px" }}>{centerBottom}</span>}
+        {centerTop && <span style={{ fontFamily: F, fontSize: centerTopSize, fontWeight: 800, color: centerColor }}>{centerTop}</span>}
+        {centerBottom && <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 800, letterSpacing: "0.1em", color: DARK.dim, textTransform: "uppercase", marginTop: "2px" }}>{centerBottom}</span>}
       </div>
     </div>
   );
@@ -307,31 +312,14 @@ function DeckPage({
   );
 }
 
-/* ════════════════════════════════════════════════════════════════
-   DISPLAY-TIME AGGREGATIONS (over data the engine already produced)
-   ════════════════════════════════════════════════════════════════ */
+/* All KPI aggregations come from the shared ReportAnalytics object
+   (src/lib/report/analytics.ts) — the same source the dashboard uses. */
 
-function useDisplayStats(metrics: PreReportMetrics, rows: any[]) {
-  let shortageCount = 0, excessCount = 0;
-  const divQty: Record<string, { phys: number; sys: number }> = {};
-  const actionItems: any[] = [];
-
-  for (const r of rows) {
-    const diff = r.differenceQty ?? 0;
-    if (diff < 0) shortageCount++;
-    else if (diff > 0) excessCount++;
-
-    const div = (r.org || "Others").trim();
-    if (!divQty[div]) divQty[div] = { phys: 0, sys: 0 };
-    divQty[div].phys += r.physicalQty ?? 0;
-    divQty[div].sys += r.erpQty ?? 0;
-
-    if (r.status === "open" && diff !== 0) actionItems.push(r);
-  }
-  actionItems.sort((a, b) => (b.absoluteVarianceValue ?? 0) - (a.absoluteVarianceValue ?? 0));
-
-  return { shortageCount, excessCount, divQty, actionItems };
-}
+const abbrev = (val: number) => {
+  if (val >= 1_000_000) return `${(val / 1_000_000).toFixed(1)}M`;
+  if (val >= 1_000) return `${(val / 1_000).toFixed(1)}K`;
+  return val.toLocaleString("en-US", { maximumFractionDigits: 0 });
+};
 
 const riskLevelOf = (absVariance: number) =>
   absVariance >= 10000 ? "HIGH" : absVariance >= 1000 ? "MEDIUM" : "LOW";
@@ -485,14 +473,16 @@ function ExecutivePage({ metrics, narrative, content }: {
   );
 }
 
-function PortfolioPage({ metrics, stats }: { metrics: PreReportMetrics; stats: ReturnType<typeof useDisplayStats> }) {
-  const matched = metrics.matchedItems;
-  const totalCat = Math.max(matched + stats.shortageCount + stats.excessCount, 1);
+function PortfolioPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
+  const totalCat = Math.max(a.accuracy.matchedCount + a.accuracy.shortageCount + a.accuracy.excessCount, 1);
   const legend = [
-    { label: "Matches (Zero Variance)", color: DARK.green, count: matched },
-    { label: "Shortage (Negative Variance)", color: DARK.orange, count: stats.shortageCount },
-    { label: "Excess (Positive Variance)", color: DARK.blue, count: stats.excessCount },
+    { label: "Matches (Zero Variance)", color: DARK.green, count: a.accuracy.matchedCount },
+    { label: "Shortage (Negative Variance)", color: DARK.orange, count: a.accuracy.shortageCount },
+    { label: "Excess (Positive Variance)", color: DARK.blue, count: a.accuracy.excessCount },
   ];
+  // Dashboard donut segments are percentage shares summing to 100,
+  // with "TOTAL / 100" rendered in the center.
+  const centerTotal = Math.round(legend.reduce((s, l) => s + (l.count / totalCat) * 100, 0));
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
@@ -526,6 +516,8 @@ function PortfolioPage({ metrics, stats }: { metrics: PreReportMetrics; stats: R
             <Donut
               segments={legend.map(l => ({ value: Math.max(l.count, 0.001), color: l.color }))}
               size={210} thickness={40}
+              centerTop={String(centerTotal)} centerBottom="TOTAL"
+              centerColor={DARK.white} centerTopSize="28px"
             />
             <div>
               {legend.map((l) => (
@@ -621,16 +613,15 @@ function CoveragePage({ metrics }: { metrics: PreReportMetrics }) {
   );
 }
 
-function DivisionsPage({ metrics }: { metrics: PreReportMetrics }) {
+function DivisionsPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
   const divs = metrics.divisions;
   const perfect = divs.filter(d => d.coverageRate >= 100).length;
-  const bestCoverage = divs.length
-    ? [...divs].sort((a, b) => b.coverageRate - a.coverageRate || b.erpValue - a.erpValue)[0]
-    : null;
-  const laggards = divs.filter(d => d.coverageRate < 100).sort((a, b) => Math.abs(b.varianceValue) - Math.abs(a.varianceValue)).slice(0, 3).map(d => d.division);
+  const laggards = divs.filter(d => d.coverageRate < 100).sort((x, y) => Math.abs(y.varianceValue) - Math.abs(x.varianceValue)).slice(0, 3).map(d => d.division);
+  // Dashboard color thresholds for Division Verification Rates
+  const covColor = (rate: number) => rate >= 95 ? "#10b981" : rate >= 80 ? "#6366f1" : "#f43f5e";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "14px", height: "100%" }}>
       <WWWCards
         what={`Reconciliation performance audit across ${divs.length} distinct organizational divisions.`}
         where="Grouped based on item organization cost codes and original Excel sheets."
@@ -639,20 +630,42 @@ function DivisionsPage({ metrics }: { metrics: PreReportMetrics }) {
 
       <div style={{ display: "flex", gap: "14px" }}>
         <KpiCard label="Total Divisions" value={String(divs.length)} caption="Active cost centers under audit" />
-        <KpiCard label="Highest Coverage" value={bestCoverage?.division || "—"} color={DARK.green} caption={bestCoverage ? `${fmtPct(bestCoverage.coverageRate)} verified` : undefined} />
+        <KpiCard label="Highest Coverage" value={a.highestCoverageDivision?.name || "N/A"} color={DARK.green} caption={a.highestCoverageDivision ? `(${a.highestCoverageDivision.coverageRate.toFixed(1)}% verified)` : undefined} />
         <KpiCard label="Highest Risk Division" value={metrics.highestRiskDivision || "—"} color={DARK.orange} caption="Highest variance cost center" />
         <KpiCard label="Net Ops Variance" value={signedMoney(metrics.varianceValue).replace(".00", "")} color={DARK.orange} caption="Total operational variance" />
       </div>
 
-      <div style={{ ...card, padding: "22px 26px", flexGrow: 1 }}>
-        <p style={{ fontFamily: F, fontSize: "13px", color: DARK.text, lineHeight: 1.75, margin: 0 }}>
-          Division reconciliation covers all {divs.length} cost centers with a blended verification coverage of {fmtPct(metrics.coverageRate)} and
-          a net operational variance of {signedMoney(metrics.varianceValue).replace(".00", "")}. {perfect} of {divs.length} divisions
-          ({fmtPct(divs.length ? (perfect / divs.length) * 100 : 0, 0)}) have reached 100% count coverage
-          {laggards.length > 0
-            ? `; the remaining ${divs.length - perfect} carry the bulk of open verification work and financial risk, led by ${laggards.join(", ")}.`
-            : "."}
-        </p>
+      <div style={{ display: "flex", gap: "16px", flexGrow: 1, minHeight: 0 }}>
+        <Panel
+          title="Division Verification Rates"
+          subtitle="Percentage of ERP ledger value verified physically"
+          style={{ flex: 1.25, minWidth: 0 }}
+        >
+          {divs.map((d) => (
+            <div key={d.division} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
+              <span style={{ fontFamily: F, fontSize: "8.5px", fontWeight: 700, color: DARK.white, width: "44px", flexShrink: 0, whiteSpace: "nowrap" }}>
+                {trunc(d.division, 8)}
+              </span>
+              <div style={{ flexGrow: 1, height: "8px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${Math.max(2, Math.min(100, d.coverageRate))}%`, borderRadius: "2px", backgroundColor: covColor(d.coverageRate) }} />
+              </div>
+              <span style={{ fontFamily: F, fontSize: "8.5px", fontWeight: 800, color: DARK.white, width: "44px", flexShrink: 0, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+                {d.coverageRate.toFixed(1)}%
+              </span>
+            </div>
+          ))}
+        </Panel>
+
+        <div style={{ ...card, padding: "18px 22px", flex: 1, minWidth: 0 }}>
+          <p style={{ fontFamily: F, fontSize: "12px", color: DARK.text, lineHeight: 1.75, margin: 0 }}>
+            Division reconciliation covers all {divs.length} cost centers with a blended verification coverage of {fmtPct(metrics.coverageRate)} and
+            a net operational variance of {signedMoney(metrics.varianceValue).replace(".00", "")}. {perfect} of {divs.length} divisions
+            ({fmtPct(divs.length ? (perfect / divs.length) * 100 : 0, 0)}) have reached 100% count coverage
+            {laggards.length > 0
+              ? `; the remaining ${divs.length - perfect} carry the bulk of open verification work and financial risk, led by ${laggards.join(", ")}.`
+              : "."}
+          </p>
+        </div>
       </div>
     </div>
   );
@@ -745,36 +758,40 @@ function DivisionItemsPage({ metrics }: { metrics: PreReportMetrics }) {
   );
 }
 
-function WorkbooksPage({ metrics, stats }: { metrics: PreReportMetrics; stats: ReturnType<typeof useDisplayStats> }) {
-  const sheets = metrics.subDivisions.slice(0, 4);
-  const divEntries = Object.entries(stats.divQty).sort((a, b) => b[1].sys - a[1].sys);
-  const largest = divEntries[0];
-  const rest = divEntries.slice(1, 20);
-  const maxRest = Math.max(...rest.map(([, v]) => Math.max(v.phys, v.sys)), 1);
+function WorkbooksPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
+  const sheets = metrics.subDivisions.slice(0, 3);
+  const divQty = a.divisionQty;
+  const largest = divQty[0];
+  const rest = divQty.slice(1, 20);
+  const maxRest = Math.max(...rest.map(v => Math.max(v.physicalCount, v.systemOnHand)), 1);
+  const halves = [divQty.slice(0, Math.ceil(divQty.length / 2)), divQty.slice(Math.ceil(divQty.length / 2))];
+
+  const cth: React.CSSProperties = { ...th, padding: "5px 9px", fontSize: "8.5px" };
+  const ctd: React.CSSProperties = { ...td, padding: "3.5px 9px", fontSize: "8.5px" };
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "100%" }}>
       <Panel title="Sub-Division Workbook Sheet Analysis" subtitle="Ingested workbook worksheet performance statistics">
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              <th style={th}>Sheet Name</th>
-              <th style={th}>Items Count</th>
-              <th style={th}>ERP Value</th>
-              <th style={th}>Verified Value</th>
-              <th style={th}>Coverage Rate</th>
-              <th style={th}>Net Variance</th>
+              <th style={cth}>Sheet Name</th>
+              <th style={cth}>Items Count</th>
+              <th style={cth}>ERP Value</th>
+              <th style={cth}>Verified Value</th>
+              <th style={cth}>Coverage Rate</th>
+              <th style={cth}>Net Variance</th>
             </tr>
           </thead>
           <tbody>
             {sheets.map((s) => (
               <tr key={s.subDivision}>
-                <td style={td}>{s.subDivision}</td>
-                <td style={td}>{s.itemCount.toLocaleString("en-US")}</td>
-                <td style={td}>{fmtSAR(s.erpValue)}</td>
-                <td style={td}>{fmtSAR(s.verifiedValue)}</td>
-                <td style={{ ...td, color: DARK.green }}>{fmtPct(s.coverageRate)}</td>
-                <td style={{ ...td, color: s.varianceValue < 0 ? DARK.red : DARK.text, fontWeight: 700 }}>
+                <td style={ctd}>{s.subDivision}</td>
+                <td style={ctd}>{s.itemCount.toLocaleString("en-US")}</td>
+                <td style={ctd}>{fmtSAR(s.erpValue)}</td>
+                <td style={ctd}>{fmtSAR(s.verifiedValue)}</td>
+                <td style={{ ...ctd, color: DARK.green }}>{fmtPct(s.coverageRate)}</td>
+                <td style={{ ...ctd, color: s.varianceValue < 0 ? DARK.red : DARK.text, fontWeight: 700 }}>
                   {signedMoney(s.varianceValue)}
                 </td>
               </tr>
@@ -785,64 +802,89 @@ function WorkbooksPage({ metrics, stats }: { metrics: PreReportMetrics; stats: R
 
       <Panel
         title="Physical Count vs System On Hand by Division"
-        subtitle={largest ? `${largest[0]} carries most units and is shown separately at left; remaining divisions plotted at their own scale` : "Quantities by division"}
-        style={{ flexGrow: 1, display: "flex", flexDirection: "column" }}
+        subtitle={largest ? `${largest.division} carries most units and is shown separately at left; remaining divisions plotted at their own scale` : "Quantities by division"}
+        style={{ display: "flex", flexDirection: "column" }}
       >
-        <div style={{ display: "flex", gap: "24px", flexGrow: 1, minHeight: 0 }}>
+        <div style={{ display: "flex", gap: "20px", height: "150px" }}>
           {largest && (
             <div style={{
-              width: "220px", flexShrink: 0, border: `1px solid ${DARK.cardBorder}`,
+              width: "190px", flexShrink: 0, border: `1px solid ${DARK.cardBorder}`,
               borderRadius: "8px", backgroundColor: DARK.cardSoft,
-              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "8px",
+              display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px",
             }}>
-              <span style={{ fontFamily: F, fontSize: "13px", fontWeight: 800, color: DARK.gold }}>{largest[0]}</span>
-              <span style={{ ...dimCaption }}>Physical Count</span>
-              <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.green }}>{largest[1].phys.toLocaleString("en-US")}</span>
-              <span style={{ ...dimCaption, marginTop: "6px" }}>System On Hand</span>
-              <span style={{ fontFamily: F, fontSize: "17px", fontWeight: 800, color: DARK.blue }}>{largest[1].sys.toLocaleString("en-US")}</span>
+              <span style={{ fontFamily: F, fontSize: "12px", fontWeight: 800, color: DARK.gold }}>{largest.division}</span>
+              <span style={{ ...dimCaption, fontSize: "8px" }}>Physical Count</span>
+              <span style={{ fontFamily: F, fontSize: "14px", fontWeight: 800, color: DARK.green }}>{largest.physicalCount.toLocaleString("en-US")}</span>
+              <span style={{ ...dimCaption, fontSize: "8px", marginTop: "3px" }}>System On Hand</span>
+              <span style={{ fontFamily: F, fontSize: "14px", fontWeight: 800, color: DARK.blue }}>{largest.systemOnHand.toLocaleString("en-US")}</span>
             </div>
           )}
           <div style={{ flexGrow: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-            <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginBottom: "8px" }}>
+            <div style={{ display: "flex", justifyContent: "center", gap: "20px", marginBottom: "6px" }}>
               {[["Physical Count", DARK.green], ["System On Hand", DARK.blue]].map(([label, color]) => (
                 <span key={label as string} style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}>
-                  <span style={{ width: "9px", height: "9px", backgroundColor: color as string, display: "inline-block" }} />
-                  <span style={{ ...dimCaption, fontSize: "9.5px", color: DARK.text }}>{label}</span>
+                  <span style={{ width: "8px", height: "8px", backgroundColor: color as string, display: "inline-block" }} />
+                  <span style={{ ...dimCaption, fontSize: "9px", color: DARK.text }}>{label}</span>
                 </span>
               ))}
             </div>
-            <div style={{ display: "flex", alignItems: "flex-end", gap: "8px", flexGrow: 1, borderBottom: `1px solid ${DARK.tableBorder}`, paddingBottom: "2px" }}>
-              {rest.map(([name, v]) => (
-                <div key={name} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "7px", flexGrow: 1, borderBottom: `1px solid ${DARK.tableBorder}`, paddingBottom: "2px" }}>
+              {rest.map((v) => (
+                <div key={v.division} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "flex-end", height: "100%", minWidth: 0 }}>
                   <div style={{ display: "flex", alignItems: "flex-end", gap: "2px", height: "100%", width: "80%", justifyContent: "center" }}>
-                    <div style={{ width: "42%", backgroundColor: DARK.green, height: `${Math.max(2, (v.phys / maxRest) * 100)}%`, borderRadius: "1.5px 1.5px 0 0" }} />
-                    <div style={{ width: "42%", backgroundColor: DARK.blue, height: `${Math.max(2, (v.sys / maxRest) * 100)}%`, borderRadius: "1.5px 1.5px 0 0" }} />
+                    <div style={{ width: "42%", backgroundColor: DARK.green, height: `${Math.max(2, (v.physicalCount / maxRest) * 100)}%`, borderRadius: "1.5px 1.5px 0 0" }} />
+                    <div style={{ width: "42%", backgroundColor: DARK.blue, height: `${Math.max(2, (v.systemOnHand / maxRest) * 100)}%`, borderRadius: "1.5px 1.5px 0 0" }} />
                   </div>
-                  <span style={{ fontFamily: F, fontSize: "7.5px", color: DARK.dim, marginTop: "5px", whiteSpace: "nowrap" }}>{name}</span>
+                  <span style={{ fontFamily: F, fontSize: "7px", color: DARK.dim, marginTop: "4px", whiteSpace: "nowrap" }}>{v.division}</span>
                 </div>
               ))}
             </div>
           </div>
+        </div>
+
+        {/* Division comparison table — same values as the chart above */}
+        <div style={{ display: "flex", gap: "16px", marginTop: "12px" }}>
+          {halves.map((half, hi) => (
+            <table key={hi} style={{ width: "100%", borderCollapse: "collapse", flex: 1 }}>
+              <thead>
+                <tr>
+                  <th style={cth}>Division</th>
+                  <th style={{ ...cth, textAlign: "right" }}>Physical Count</th>
+                  <th style={{ ...cth, textAlign: "right" }}>System On Hand</th>
+                  <th style={{ ...cth, textAlign: "right" }}>Difference</th>
+                </tr>
+              </thead>
+              <tbody>
+                {half.map((v) => (
+                  <tr key={v.division}>
+                    <td style={{ ...ctd, fontWeight: 700, color: DARK.white }}>{v.division}</td>
+                    <td style={{ ...ctd, textAlign: "right" }}>{v.physicalCount.toLocaleString("en-US")}</td>
+                    <td style={{ ...ctd, textAlign: "right" }}>{v.systemOnHand.toLocaleString("en-US")}</td>
+                    <td style={{ ...ctd, textAlign: "right", fontWeight: 800, color: v.difference < 0 ? DARK.red : v.difference > 0 ? DARK.green : DARK.text }}>
+                      {v.difference > 0 ? "+" : ""}{v.difference.toLocaleString("en-US")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ))}
         </div>
       </Panel>
     </div>
   );
 }
 
-function SuppliersPage({ metrics }: { metrics: PreReportMetrics }) {
-  const byVar = [...metrics.suppliers].sort((a, b) => b.absoluteVarianceValue - a.absoluteVarianceValue);
-  const top3 = byVar.slice(0, 3);
-  const maxVar = Math.max(...top3.map(s => s.absoluteVarianceValue), 1);
-  const totalAbs = Math.max(metrics.suppliers.reduce((s, x) => s + x.absoluteVarianceValue, 0), 0.0001);
+function SuppliersPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
+  const top5 = a.suppliersByVariance.slice(0, 5);
+  const maxVar = Math.max(...top5.map(s => s.absoluteVarianceValue), 1);
+  const totalAbs = Math.max(a.supplierAbsVarianceTotal, 0.0001);
+  const top3 = a.suppliersByVariance.slice(0, 3);
   const othersVar = Math.max(totalAbs - top3.reduce((s, x) => s + x.absoluteVarianceValue, 0), 0);
   const donutColors = [DARK.orange, DARK.goldSoft, DARK.blue, "rgba(255,255,255,0.14)"];
   const legend = [
     ...top3.map((s, i) => ({ label: s.supplier, value: s.absoluteVarianceValue, color: donutColors[i] })),
     { label: "All Others", value: othersVar, color: donutColors[3] },
   ];
-  const avgMatch = metrics.suppliers.length
-    ? metrics.suppliers.reduce((s, x) => s + x.matchingRate, 0) / metrics.suppliers.length
-    : 100;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
@@ -855,13 +897,13 @@ function SuppliersPage({ metrics }: { metrics: PreReportMetrics }) {
       <div style={{ display: "flex", gap: "14px" }}>
         <KpiCard label="Mapped Suppliers" value={String(metrics.suppliers.length)} caption="Resolved suppliers in file" />
         <KpiCard label="Top Exposure Supplier" value={metrics.highestRiskSupplier || "—"} color={DARK.orange} caption="Supplier with highest variance" valueSize="15px" />
-        <KpiCard label="Supplier Abs Variance" value={fmtSAR(metrics.totalRiskValue)} color={DARK.orange} caption="Total supplier absolute risk" />
-        <KpiCard label="Average Match Rate" value={fmtPct(avgMatch)} color={DARK.green} caption="Average supplier line matching" />
+        <KpiCard label="Supplier Abs Variance" value={fmtSAR(a.supplierAbsVarianceTotal)} color={DARK.orange} caption="Total supplier absolute risk" />
+        <KpiCard label="Average Match Rate" value={fmtPct(a.avgSupplierMatchRate)} color={DARK.green} caption="Average supplier line matching" />
       </div>
 
       <div style={{ display: "flex", gap: "16px", flexGrow: 1, minHeight: 0 }}>
-        <Panel title="Top Suppliers by Absolute Variance" subtitle="Highest financial risk associated with suppliers" style={{ flex: 1 }}>
-          {top3.map((s) => (
+        <Panel title="Top 5 Suppliers by Absolute Variance" subtitle="Highest financial risk associated with suppliers" style={{ flex: 1 }}>
+          {top5.map((s) => (
             <BarRow
               key={s.supplier}
               label={s.supplier}
@@ -874,7 +916,12 @@ function SuppliersPage({ metrics }: { metrics: PreReportMetrics }) {
 
         <Panel title="Variance Share of Top Suppliers" style={{ flex: 1 }}>
           <div style={{ display: "flex", alignItems: "center", gap: "26px" }}>
-            <Donut segments={legend.map(l => ({ value: Math.max(l.value, 0.001), color: l.color }))} size={140} thickness={30} />
+            <Donut
+              segments={legend.map(l => ({ value: Math.max(l.value, 0.001), color: l.color }))}
+              size={140} thickness={26}
+              centerTop={`SAR ${abbrev(totalAbs)}`} centerBottom="TOTAL"
+              centerColor={DARK.white} centerTopSize="13px"
+            />
             <div style={{ minWidth: 0 }}>
               {legend.map((l) => (
                 <div key={l.label} style={{ display: "flex", alignItems: "center", gap: "9px", marginBottom: "11px", minWidth: 0 }}>
@@ -892,8 +939,8 @@ function SuppliersPage({ metrics }: { metrics: PreReportMetrics }) {
   );
 }
 
-function SuppliersAllPage({ metrics }: { metrics: PreReportMetrics }) {
-  const list = [...metrics.suppliers].sort((a, b) => b.absoluteVarianceValue - a.absoluteVarianceValue).slice(0, 12);
+function SuppliersAllPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
+  const list = a.suppliersByVariance.slice(0, 15);
   return (
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
@@ -926,8 +973,8 @@ function SuppliersAllPage({ metrics }: { metrics: PreReportMetrics }) {
   );
 }
 
-function WorkforcePage({ metrics }: { metrics: PreReportMetrics }) {
-  const counters = metrics.counters;
+function WorkforcePage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
+  const counters = a.counters;
   const top = counters[0];
   const totalCounted = counters.reduce((s, c) => s + c.itemsCounted, 0);
   const avgAccuracy = counters.length ? counters.reduce((s, c) => s + c.accuracyRate, 0) / counters.length : 100;
@@ -948,7 +995,7 @@ function WorkforcePage({ metrics }: { metrics: PreReportMetrics }) {
       </div>
 
       <Panel title="Productivity Share" subtitle="Portion of attributed count lines completed per specialist" style={{ flexGrow: 1 }}>
-        {counters.slice(0, 6).map((c) => (
+        {counters.map((c) => (
           <BarRow
             key={c.name}
             label={c.name}
@@ -967,8 +1014,8 @@ function WorkforcePage({ metrics }: { metrics: PreReportMetrics }) {
   );
 }
 
-function LeaderboardPage({ metrics }: { metrics: PreReportMetrics }) {
-  const counters = metrics.counters.slice(0, 10);
+function LeaderboardPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
+  const counters = a.counters;
   return counters.length === 0 ? (
     <p style={{ fontFamily: F, fontSize: "11px", color: DARK.dim }}>
       No applicable data was available for this reporting period.
@@ -1021,8 +1068,44 @@ function RiskPage({ metrics, narrative }: { metrics: PreReportMetrics; narrative
         <KpiCard label="Excess Value" value={fmtSAR(metrics.totalExcessValue)} color={DARK.green} caption="Surplus stock discovered" />
       </div>
 
+      <Panel title="Top 5 High-Risk Discrepancy Items" subtitle="Sorted by absolute variance descending">
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{ ...th, padding: "6px 10px" }}>Item Code</th>
+              <th style={{ ...th, padding: "6px 10px" }}>Supplier</th>
+              <th style={{ ...th, padding: "6px 10px" }}>Organization</th>
+              <th style={{ ...th, padding: "6px 10px", textAlign: "right" }}>ERP Qty</th>
+              <th style={{ ...th, padding: "6px 10px", textAlign: "right" }}>Physical Qty</th>
+              <th style={{ ...th, padding: "6px 10px", textAlign: "right" }}>Variance Value</th>
+              <th style={{ ...th, padding: "6px 10px" }}>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {metrics.highestRiskItems.slice(0, 5).map((item: any, i: number) => {
+              const v = item.varianceValue ?? 0;
+              return (
+                <tr key={i}>
+                  <td style={{ ...td, padding: "4.5px 10px", fontWeight: 700, color: DARK.white }}>{item.itemCode || "N/A"}</td>
+                  <td style={{ ...td, padding: "4.5px 10px", whiteSpace: "nowrap" }}>
+                    {trunc(item.supplier || item.supplierName || item.detectedSupplierName || "Others", 24)}
+                  </td>
+                  <td style={{ ...td, padding: "4.5px 10px" }}>{item.org || "—"}</td>
+                  <td style={{ ...td, padding: "4.5px 10px", textAlign: "right" }}>{(item.erpQty ?? 0).toLocaleString("en-US")}</td>
+                  <td style={{ ...td, padding: "4.5px 10px", textAlign: "right" }}>{(item.physicalQty ?? 0).toLocaleString("en-US")}</td>
+                  <td style={{ ...td, padding: "4.5px 10px", textAlign: "right", color: v < 0 ? DARK.red : DARK.green, fontWeight: 800 }}>{signedMoney(v)}</td>
+                  <td style={{ ...td, padding: "4.5px 10px", color: DARK.orange, fontWeight: 800, letterSpacing: "0.06em" }}>
+                    {(item.status || "open").toUpperCase()}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </Panel>
+
       <Panel title="Key Risk Findings" subtitle="Data-supported findings generated from this cycle's reconciliation" style={{ flexGrow: 1 }}>
-        {narrative.risks.slice(0, 3).map((r) => (
+        {narrative.risks.slice(0, 2).map((r) => (
           <div key={r.id} style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "13px" }}>
             <span style={{
               flexShrink: 0, fontFamily: F, fontSize: "8.5px", fontWeight: 800, letterSpacing: "0.08em",
@@ -1056,7 +1139,7 @@ function RiskItemsPage({ metrics }: { metrics: PreReportMetrics }) {
     <table style={{ width: "100%", borderCollapse: "collapse" }}>
       <thead>
         <tr>
-          <th style={th}>Item Code &amp; Details</th>
+          <th style={th}>Item Code</th>
           <th style={th}>Supplier</th>
           <th style={th}>Org</th>
           <th style={th}>ERP / Phys</th>
@@ -1069,8 +1152,8 @@ function RiskItemsPage({ metrics }: { metrics: PreReportMetrics }) {
           const v = item.varianceValue ?? 0;
           return (
             <tr key={i}>
-              <td style={{ ...td, whiteSpace: "nowrap" }}>
-                {trunc(`${item.itemCode || "N/A"} — ${item.description || "N/A"}`, 52)}
+              <td style={{ ...td, whiteSpace: "nowrap", fontWeight: 700, color: DARK.white }}>
+                {item.itemCode || "N/A"}
               </td>
               <td style={{ ...td, whiteSpace: "nowrap" }}>
                 {trunc(item.supplier || item.supplierName || item.detectedSupplierName || "Others", 22)}
@@ -1089,7 +1172,7 @@ function RiskItemsPage({ metrics }: { metrics: PreReportMetrics }) {
   );
 }
 
-function RegistryPage({ metrics, stats }: { metrics: PreReportMetrics; stats: ReturnType<typeof useDisplayStats> }) {
+function RegistryPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
   const filters = ["Search code / description / supplier", "All Suppliers", "All Organizations", "All Issue Categories", "All Risk Levels"];
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px", height: "100%" }}>
@@ -1101,7 +1184,7 @@ function RegistryPage({ metrics, stats }: { metrics: PreReportMetrics; stats: Re
 
       <div style={{ display: "flex", gap: "14px" }}>
         <KpiCard label="Filtered Items" value={metrics.totalLines.toLocaleString("en-US")} />
-        <KpiCard label="Action Required" value={String(stats.actionItems.length)} color={DARK.gold} />
+        <KpiCard label="Action Required" value={a.actionRequiredCount.toLocaleString("en-US")} color={DARK.gold} />
         <KpiCard label="Filtered Abs Risk" value={fmtSAR(metrics.totalRiskValue)} color={DARK.orange} />
         <KpiCard label="Filtered Net Variance" value={signedMoney(metrics.varianceValue).replace(".00", "")} color={DARK.orange} />
       </div>
@@ -1126,8 +1209,12 @@ function RegistryPage({ metrics, stats }: { metrics: PreReportMetrics; stats: Re
   );
 }
 
-function ActionItemsPage({ stats }: { stats: ReturnType<typeof useDisplayStats> }) {
-  const rows = stats.actionItems.slice(0, 11);
+function ActionItemsPage({ a }: { a: ReportAnalytics }) {
+  // Top 15 of the SAME dataset the dashboard ledger uses (non-closed
+  // items), sorted by absolute variance descending.
+  const rows = a.actionItems.slice(0, 15);
+  const cth: React.CSSProperties = { ...th, padding: "6px 10px", fontSize: "9px" };
+  const ctd: React.CSSProperties = { ...td, padding: "4px 10px", fontSize: "9px" };
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {rows.length === 0 ? (
@@ -1139,14 +1226,15 @@ function ActionItemsPage({ stats }: { stats: ReturnType<typeof useDisplayStats> 
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr>
-                <th style={th}>Item Code</th>
-                <th style={th}>Supplier</th>
-                <th style={th}>Org</th>
-                <th style={th}>ERP/Phys</th>
-                <th style={th}>Diff</th>
-                <th style={th}>Unit Cost</th>
-                <th style={th}>Variance</th>
-                <th style={th}>Risk</th>
+                <th style={cth}>Item Code</th>
+                <th style={cth}>Supplier</th>
+                <th style={cth}>Division</th>
+                <th style={{ ...cth, textAlign: "right" }}>ERP Qty</th>
+                <th style={{ ...cth, textAlign: "right" }}>Physical Qty</th>
+                <th style={{ ...cth, textAlign: "right" }}>Variance Qty</th>
+                <th style={{ ...cth, textAlign: "right" }}>Variance Value</th>
+                <th style={cth}>Status</th>
+                <th style={cth}>Action Priority</th>
               </tr>
             </thead>
             <tbody>
@@ -1155,25 +1243,28 @@ function ActionItemsPage({ stats }: { stats: ReturnType<typeof useDisplayStats> 
                 const v = r.varianceValue ?? 0;
                 return (
                   <tr key={i}>
-                    <td style={td}>{r.itemCode || "N/A"}</td>
-                    <td style={{ ...td, whiteSpace: "nowrap" }}>
-                      {trunc(r.supplier || "Others", 24)}
+                    <td style={{ ...ctd, fontWeight: 700, color: DARK.white }}>{r.itemCode || "N/A"}</td>
+                    <td style={{ ...ctd, whiteSpace: "nowrap" }}>
+                      {trunc(r.supplier || "Others", 22)}
                     </td>
-                    <td style={td}>{r.org || "—"}</td>
-                    <td style={td}>{(r.erpQty ?? 0).toLocaleString("en-US")}/{(r.physicalQty ?? 0).toLocaleString("en-US")}</td>
-                    <td style={{ ...td, color: (r.differenceQty ?? 0) < 0 ? DARK.red : DARK.green }}>
+                    <td style={ctd}>{r.org || "—"}</td>
+                    <td style={{ ...ctd, textAlign: "right" }}>{(r.erpQty ?? 0).toLocaleString("en-US")}</td>
+                    <td style={{ ...ctd, textAlign: "right" }}>{(r.physicalQty ?? 0).toLocaleString("en-US")}</td>
+                    <td style={{ ...ctd, textAlign: "right", color: (r.differenceQty ?? 0) < 0 ? DARK.red : (r.differenceQty ?? 0) > 0 ? DARK.green : DARK.text }}>
                       {(r.differenceQty ?? 0) > 0 ? "+" : ""}{(r.differenceQty ?? 0).toLocaleString("en-US")}
                     </td>
-                    <td style={td}>{money(r.unitCost ?? 0)}</td>
-                    <td style={{ ...td, color: v < 0 ? DARK.red : DARK.green, fontWeight: 800 }}>{signedMoney(v)}</td>
-                    <td style={{ ...td, color: riskColorOf(level), fontWeight: 800, letterSpacing: "0.06em" }}>{level}</td>
+                    <td style={{ ...ctd, textAlign: "right", color: v < 0 ? DARK.red : v > 0 ? DARK.green : DARK.text, fontWeight: 800 }}>{signedMoney(v)}</td>
+                    <td style={{ ...ctd, color: DARK.orange, fontWeight: 800, letterSpacing: "0.06em" }}>
+                      {(r.status || "open").toUpperCase()}
+                    </td>
+                    <td style={{ ...ctd, color: riskColorOf(level), fontWeight: 800, letterSpacing: "0.06em" }}>{level}</td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
           <p style={{ fontFamily: F, fontSize: "9px", color: DARK.dim, fontStyle: "italic", margin: "auto 0 0" }}>
-            Displaying {rows.length} of {stats.actionItems.length} action items · full registry available in the application.
+            Displaying {rows.length} of {a.actionRequiredCount.toLocaleString("en-US")} action items · full registry available in the application.
           </p>
         </>
       )}
@@ -1276,7 +1367,7 @@ const SECTION_KICKERS: Record<string, string> = {
 };
 
 export function ClientReportDocument({
-  sections, cover, content, images, metrics, narrative, reportMeta, rows = [], totalPagesOverride,
+  sections, cover, content, images, metrics, narrative, reportMeta, rows = [], analytics, totalPagesOverride,
 }: ClientReportDocumentProps) {
   const enabled = [...sections].sort((a, b) => a.order - b.order).filter((s) => s.enabled);
   const proofs = getProofImages(images);
@@ -1285,7 +1376,8 @@ export function ClientReportDocument({
     proofChunks.push(proofs.slice(i, i + PROOFS_PER_PAGE));
   }
 
-  const stats = useDisplayStats(metrics, rows);
+  // Single source of truth for every KPI (same object as the dashboard).
+  const a = analytics ?? buildReportAnalytics(rows);
   const totalPages = totalPagesOverride ?? countClientReportPages(sections, images);
 
   // Flatten sections into page descriptors (team expands / collapses)
@@ -1331,7 +1423,7 @@ export function ClientReportDocument({
           case "kpi":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title}>
-                <PortfolioPage metrics={metrics} stats={stats} />
+                <PortfolioPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "coverage":
@@ -1343,7 +1435,7 @@ export function ClientReportDocument({
           case "divisions":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title}>
-                <DivisionsPage metrics={metrics} />
+                <DivisionsPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "divisionItems":
@@ -1355,31 +1447,31 @@ export function ClientReportDocument({
           case "workbooks":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} brandFooter>
-                <WorkbooksPage metrics={metrics} stats={stats} />
+                <WorkbooksPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "suppliers":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} brandFooter>
-                <SuppliersPage metrics={metrics} />
+                <SuppliersPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "suppliersAll":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} subtitle="Detailed inventory analytics for all resolved supplier entities" brandFooter>
-                <SuppliersAllPage metrics={metrics} />
+                <SuppliersAllPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "workforce":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} brandFooter>
-                <WorkforcePage metrics={metrics} />
+                <WorkforcePage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "leaderboard":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} subtitle="Verification speed and accuracy performance metrics for field counters" brandFooter>
-                <LeaderboardPage metrics={metrics} />
+                <LeaderboardPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "risk":
@@ -1397,13 +1489,13 @@ export function ClientReportDocument({
           case "validation":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} brandFooter>
-                <RegistryPage metrics={metrics} stats={stats} />
+                <RegistryPage metrics={metrics} a={a} />
               </DeckPage>
             );
           case "actionItems":
             return (
-              <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={`${section.title} (${stats.actionItems.length})`} subtitle="High-risk open items — displaying top rows" brandFooter>
-                <ActionItemsPage stats={stats} />
+              <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={`${section.title} (${a.actionRequiredCount.toLocaleString("en-US")})`} subtitle="High-risk open items — displaying top rows" brandFooter>
+                <ActionItemsPage a={a} />
               </DeckPage>
             );
           case "team":

@@ -5,6 +5,25 @@ All notable changes to the Inventory Analytics & Reporting Portal will be docume
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to Semantic Versioning.
 
 ---
+## [1.5.8] - 2026-07-17
+### Added
+- **Admin Approval Workflow**: Restrict pending users and display an awaiting-approval screen. Managed via Firestore security rules and administrative user role management panels.
+- **Shared Analytics Source**: Centralized all core KPI formulas in `src/lib/report/analytics.ts` to ensure consistency between the interactive pre-report view and the generated PDF report.
+- **High-Risk Items & Quality Upgrades**: Added a "Top 5 High-Risk Discrepancy Items" card, workforce counters, division comparison tables (physical vs. system vs. difference), and Top 5 supplier bars.
+- **Division Performance Charting**: Grouped bar chart visualizations and notched radial gauges for division performance metrics.
+
+### Changed
+- **Dark Landscape Blueprint**: Migrated report layout and UI design to the client-approved landscape blueprint.
+- **Evidence Appendix Manager**: Simplified Evidence Appendix Manager inputs to straightforward text areas.
+- **Authentication Security**: Removed the "Bypass Auth" option on the login page.
+- **Upload Simplification**: Removed the "Load Sample Test Files" option from the upload view.
+
+### Fixed
+- **PDF Layout & Export Clipping**: Resolved text clipping, bottom-cut cards, and table layout overflows in the generated Executive PDF Report.
+- **Locale Formatting**: Fixed locale-dependent number grouping for system auditing.
+
+---
+
 ## [1.3.0] - 2026-07-14
 ### Added
 - **BKLitUI Pie Chart Integration**: Replaced the custom SVG donut chart inside the "Variance Share of Top Suppliers" card with a highly premium, animated `BKLitUI` composable Pie Chart component.

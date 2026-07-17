@@ -27,6 +27,7 @@ import {
   ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
 } from "@/components/pre-report/ClientReportDocument";
 import { buildReportAnalytics, validateReportAnalytics } from "@/lib/report/analytics";
+import { exportReportPpt } from "@/lib/report/pptExport";
 import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
 
 interface Report {
@@ -77,6 +78,7 @@ export default function ReportBuilder() {
   const [message, setMessage] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isExportingPpt, setIsExportingPpt] = useState(false);
 
   // Evidence & Personnel state
   const [personnelList, setPersonnelList] = useState<PersonnelEntry[]>([]);
@@ -246,6 +248,49 @@ export default function ReportBuilder() {
       setError("Failed to compile PDF: " + (err.message || err));
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const handleExportPpt = async () => {
+    if (isExportingPpt) return;
+    if (!report) {
+      setError("No report metadata loaded.");
+      return;
+    }
+    setIsExportingPpt(true);
+    setMessage(null);
+    setError(null);
+
+    // Same consistency gate as the PDF: the deck may only be generated
+    // when the shared analytics object passes cross-validation.
+    const consistencyErrors = validateReportAnalytics(reportAnalytics);
+    if (consistencyErrors.length > 0) {
+      setError(
+        `PowerPoint export blocked — dashboard/report consistency check failed: ${consistencyErrors.join(" ")}`
+      );
+      setIsExportingPpt(false);
+      return;
+    }
+
+    try {
+      const safeTitle = (report.title || "Inventory_Report").replace(/[^a-z0-9]/gi, "_").toLowerCase();
+      await exportReportPpt({
+        sections: pdfSections,
+        cover: pdfCover,
+        content: pdfContent,
+        images: pdfImages,
+        analytics: reportAnalytics,
+        narrative,
+        reportMeta: { quarter: report.quarter, year: report.year, location: report.location },
+        fileName: `${safeTitle}_${report.quarter}_${report.year}.pptx`,
+      });
+      setMessage("Editable PowerPoint deck generated and downloaded successfully!");
+      setTimeout(() => setMessage(null), 5000);
+    } catch (err: any) {
+      console.error("Error exporting PowerPoint:", err);
+      setError("Failed to export PowerPoint: " + (err?.message || err));
+    } finally {
+      setIsExportingPpt(false);
     }
   };
 
@@ -484,6 +529,24 @@ export default function ReportBuilder() {
               <>
                 <Printer className="h-4 w-4" />
                 Generate PDF Package
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleExportPpt}
+            disabled={isExportingPpt}
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:bg-emerald-900 px-5 py-3 text-sm font-semibold text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed shadow-lg shadow-emerald-500/10 active:scale-[0.98]"
+          >
+            {isExportingPpt ? (
+              <>
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white"></div>
+                Building PowerPoint...
+              </>
+            ) : (
+              <>
+                <Printer className="h-4 w-4" />
+                Export PowerPoint (Editable)
               </>
             )}
           </button>

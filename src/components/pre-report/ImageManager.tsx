@@ -4,6 +4,7 @@ import React, { useRef, useState } from "react";
 import { Upload, X, Tag, MessageSquare, Image as ImageIcon, Sparkles, MoveUp, MoveDown } from "lucide-react";
 import { UploadedImage } from "@/types/preReport";
 import { compressImage } from "@/lib/utils";
+import { MAX_PROOF_IMAGES } from "@/lib/report/proofImages";
 
 interface ImageManagerProps {
   images: UploadedImage[];
@@ -17,45 +18,51 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
   const [tempCaption, setTempCaption] = useState("");
   const [isDragActive, setIsDragActive] = useState(false);
 
-  const handleImageUpload = async (file: File) => {
-    if (!file) return;
-    if (file.size === 0) {
-      alert("Selected evidence file is empty (0 bytes).");
+  const handleFilesUpload = async (fileList: FileList | File[]) => {
+    const files = Array.from(fileList || []);
+    if (files.length === 0) return;
+
+    const room = MAX_PROOF_IMAGES - images.length;
+    if (room <= 0) {
+      alert(`Maximum of ${MAX_PROOF_IMAGES} proof images reached. Remove an image before uploading more.`);
       return;
     }
-    if (file.size > 5 * 1024 * 1024) {
-      alert("Evidence file exceeds the maximum 5MB size limit.");
-      return;
-    }
-    if (!file.type.startsWith("image/")) {
-      alert("Unsupported file format. Please upload an image file (PNG, JPG, JPEG).");
-      return;
-    }
-    const isDuplicate = images.some(img => img.name === file.name);
-    if (isDuplicate) {
-      alert(`An evidence image named "${file.name}" has already been uploaded.`);
-      return;
+    if (files.length > room) {
+      alert(`Only ${room} more image(s) can be added (maximum ${MAX_PROOF_IMAGES}). The extra files were skipped.`);
     }
 
+    const selected = files.slice(0, room);
     const uploadPromise = (async () => {
-      try {
-        console.log(`[ImageManager] Starting evidence image compression/upload for ${file.name}...`);
-        const compressedUrl = await compressImage(file, 800, 0.7);
-        if (compressedUrl) {
-          const newImg: UploadedImage = {
-            id: Math.random().toString(36).substr(2, 9),
-            name: file.name,
-            url: compressedUrl,
-            caption: tempCaption.trim() || `Image representing ${selectedCategory}`,
-            category: selectedCategory
-          };
-          onImagesChange([...images, newImg]);
-          setTempCaption(""); // reset
-          console.log(`[ImageManager] Evidence image compression/upload finished for ${file.name}.`);
+      const added: UploadedImage[] = [];
+      for (const file of selected) {
+        if (file.size === 0) { alert(`"${file.name}" is empty (0 bytes) and was skipped.`); continue; }
+        if (file.size > 5 * 1024 * 1024) { alert(`"${file.name}" exceeds the 5MB size limit and was skipped.`); continue; }
+        if (!file.type.startsWith("image/")) { alert(`"${file.name}" is not an image file and was skipped.`); continue; }
+        if (images.some(img => img.name === file.name) || added.some(img => img.name === file.name)) {
+          alert(`An evidence image named "${file.name}" has already been uploaded.`);
+          continue;
         }
-      } catch (err) {
-        console.error(`[ImageManager] Error uploading/compressing image ${file.name}:`, err);
-        throw err;
+        try {
+          console.log(`[ImageManager] Starting evidence image compression/upload for ${file.name}...`);
+          const compressedUrl = await compressImage(file, 800, 0.7);
+          if (compressedUrl) {
+            added.push({
+              id: Math.random().toString(36).substr(2, 9),
+              name: file.name,
+              url: compressedUrl,
+              caption: tempCaption.trim() || `Image representing ${selectedCategory}`,
+              category: selectedCategory
+            });
+            console.log(`[ImageManager] Evidence image compression/upload finished for ${file.name}.`);
+          }
+        } catch (err) {
+          console.error(`[ImageManager] Error uploading/compressing image ${file.name}:`, err);
+          throw err;
+        }
+      }
+      if (added.length > 0) {
+        onImagesChange([...images, ...added]);
+        setTempCaption(""); // reset
       }
     })();
 
@@ -100,8 +107,8 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
     e.preventDefault();
     e.stopPropagation();
     setIsDragActive(false);
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      handleImageUpload(e.dataTransfer.files[0]);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleFilesUpload(e.dataTransfer.files);
     }
   };
 
@@ -165,10 +172,11 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
           ref={fileInputRef}
           type="file"
           accept="image/*"
+          multiple
           className="hidden"
           onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) handleImageUpload(f);
+            if (e.target.files && e.target.files.length > 0) handleFilesUpload(e.target.files);
+            e.target.value = "";
           }}
         />
 
@@ -178,8 +186,8 @@ export function ImageManager({ images, onImagesChange, registerPromise }: ImageM
         >
           <Upload className="h-5 w-5 text-slate-500 group-hover:text-indigo-400 group-hover:scale-105 transition-transform" />
           <div className="text-center">
-            <span className="font-semibold text-[11px] block">Drag &amp; drop or click to upload</span>
-            <span className="text-[10px] text-slate-500 block mt-0.5">Supports PNG, JPG, JPEG up to 5MB</span>
+            <span className="font-semibold text-[11px] block">Drag &amp; drop or click to upload (multiple allowed)</span>
+            <span className="text-[10px] text-slate-500 block mt-0.5">PNG, JPG, JPEG up to 5MB each · maximum {MAX_PROOF_IMAGES} images</span>
           </div>
         </div>
       </div>

@@ -1403,12 +1403,15 @@ div.rounded-2xl {
 [data-theme="light"] .pdf-report-page.pdf-report-page--deck td {
   color: inherit;
 }
-/* Neutralize app-wide table sizing rules inside deck pages so the
-   compact inline paddings/heights are respected. */
+/* Neutralize app-wide table sizing rules inside deck pages so rows
+   stay compact. These values must be small: with 15-row tables on a
+   fixed 794px-tall page, 8px+ paddings overflow the page box and the
+   PDF capture renders values spilling out of their panels. */
 .pdf-report-page--deck thead th,
 .pdf-report-page--deck tbody td {
-  padding: 8px 12px !important;
+  padding: 4px 9px !important;
   height: auto !important;
+  line-height: 1.25 !important;
   border-bottom: none;
 }
 

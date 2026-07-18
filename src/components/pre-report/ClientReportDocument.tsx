@@ -642,14 +642,14 @@ function DivisionsPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAna
           style={{ flex: 1.25, minWidth: 0 }}
         >
           {divs.map((d) => (
-            <div key={d.division} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "5px" }}>
-              <span style={{ fontFamily: F, fontSize: "8.5px", fontWeight: 700, color: DARK.white, width: "44px", flexShrink: 0, whiteSpace: "nowrap" }}>
+            <div key={d.division} style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "3px", height: "11px" }}>
+              <span style={{ fontFamily: F, fontSize: "8px", lineHeight: "10px", fontWeight: 700, color: DARK.white, width: "44px", flexShrink: 0, whiteSpace: "nowrap" }}>
                 {trunc(d.division, 8)}
               </span>
-              <div style={{ flexGrow: 1, height: "8px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
+              <div style={{ flexGrow: 1, height: "6px", borderRadius: "2px", backgroundColor: "rgba(255,255,255,0.06)", overflow: "hidden" }}>
                 <div style={{ height: "100%", width: `${Math.max(2, Math.min(100, d.coverageRate))}%`, borderRadius: "2px", backgroundColor: covColor(d.coverageRate) }} />
               </div>
-              <span style={{ fontFamily: F, fontSize: "8.5px", fontWeight: 800, color: DARK.white, width: "44px", flexShrink: 0, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
+              <span style={{ fontFamily: F, fontSize: "8px", lineHeight: "10px", fontWeight: 800, color: DARK.white, width: "44px", flexShrink: 0, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>
                 {d.coverageRate.toFixed(1)}%
               </span>
             </div>
@@ -764,10 +764,15 @@ function WorkbooksPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAna
   const largest = divQty[0];
   const rest = divQty.slice(1, 20);
   const maxRest = Math.max(...rest.map(v => Math.max(v.physicalCount, v.systemOnHand)), 1);
-  const halves = [divQty.slice(0, Math.ceil(divQty.length / 2)), divQty.slice(Math.ceil(divQty.length / 2))];
+  // Four side-by-side column groups keep all divisions within the fixed
+  // page height (5 rows each for 20 divisions).
+  const perCol = Math.ceil(divQty.length / 4) || 1;
+  const columns = [0, 1, 2, 3]
+    .map(i => divQty.slice(i * perCol, (i + 1) * perCol))
+    .filter(colRows => colRows.length > 0);
 
-  const cth: React.CSSProperties = { ...th, padding: "5px 9px", fontSize: "8.5px" };
-  const ctd: React.CSSProperties = { ...td, padding: "3.5px 9px", fontSize: "8.5px" };
+  const cth: React.CSSProperties = { ...th, fontSize: "7.5px" };
+  const ctd: React.CSSProperties = { ...td, fontSize: "7.5px" };
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "100%" }}>
@@ -805,10 +810,10 @@ function WorkbooksPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAna
         subtitle={largest ? `${largest.division} carries most units and is shown separately at left; remaining divisions plotted at their own scale` : "Quantities by division"}
         style={{ display: "flex", flexDirection: "column" }}
       >
-        <div style={{ display: "flex", gap: "20px", height: "150px" }}>
+        <div style={{ display: "flex", gap: "20px", height: "108px" }}>
           {largest && (
             <div style={{
-              width: "190px", flexShrink: 0, border: `1px solid ${DARK.cardBorder}`,
+              width: "170px", flexShrink: 0, border: `1px solid ${DARK.cardBorder}`,
               borderRadius: "8px", backgroundColor: DARK.cardSoft,
               display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "4px",
             }}>
@@ -843,19 +848,19 @@ function WorkbooksPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAna
         </div>
 
         {/* Division comparison table — same values as the chart above */}
-        <div style={{ display: "flex", gap: "16px", marginTop: "12px" }}>
-          {halves.map((half, hi) => (
-            <table key={hi} style={{ width: "100%", borderCollapse: "collapse", flex: 1 }}>
+        <div style={{ display: "flex", gap: "12px", marginTop: "10px" }}>
+          {columns.map((colRows, ci) => (
+            <table key={ci} style={{ width: "100%", borderCollapse: "collapse", flex: 1 }}>
               <thead>
                 <tr>
                   <th style={cth}>Division</th>
-                  <th style={{ ...cth, textAlign: "right" }}>Physical Count</th>
-                  <th style={{ ...cth, textAlign: "right" }}>System On Hand</th>
-                  <th style={{ ...cth, textAlign: "right" }}>Difference</th>
+                  <th style={{ ...cth, textAlign: "right" }}>Physical</th>
+                  <th style={{ ...cth, textAlign: "right" }}>System</th>
+                  <th style={{ ...cth, textAlign: "right" }}>Diff</th>
                 </tr>
               </thead>
               <tbody>
-                {half.map((v) => (
+                {colRows.map((v) => (
                   <tr key={v.division}>
                     <td style={{ ...ctd, fontWeight: 700, color: DARK.white }}>{v.division}</td>
                     <td style={{ ...ctd, textAlign: "right" }}>{v.physicalCount.toLocaleString("en-US")}</td>
@@ -1106,7 +1111,7 @@ function RiskPage({ metrics, narrative }: { metrics: PreReportMetrics; narrative
 
       <Panel title="Key Risk Findings" subtitle="Data-supported findings generated from this cycle's reconciliation" style={{ flexGrow: 1 }}>
         {narrative.risks.slice(0, 2).map((r) => (
-          <div key={r.id} style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "13px" }}>
+          <div key={r.id} style={{ display: "flex", gap: "14px", alignItems: "flex-start", marginBottom: "9px" }}>
             <span style={{
               flexShrink: 0, fontFamily: F, fontSize: "8.5px", fontWeight: 800, letterSpacing: "0.08em",
               color: riskColorOf(r.level.toUpperCase() === "CRITICAL" ? "HIGH" : r.level.toUpperCase()),

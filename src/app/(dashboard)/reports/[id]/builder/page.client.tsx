@@ -28,6 +28,7 @@ import {
 } from "@/components/pre-report/ClientReportDocument";
 import { buildReportAnalytics, validateReportAnalytics } from "@/lib/report/analytics";
 import { exportReportPpt } from "@/lib/report/pptExport";
+import { loadProofImages } from "@/lib/report/proofImages";
 import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
 
 interface Report {
@@ -79,6 +80,7 @@ export default function ReportBuilder() {
   const [isClosing, setIsClosing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingPpt, setIsExportingPpt] = useState(false);
+  const [proofImages, setProofImages] = useState<UploadedImage[]>([]);
 
   // Evidence & Personnel state
   const [personnelList, setPersonnelList] = useState<PersonnelEntry[]>([]);
@@ -157,6 +159,13 @@ export default function ReportBuilder() {
             }
           });
           setAgingRecords(loadedAging);
+
+          // Proof images live in their own subcollection (post-migration)
+          try {
+            setProofImages(await loadProofImages(id));
+          } catch (imgErr) {
+            console.error("Error loading proof images:", imgErr);
+          }
         } else {
           setError("Report session not found.");
         }
@@ -369,7 +378,7 @@ export default function ReportBuilder() {
     approvedBy: report?.approvedBy || "",
   };
   const pdfContent: EditableContent = preConfig?.content ?? DEFAULT_CONTENT;
-  const pdfImages: UploadedImage[] = preConfig?.images ?? [];
+  const pdfImages: UploadedImage[] = proofImages.length > 0 ? proofImages : (preConfig?.images ?? []);
 
   // Generated narrative (insights, risks, recommendations) — presentation only
   const narrative = buildReportNarrative({

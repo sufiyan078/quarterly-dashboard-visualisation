@@ -5,6 +5,27 @@ All notable changes to the Inventory Analytics & Reporting Portal will be docume
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to Semantic Versioning.
 
 ---
+## [1.6.7] - 2026-07-19
+### Added
+- **Proof Image Limit & Subcollection Ingestion**: Raised maximum proof images to 20 with support for multi-file selection and drag-drop upload. Moved proof images to a dedicated `reports/{id}/proofImages` Firestore subcollection to prevent document size limit exceptions.
+
+### Fixed
+- **Report Page Overflow**: Compacted global deck table cells (4px padding, tight line height) and division verification rows so that all 20 divisions fit cleanly within their panels and avoid spilling in PDF capture.
+
+---
+
+## [1.6.6] - 2026-07-18
+### Added
+- **Interactive Chart Details**: Implemented hover details panel on the division chart.
+
+---
+
+## [1.5.9] - 2026-07-18
+### Added
+- **PowerPoint Export**: Added client-side editable PowerPoint (.pptx) export mirroring the report deck, using native editable charts and A4 landscape design tokens.
+
+---
+
 ## [1.5.8] - 2026-07-17
 ### Added
 - **Admin Approval Workflow**: Restrict pending users and display an awaiting-approval screen. Managed via Firestore security rules and administrative user role management panels.

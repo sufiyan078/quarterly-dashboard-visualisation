@@ -26,6 +26,7 @@ import {
   ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
 } from "@/components/pre-report/ClientReportDocument";
 import { buildReportAnalytics } from "@/lib/report/analytics";
+import { saveProofImages, loadProofImages } from "@/lib/report/proofImages";
 import { runQA } from "@/lib/report/qaEngine";
 
 interface Report {
@@ -176,6 +177,15 @@ export default function PreReportPage() {
             }, { merge: true });
           }
 
+          // Proof images live in their own subcollection; fall back to the
+          // legacy embedded array for configs saved before the migration.
+          let storedImages: UploadedImage[] = [];
+          try {
+            storedImages = await loadProofImages(id);
+          } catch (imgErr) {
+            console.error("Error loading proof images:", imgErr);
+          }
+
           // Initialize configs if stored in Firestore
           if (reportData.preReportConfig) {
             const config = reportData.preReportConfig;
@@ -183,7 +193,7 @@ export default function PreReportPage() {
               sections: config.sections ? mergeWithDefaultSections(config.sections) : DEFAULT_SECTIONS,
               cover: config.cover || DEFAULT_COVER,
               content: config.content || DEFAULT_CONTENT,
-              images: config.images || [],
+              images: storedImages.length > 0 ? storedImages : (config.images || []),
               approval: config.approval || DEFAULT_APPROVAL
             });
           } else {
@@ -200,7 +210,7 @@ export default function PreReportPage() {
                 approvedBy: reportData.approvedBy || "",
               },
               content: DEFAULT_CONTENT,
-              images: [],
+              images: storedImages,
               approval: DEFAULT_APPROVAL
             });
           }
@@ -505,8 +515,11 @@ export default function PreReportPage() {
 
       const docRef = doc(db, "reports", id);
       try {
+        // Proof images live in their own subcollection (one doc per image)
+        // so the report document stays under Firestore's 1MB limit.
+        await saveProofImages(id, configToSave.images);
         await setDoc(docRef, {
-          preReportConfig: configToSave,
+          preReportConfig: { ...configToSave, images: [] },
           updatedAt: new Date()
         }, { merge: true });
       } catch (fErr: any) {
@@ -558,9 +571,11 @@ export default function PreReportPage() {
       console.log("[ApprovalPipeline] Approving configuration. Writing to Firestore...");
       const docRef = doc(db, "reports", id);
       try {
+        await saveProofImages(id, configToSave.images);
         await setDoc(docRef, {
           preReportConfig: {
             ...configToSave,
+            images: [],
             approval: {
               ...configToSave.approval,
               readyForExport: true

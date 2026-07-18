@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from "react";
 import { useAuth, UserProfile } from "@/context/AuthContext";
 import { db, collection, getDocs, query, where, setDoc, doc } from "@/lib/firebase";
-import DemoOne from "@/components/ui/morphing-card-stack-demo";
 
 /** Admin-only: pending Google sign-in requests with Approve / Reject. */
 function PendingUserRequests() {
@@ -115,24 +114,7 @@ export default function HomeDashboard() {
         </h1>
       </div>
 
-      {/* Motion Card / Process Pipeline */}
-      <div className="rounded-xl border border-slate-800/80 bg-slate-950/40 p-6 sm:p-8 backdrop-blur-md relative overflow-hidden">
-        {/* Glow node */}
-        <div className="absolute top-0 right-0 h-40 w-40 rounded-full bg-indigo-500/5 blur-3xl"></div>
 
-        <div className="mb-8">
-          <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-            Inventory Audit Pipeline
-          </h3>
-          <p className="text-xs text-slate-400 mt-1">
-            Interactive visualization of the end-to-end reconciliation flow. Switch layout modes to explore.
-          </p>
-        </div>
-
-        <div className="py-4">
-          <DemoOne />
-        </div>
-      </div>
 
       {/* Admin-only: pending access requests */}
       {isAdmin && <PendingUserRequests />}

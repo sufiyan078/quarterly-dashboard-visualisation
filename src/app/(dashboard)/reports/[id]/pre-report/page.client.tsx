@@ -62,7 +62,7 @@ export default function PreReportPage() {
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   // Active custom tab in Left Panel
-  const [activeTab, setActiveTab] = useState<'sections' | 'cover' | 'content' | 'images' | 'approve'>('sections');
+  const [activeTab, setActiveTab] = useState<'sections' | 'cover' | 'content' | 'images' | 'approve'>('cover');
 
   // Preview zoom level
   const [zoom, setZoom] = useState<number>(0.7);
@@ -702,11 +702,9 @@ export default function PreReportPage() {
           {/* Internal Workspace Toolbox Tabs */}
           <div className="flex border-b border-slate-800 pb-px overflow-x-auto gap-1">
             {[
-              { id: 'sections', label: 'Outline' },
               { id: 'cover', label: 'Cover Designer' },
-              { id: 'content', label: 'Narrative Editor' },
               { id: 'images', label: 'Evidence Images' },
-              { id: 'approve', label: 'Quality & Sign-Off' }
+              { id: 'approve', label: 'Sign-Off' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -723,16 +721,7 @@ export default function PreReportPage() {
           </div>
 
           {/* Active Workspace Control Component */}
-          <div className="space-y-4">
-            {activeTab === 'sections' && (
-              <SectionManager
-                sections={sections}
-                onSectionsChange={setSections}
-                activeSectionId={activeSectionId}
-                onSectionSelect={handleSectionSelect}
-                sectionMeta={sectionMeta}
-              />
-            )}
+          <div className="space-y-4 font-sans">
 
             {activeTab === 'cover' && (
               <CoverPageEditor
@@ -742,12 +731,7 @@ export default function PreReportPage() {
               />
             )}
 
-            {activeTab === 'content' && (
-              <ContentEditor
-                content={content}
-                onContentChange={setContent}
-              />
-            )}
+
 
             {activeTab === 'images' && (
               <ImageManager

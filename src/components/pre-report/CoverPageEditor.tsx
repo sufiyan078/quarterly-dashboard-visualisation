@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useRef } from "react";
-import { Upload, X, Image as ImageIcon, Sparkles, Building, User, Calendar, ShieldAlert } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Sparkles, Building, User, Calendar } from "lucide-react";
 import { CoverPageData } from "@/types/preReport";
 import { compressImage } from "@/lib/utils";
 
@@ -261,21 +261,6 @@ export function CoverPageEditor({ cover, onCoverChange, registerPromise }: Cover
               />
             </div>
           </div>
-        </div>
-
-        {/* Confidentiality Statement */}
-        <div className="space-y-1.5">
-          <label className="text-[10px] text-slate-400 font-semibold flex items-center gap-1.5">
-            <ShieldAlert className="h-3 w-3 text-slate-500" />
-            Confidentiality Statement
-          </label>
-          <textarea
-            value={cover.confidentialityStatement}
-            onChange={(e) => update('confidentialityStatement', e.target.value)}
-            rows={3}
-            className="w-full bg-slate-950/40 border border-slate-800/80 rounded-lg px-3 py-2 text-xs text-slate-200 outline-none focus:border-indigo-500/50 transition-colors resize-none placeholder-slate-700 font-sans leading-relaxed"
-            placeholder="Enter confidentiality statement..."
-          />
         </div>
       </div>
     </div>

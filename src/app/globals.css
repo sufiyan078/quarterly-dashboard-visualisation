@@ -204,7 +204,6 @@ code, kbd, samp, pre {
   color: #3d3520 !important;
 }
 
-/* ─── Card / Surface panels (only divs/forms, not buttons/links) ─── */
 [data-theme="light"] div.rounded-xl,
 [data-theme="light"] div.rounded-2xl,
 [data-theme="light"] form.rounded-xl,
@@ -213,9 +212,7 @@ code, kbd, samp, pre {
 [data-theme="light"] div.rounded-2xl[class*="bg-"],
 [data-theme="light"] form.rounded-xl[class*="bg-"],
 [data-theme="light"] form.rounded-2xl[class*="bg-"] {
-  background: 
-    linear-gradient(135deg, rgba(255, 255, 255, 0.6) 0%, rgba(255, 255, 245, 0.3) 100%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.75) 0%, rgba(253, 248, 225, 0.6) 100%) !important;
+  background: #FFFFFF !important;
   backdrop-filter: blur(16px) saturate(120%) !important;
   -webkit-backdrop-filter: blur(16px) saturate(120%) !important;
   border: 1px solid rgba(140, 123, 80, 0.18) !important;
@@ -228,9 +225,7 @@ code, kbd, samp, pre {
 [data-theme="light"] form.rounded-xl:hover,
 [data-theme="light"] form.rounded-2xl:hover {
   border-color: rgba(140, 123, 80, 0.32) !important;
-  background: 
-    linear-gradient(135deg, rgba(255, 255, 255, 0.85) 0%, rgba(255, 255, 245, 0.5) 100%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.9) 0%, rgba(253, 248, 225, 0.75) 100%) !important;
+  background: #FFFFFF !important;
   box-shadow: 0 12px 40px 0 rgba(140, 123, 80, 0.12), inset 0 1px 2px rgba(255, 255, 255, 0.9) !important;
 }
 
@@ -341,9 +336,9 @@ code, kbd, samp, pre {
 }
 
 /* Buttons and links with text-white should keep white */
-[data-theme="light"] button.text-white,
-[data-theme="light"] a.text-white {
-  /* Only override if they don't have a colored bg */
+[data-theme="light"] button.text-white:not([class*="bg-indigo"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-purple"]):not([class*="bg-blue"]):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-violet"]):not([class*="bg-amber"]):not([class*="bg-slate-900"]):not([class*="bg-slate-950"]),
+[data-theme="light"] a.text-white:not([class*="bg-indigo"]):not([class*="bg-emerald"]):not([class*="bg-rose"]):not([class*="bg-purple"]):not([class*="bg-blue"]):not([class*="bg-red"]):not([class*="bg-green"]):not([class*="bg-violet"]):not([class*="bg-amber"]):not([class*="bg-slate-900"]):not([class*="bg-slate-950"]) {
+  color: var(--th-text-heading) !important;
 }
 
 /* Force white text on SOLID accent-colored buttons/links only */

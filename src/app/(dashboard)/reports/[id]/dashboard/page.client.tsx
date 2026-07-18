@@ -794,109 +794,190 @@ function BKLitGroupedBarChart({
         {subtitle && <p className="text-[10px] text-slate-500 mt-1">{subtitle}</p>}
       </div>
 
-      {/* Legend */}
-      <div className="flex items-center gap-5 mt-3 mb-1">
-        {series.map(s => (
-          <div key={s.key} className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: s.color }} />
-            <span className="text-[10px] text-slate-400 font-medium">{s.label}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Chart area */}
-      <div
-        className="relative flex items-end gap-3 pt-4 pb-2 overflow-x-auto"
-        style={{ height: `${height}px`, minHeight: `${height}px` }}
-      >
-        {data.map((point, gi) => (
-          <div
-            key={gi}
-            className="flex flex-col items-center flex-1 min-w-[48px] h-full justify-end"
-            onMouseEnter={e => {
-              const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-              const parent = (e.currentTarget.closest(".rounded-xl") as HTMLElement)?.getBoundingClientRect();
-              if (parent) {
-                setTooltip({
-                  x: rect.left - parent.left + rect.width / 2,
-                  y: rect.top - parent.top,
-                  point,
-                });
-              }
-            }}
-            onMouseLeave={() => setTooltip(null)}
-          >
-            {/* Two bars side-by-side */}
-            <div className="flex items-end gap-[3px] w-full h-full justify-center">
-              {series.map(s => {
-                const val = point.values[s.key] ?? 0;
-                const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
-                return (
-                  <div
-                    key={s.key}
-                    className="flex-1 group relative flex flex-col justify-end"
-                    style={{ height: "100%", maxWidth: "28px" }}
-                  >
-                    <div
-                      className="w-full rounded-t-sm transition-all duration-500 ease-out cursor-pointer group-hover:brightness-125"
-                      style={{
-                        height: `${Math.max(3, pct)}%`,
-                        backgroundColor: s.color,
-                        opacity: 0.9,
-                        transformOrigin: "bottom",
-                        transition: "height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s",
-                      }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* X-Axis label */}
-            <span className="text-[9px] text-slate-400 mt-2 font-mono text-center truncate w-full" title={point.group}>
-              {point.group}
-            </span>
-          </div>
-        ))}
-
-        {/* Tooltip */}
-        {tooltip && (
-          <div
-            className="absolute z-30 pointer-events-none"
-            style={{
-              left: `${Math.min(tooltip.x, 260)}px`,
-              top: `${Math.max(0, tooltip.y - 8)}px`,
-              transform: "translate(-50%, -100%)",
-            }}
-          >
-            <div className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 shadow-2xl text-[11px] font-mono min-w-[160px] space-y-1.5">
-              <div className="text-slate-300 font-bold border-b border-slate-800 pb-1.5 mb-1">
-                Division: {tooltip.point.group}
+      <div className="flex flex-col lg:flex-row gap-6 mt-4 items-stretch flex-1">
+        {/* Left: Chart container */}
+        <div className="flex-1 min-w-0 flex flex-col justify-between">
+          {/* Legend */}
+          <div className="flex items-center gap-5 mb-3">
+            {series.map(s => (
+              <div key={s.key} className="flex items-center gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-sm flex-shrink-0" style={{ backgroundColor: s.color }} />
+                <span className="text-[10px] text-slate-400 font-medium">{s.label}</span>
               </div>
-              {series.map(s => (
-                <div key={s.key} className="flex justify-between items-center gap-4">
-                  <span className="flex items-center gap-1.5">
-                    <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: s.color }} />
-                    <span className="text-slate-400">{s.label}</span>
-                  </span>
-                  <span className="font-bold text-white">{fmt(tooltip.point.values[s.key] ?? 0)}</span>
-                </div>
-              ))}
-              {/* Difference row */}
-              {series.length === 2 && (() => {
-                const diff = (tooltip.point.values[series[0].key] ?? 0) - (tooltip.point.values[series[1].key] ?? 0);
-                return (
-                  <div className="flex justify-between items-center gap-4 border-t border-slate-800 pt-1.5 mt-0.5">
-                    <span className="text-slate-500">Difference</span>
-                    <span className={`font-bold ${diff < 0 ? "text-rose-400" : diff > 0 ? "text-emerald-400" : "text-slate-400"}`}>
-                      {diff > 0 ? "+" : ""}{fmt(diff)}
-                    </span>
-                  </div>
-                );
-              })()}
-            </div>
+            ))}
           </div>
-        )}
+
+          {/* Chart area */}
+          <div
+            className="relative flex items-end gap-3 pt-4 pb-2 overflow-x-auto"
+            style={{ height: `${height}px`, minHeight: `${height}px` }}
+          >
+            {data.map((point, gi) => (
+              <div
+                key={gi}
+                className="flex flex-col items-center flex-1 min-w-[48px] h-full justify-end"
+                onMouseEnter={e => {
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+                  const parent = (e.currentTarget.closest(".rounded-xl") as HTMLElement)?.getBoundingClientRect();
+                  if (parent) {
+                    setTooltip({
+                      x: rect.left - parent.left + rect.width / 2,
+                      y: rect.top - parent.top,
+                      point,
+                    });
+                  }
+                }}
+                onMouseLeave={() => setTooltip(null)}
+              >
+                {/* Two bars side-by-side */}
+                <div className="flex items-end gap-[3px] w-full h-full justify-center">
+                  {series.map(s => {
+                    const val = point.values[s.key] ?? 0;
+                    const pct = maxVal > 0 ? (val / maxVal) * 100 : 0;
+                    return (
+                      <div
+                        key={s.key}
+                        className="flex-1 group relative flex flex-col justify-end"
+                        style={{ height: "100%", maxWidth: "28px" }}
+                      >
+                        <div
+                          className="w-full rounded-t-sm transition-all duration-500 ease-out cursor-pointer group-hover:brightness-125"
+                          style={{
+                            height: `${Math.max(3, pct)}%`,
+                            backgroundColor: s.color,
+                            opacity: 0.9,
+                            transformOrigin: "bottom",
+                            transition: "height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s",
+                          }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* X-Axis label */}
+                <span className="text-[9px] text-slate-400 mt-2 font-mono text-center truncate w-full" title={point.group}>
+                  {point.group}
+                </span>
+              </div>
+            ))}
+
+            {/* Tooltip */}
+            {tooltip && (
+              <div
+                className="absolute z-30 pointer-events-none"
+                style={{
+                  left: `${Math.min(tooltip.x, 260)}px`,
+                  top: `${Math.max(0, tooltip.y - 8)}px`,
+                  transform: "translate(-50%, -100%)",
+                }}
+              >
+                <div className="bg-slate-950 border border-slate-700 rounded-lg px-3 py-2.5 shadow-2xl text-[11px] font-mono min-w-[160px] space-y-1.5">
+                  <div className="text-slate-300 font-bold border-b border-slate-800 pb-1.5 mb-1">
+                    Division: {tooltip.point.group}
+                  </div>
+                  {series.map(s => (
+                    <div key={s.key} className="flex justify-between items-center gap-4">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-sm" style={{ backgroundColor: s.color }} />
+                        <span className="text-slate-400">{s.label}</span>
+                      </span>
+                      <span className="font-bold text-white">{fmt(tooltip.point.values[s.key] ?? 0)}</span>
+                    </div>
+                  ))}
+                  {/* Difference row */}
+                  {series.length === 2 && (() => {
+                    const diff = (tooltip.point.values[series[0].key] ?? 0) - (tooltip.point.values[series[1].key] ?? 0);
+                    return (
+                      <div className="flex justify-between items-center gap-4 border-t border-slate-800 pt-1.5 mt-0.5">
+                        <span className="text-slate-500">Difference</span>
+                        <span className={`font-bold ${diff < 0 ? "text-rose-400" : diff > 0 ? "text-emerald-400" : "text-slate-400"}`}>
+                          {diff > 0 ? "+" : ""}{fmt(diff)}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right column: Hover Details Panel */}
+        <div className="w-full lg:w-72 flex-shrink-0 flex flex-col justify-center">
+          {tooltip ? (
+            <div className="h-full rounded-xl border border-slate-800/80 bg-slate-950/30 p-4 flex flex-col justify-between min-h-[180px] shadow-xl">
+              <div>
+                <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Selected Division
+                </span>
+                <h4 className="text-sm font-extrabold text-white truncate" title={tooltip.point.group}>
+                  {tooltip.point.group}
+                </h4>
+              </div>
+
+              <div className="space-y-3 my-4">
+                {/* Physical Count */}
+                <div className="flex justify-between items-center border-b border-slate-800/40 pb-2">
+                  <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-[#10b981]" />
+                    Physical Count
+                  </span>
+                  <span className="text-sm font-bold text-[#10b981]">
+                    {fmt(tooltip.point.values["physicalCount"] ?? 0)}
+                  </span>
+                </div>
+
+                {/* System On Hand */}
+                <div className="flex justify-between items-center border-b border-slate-800/40 pb-2">
+                  <span className="text-[11px] text-slate-400 font-medium flex items-center gap-1.5">
+                    <span className="h-2.5 w-2.5 rounded-sm bg-[#60a5fa]" />
+                    System On Hand
+                  </span>
+                  <span className="text-sm font-bold text-[#60a5fa]">
+                    {fmt(tooltip.point.values["systemOnHand"] ?? 0)}
+                  </span>
+                </div>
+
+                {/* Difference */}
+                {(() => {
+                  const phys = tooltip.point.values["physicalCount"] ?? 0;
+                  const sys = tooltip.point.values["systemOnHand"] ?? 0;
+                  const diff = phys - sys;
+                  
+                  let diffColor = "text-[#10b981]"; // Green if diff = 0
+                  if (diff > 0) {
+                    diffColor = "text-[#f59e0b]"; // Amber if diff > 0
+                  } else if (diff < 0) {
+                    diffColor = "text-[#ef4444]"; // Red if diff < 0
+                  }
+
+                  return (
+                    <div className="flex justify-between items-center pt-1">
+                      <span className="text-[11px] text-slate-400 font-medium">Difference</span>
+                      <span className={`text-sm font-bold ${diffColor}`}>
+                        {diff > 0 ? "+" : ""}{fmt(diff)}
+                      </span>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              <div className="text-[9px] text-slate-500 font-mono text-right italic">
+                * Real-time metrics
+              </div>
+            </div>
+          ) : (
+            <div className="h-full rounded-xl border border-dashed border-slate-800 bg-slate-950/10 p-5 flex flex-col items-center justify-center text-center min-h-[180px] transition-all duration-300">
+              <svg className="w-6 h-6 text-slate-500 mb-2 opacity-60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+              </svg>
+              <p className="text-[11px] text-slate-500 font-medium max-w-[180px] leading-relaxed">
+                Hover over a division to view details.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

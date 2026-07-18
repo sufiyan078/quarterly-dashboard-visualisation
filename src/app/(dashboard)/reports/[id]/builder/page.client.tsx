@@ -10,7 +10,6 @@ import {
   ArrowLeft, 
   CheckSquare, 
   Printer, 
-  Lock, 
   Sparkles,
   Award
 } from "lucide-react";
@@ -76,7 +75,6 @@ export default function ReportBuilder() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-  const [isClosing, setIsClosing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isExportingPpt, setIsExportingPpt] = useState(false);
 
@@ -294,21 +292,7 @@ export default function ReportBuilder() {
     }
   };
 
-  const handleCloseAudit = async () => {
-    setIsClosing(true);
-    try {
-      const docRef = doc(db, "reports", id);
-      await setDoc(docRef, {
-        status: "closed",
-        updatedAt: new Date(),
-      }, { merge: true });
-      router.push("/reports");
-    } catch (err) {
-      console.error("Error closing audit session:", err);
-      setError("Could not close audit. Make sure you are logged in.");
-      setIsClosing(false);
-    }
-  };
+
 
   if (loading) {
     return (
@@ -547,21 +531,6 @@ export default function ReportBuilder() {
               <>
                 <Printer className="h-4 w-4" />
                 Export PowerPoint (Editable)
-              </>
-            )}
-          </button>
-
-          <button
-            onClick={handleCloseAudit}
-            disabled={isClosing}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg bg-slate-900 hover:bg-slate-850 border border-slate-800/80 disabled:bg-slate-950 px-5 py-3 text-sm font-semibold text-slate-300 hover:text-white transition-all duration-200 cursor-pointer disabled:cursor-not-allowed active:scale-[0.98]"
-          >
-            {isClosing ? (
-              "Closing Audit..."
-            ) : (
-              <>
-                <Lock className="h-4 w-4" />
-                Complete & Close Audit
               </>
             )}
           </button>

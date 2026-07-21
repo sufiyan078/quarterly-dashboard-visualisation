@@ -4,7 +4,57 @@ All notable changes to the Inventory Analytics & Reporting Portal will be docume
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and adheres to Semantic Versioning.
 
+## [1.7.7] - 2026-07-21
+### Added
+- **Exact Pixel-Perfect Executive Cover Page Redesign**: Redesigned Page 1 (Cover Page) to match the reference screenshot with 100% precision in colors, typography, weights, line wrapping, and layout.
+- **Full-Bleed 62% / 38% Vertical Split Column Layout**: Deep dark navy background (`#0B182B`) for the left 62% content section and solid lighter navy background (`#12243E`) for the full-height right 38% Health Score column.
+- **Serif Typography**: Applied Georgia serif font stack (`Georgia, "Times New Roman", Times, serif`) to main report title (`44px` bold white, 3-line split), italic subtitle (`16px` `#A0B0C6`), client company name (`14px` bold white), and numeric score (`52px` bold white).
+- **SVG Circular Donut Ring**: Donut ring with thick gold progress stroke (`#C69A39`, `18px` width) and dark navy gap track (`#0B182B`), displaying `96.9` score and gold `EXCELLENT RATING` label.
+- **Universal Multi-Format Parity**: Synchronized layout, background, font stack, and donut track across Live Pre-Report Web Preview, PDF Export, and PowerPoint (.pptx) Export.
+
 ---
+
+## [1.7.6] - 2026-07-21
+### Added
+- **Executive Cover Page Redesign**: Redesigned Page 1 (Cover Page) into a premium 65% / 35% executive layout matching client specification.
+- **Left Column (~65%)**: Kicker (`{Quarter} {Year} · EXECUTIVE AUDIT REPORT`), large bold white main title, italicized subtitle, gold accent divider bar, and client branding/copyright.
+- **Right Column (~35%) - Health Score Panel**: Dedicated panel featuring an SVG circular progress donut ring displaying the numeric Inventory Health Score and uppercase rating label (`EXCELLENT RATING`).
+- **Single Source of Truth Parity**: Enforced identical cover layout and presentation across Live Web Preview, PDF Export, and PowerPoint Export (`pptExport.ts`).
+
+---
+
+## [1.7.5] - 2026-07-21
+### Added
+- **Single Source of Truth (SSOT) Architecture Finalization**: Enforced absolute visual, structural, and data parity across Live Web Preview, PDF Export, and PowerPoint (.pptx) Export using the canonical `SharedReportModel`.
+- **Pre-Report & Builder Model Sync**: Refactored both `ClientReportDocument` and builder PDF template rendering to consume the memoized `SharedReportModel` via model prop, removing independent page calculation, kicker lookups, and section re-ordering.
+- **Export Validation Gate Integration**: Integrated mandatory `validateReportParity` gate prior to all PDF and PowerPoint exports to guarantee structural layout integrity before rendering.
+
+---
+
+## [1.7.4] - 2026-07-20
+### Improved
+- **Coverage vs Match Rate Presentation Clarity**: Enhanced the UX of Supplier Spotlight pages (Live Preview, PDF Export, and PPTX Export) to explicitly differentiate between **Inventory Value Coverage** (% of ERP inventory value physically verified) and **Line Item Match Rate** (% of count records matching ERP with zero variance).
+- **Separated Metric Cards & Explicit Phrasing**: Separated Coverage and Match Rate into two independent, styled metric blocks with dedicated subtitles and explicit narrative sentences to remove ambiguity for report readers.
+- **Visual Label Standardization**: Updated Donut center text to `"VAL COVERAGE"` and KPI card label to `"Line Match Rate"` across all report components and slide templates.
+
+---
+
+## [1.7.3] - 2026-07-20
+### Added
+- **Supplier Evidence Manager Overhaul**: Replaced dropdown-based image mapping with a dedicated Supplier Evidence Manager featuring 5 independent drag & drop upload cards (one for each of the Top 5 suppliers by absolute variance).
+- **Strict Evidence Isolation**: Enforced complete segregation between generic proof photographs (Evidence Appendix Manager) and supplier-specific spotlight photos. Images uploaded per supplier appear strictly on that supplier's Spotlight page and never on generic Proofs pages.
+- **Multi-Format Parity**: Synchronized independent supplier evidence galleries across Live Web Preview, PDF Export, and PowerPoint Export (.pptx).
+
+---
+
+## [1.7.2] - 2026-07-20
+### Added
+- **Dynamic Supplier Spotlight Pages**: Introduced 5 automated supplier deep-dive spotlight pages positioned immediately following the Supplier Risk Overview. Features rule-based AI performance insights, key financial & reconciliation KPIs, risk level badge, and mapped evidence photos.
+- **Supplier Evidence Mapping**: Added interactive mapping UI within the Evidence Appendix Manager permitting manual image assignments per top supplier.
+- **Pipeline Synchronization**: Full PDF (html2canvas) and PowerPoint (.pptx) export parity with custom image mappings preserved across all export formats.
+
+---
+
 ## [1.6.7] - 2026-07-19
 ### Added
 - **Proof Image Limit & Subcollection Ingestion**: Raised maximum proof images to 20 with support for multi-file selection and drag-drop upload. Moved proof images to a dedicated `reports/{id}/proofImages` Firestore subcollection to prevent document size limit exceptions.

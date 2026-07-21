@@ -13,7 +13,7 @@ import {
 import { computeDashboardMetrics } from "@/lib/inventory/dashboardCalculations";
 import { buildReportNarrative, PreReportMetrics } from "@/lib/report/insightEngine";
 import {
-  ReportSection, CoverPageData, EditableContent, UploadedImage, ApprovalState,
+  ReportSection, CoverPageData, EditableContent, UploadedImage, ApprovalState, SupplierImageMapping,
   DEFAULT_SECTIONS, DEFAULT_COVER, DEFAULT_CONTENT, DEFAULT_APPROVAL,
   mergeWithDefaultSections
 } from "@/types/preReport";
@@ -21,11 +21,15 @@ import { SectionManager } from "@/components/pre-report/SectionManager";
 import { CoverPageEditor } from "@/components/pre-report/CoverPageEditor";
 import { ContentEditor } from "@/components/pre-report/ContentEditor";
 import { ImageManager } from "@/components/pre-report/ImageManager";
+import { SupplierEvidenceManager } from "@/components/pre-report/SupplierEvidenceManager";
 import { ApprovalGatedChecklist } from "@/components/pre-report/ApprovalGatedChecklist";
 import {
   ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
 } from "@/components/pre-report/ClientReportDocument";
 import { buildReportAnalytics } from "@/lib/report/analytics";
+import { buildSharedReportModel } from "@/lib/report/reportModel";
+import { resolveClientName, resolveReportingPeriod } from "@/lib/report/reportResolvers";
+import { validateReportParity } from "@/lib/report/reportValidationGate";
 import { saveProofImages, loadProofImages } from "@/lib/report/proofImages";
 import { runQA } from "@/lib/report/qaEngine";
 
@@ -46,6 +50,7 @@ interface Report {
     content: EditableContent;
     images: UploadedImage[];
     approval: ApprovalState;
+    supplierImageMapping?: SupplierImageMapping;
   };
 }
 
@@ -77,16 +82,18 @@ export default function PreReportPage() {
     content: EditableContent;
     images: UploadedImage[];
     approval: ApprovalState;
+    supplierImageMapping: SupplierImageMapping;
   }>({
     sections: DEFAULT_SECTIONS,
     cover: DEFAULT_COVER,
     content: DEFAULT_CONTENT,
     images: [],
     approval: DEFAULT_APPROVAL,
+    supplierImageMapping: {},
   });
 
   // Getters for destructured fields so existing code works without changes
-  const { sections, cover, content, images, approval } = preReportConfig;
+  const { sections, cover, content, images, approval, supplierImageMapping } = preReportConfig;
 
   // Ref to always have access to the latest state inside async calls/effects
   const preReportConfigRef = useRef(preReportConfig);
@@ -127,6 +134,13 @@ export default function PreReportPage() {
     setPreReportConfig(prev => ({
       ...prev,
       approval: typeof valOrFn === 'function' ? valOrFn(prev.approval) : valOrFn
+    }));
+  };
+
+  const setSupplierImageMapping = (valOrFn: SupplierImageMapping | ((prev: SupplierImageMapping) => SupplierImageMapping)) => {
+    setPreReportConfig(prev => ({
+      ...prev,
+      supplierImageMapping: typeof valOrFn === 'function' ? valOrFn(prev.supplierImageMapping) : valOrFn
     }));
   };
 
@@ -194,24 +208,35 @@ export default function PreReportPage() {
               cover: config.cover || DEFAULT_COVER,
               content: config.content || DEFAULT_CONTENT,
               images: storedImages.length > 0 ? storedImages : (config.images || []),
-              approval: config.approval || DEFAULT_APPROVAL
+              approval: config.approval || DEFAULT_APPROVAL,
+              supplierImageMapping: config.supplierImageMapping || {},
             });
           } else {
             // Prefill cover values from report base data
+            const resolvedClient = resolveClientName(
+              reportData.warehouseName,
+              reportData.location
+            );
+            const resolvedPeriod = resolveReportingPeriod(
+              undefined,
+              reportData.quarter,
+              reportData.year
+            );
             setPreReportConfig({
               sections: DEFAULT_SECTIONS,
               cover: {
                 ...DEFAULT_COVER,
                 reportTitle: reportData.title || `Q${reportData.quarter} Inventory Report`,
-                clientName: reportData.warehouseName || reportData.location || "Default Client",
-                reportingPeriod: `${reportData.quarter} ${reportData.year}`,
+                clientName: resolvedClient,
+                reportingPeriod: resolvedPeriod,
                 preparedBy: reportData.preparedBy || "",
                 checkedBy: reportData.checkedBy || "",
                 approvedBy: reportData.approvedBy || "",
               },
               content: DEFAULT_CONTENT,
               images: storedImages,
-              approval: DEFAULT_APPROVAL
+              approval: DEFAULT_APPROVAL,
+              supplierImageMapping: {},
             });
           }
 
@@ -333,6 +358,38 @@ export default function PreReportPage() {
     });
   }, [metrics, formattedRows, report, cover.clientName]);
 
+  // ── SINGLE SOURCE OF TRUTH: SharedReportModel ──
+  // This model is the canonical representation consumed by:
+  //   1. Live Web Preview (ClientReportDocument via model prop)
+  //   2. PDF Export (html2canvas capture of the same component)
+  //   3. PowerPoint Export (pptxgenjs consuming the same model)
+  // Any edit in the Pre-Report Builder mutates the `preReportConfig`
+  // state, which flows into this memo and automatically propagates
+  // to all three outputs without separate layout definitions.
+  const sharedReportModel = useMemo(
+    () => buildSharedReportModel({
+      sections,
+      cover,
+      content,
+      images,
+      supplierImageMapping,
+      approval,
+      formattedRows,
+      agingRecords,
+      reportMeta: {
+        quarter: report?.quarter || "Q1",
+        year: report?.year || 2026,
+        location: report?.location || "",
+        title: cover.reportTitle || report?.title,
+        warehouseName: cover.clientName || report?.warehouseName,
+      },
+    }),
+    [sections, cover, content, images, supplierImageMapping, approval, formattedRows, agingRecords, report]
+  );
+
+  // Derived from the shared model for convenience
+  const documentPageCount = sharedReportModel.totalPages;
+
   const qaIssues = useMemo(() => {
     console.log("[ApprovalPipeline] Running QA Validation...");
     const issues = runQA({
@@ -422,6 +479,9 @@ export default function PreReportPage() {
           break;
         case 'team':
           status = images.length > 0 ? 'complete' : 'review';
+          break;
+        case 'supplierSpotlight':
+          status = 'complete';
           break;
       }
       
@@ -568,6 +628,31 @@ export default function PreReportPage() {
         throw new Error(`Validation failed: ${errors.map(e => e.message).join("; ")}`);
       }
 
+      // Parity & Consistency Gate Check
+      const sharedModel = buildSharedReportModel({
+        sections: configToSave.sections,
+        cover: configToSave.cover,
+        content: configToSave.content,
+        images: configToSave.images,
+        supplierImageMapping: configToSave.supplierImageMapping,
+        approval: configToSave.approval,
+        formattedRows: items,
+        agingRecords,
+        reportMeta: {
+          quarter: report?.quarter || "Q1",
+          year: report?.year || 2026,
+          location: report?.location || "Dammam, KSA",
+          title: configToSave.cover.reportTitle || report?.title,
+          warehouseName: configToSave.cover.clientName || report?.warehouseName,
+        },
+      });
+
+      const parityResult = validateReportParity(sharedModel);
+      if (!parityResult.isValid) {
+        console.warn("[ApprovalPipeline] Report Parity Gate failed:", parityResult.errors);
+        throw new Error(`Single Source of Truth Validation Failed: ${parityResult.errors.join("; ")}`);
+      }
+
       console.log("[ApprovalPipeline] Approving configuration. Writing to Firestore...");
       const docRef = doc(db, "reports", id);
       try {
@@ -607,9 +692,10 @@ export default function PreReportPage() {
     );
   }
 
+  // sortedSections and enabledSections are already computed inside sharedReportModel
+  // documentPageCount is derived from sharedReportModel.totalPages (line ~381)
   const sortedSections = [...sections].sort((a, b) => a.order - b.order);
   const enabledSections = sortedSections.filter(s => s.enabled);
-  const documentPageCount = countClientReportPages(sections, images);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -749,11 +835,22 @@ export default function PreReportPage() {
 
 
             {activeTab === 'images' && (
-              <ImageManager
-                images={images}
-                onImagesChange={setImages}
-                registerPromise={registerPromise}
-              />
+              <>
+                <ImageManager
+                  images={images.filter(img => !img.supplierName)}
+                  onImagesChange={(genericImgs) => {
+                    const supplierImgs = images.filter(img => !!img.supplierName);
+                    setImages([...genericImgs, ...supplierImgs]);
+                  }}
+                  registerPromise={registerPromise}
+                />
+                <SupplierEvidenceManager
+                  suppliersByVariance={reportAnalytics.suppliersByVariance}
+                  images={images}
+                  onImagesChange={setImages}
+                  registerPromise={registerPromise}
+                />
+              </>
             )}
 
             {activeTab === 'approve' && (
@@ -851,19 +948,7 @@ export default function PreReportPage() {
                 className="flex flex-col gap-8"
               >
                 <ClientReportDocument
-                  sections={sections}
-                  cover={cover}
-                  content={content}
-                  images={images}
-                  metrics={metrics}
-                  narrative={narrative}
-                  rows={formattedRows}
-                  analytics={reportAnalytics}
-                  reportMeta={{
-                    quarter: report?.quarter || "",
-                    year: report?.year || "",
-                    location: report?.location || ""
-                  }}
+                  model={sharedReportModel}
                 />
               </div>
             </div>

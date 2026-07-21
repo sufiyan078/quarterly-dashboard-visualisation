@@ -10,7 +10,8 @@ export type ReportSectionType =
   | 'divisionItems'  // Division Items Mapped & Risk Table (client p.6)
   | 'workbooks'      // Workbook Ingestion & Count Comparison (client p.7)
   | 'suppliers'      // Supplier Analysis — Supplier Risk Overview (client p.8)
-  | 'suppliersAll'   // All Suppliers Breakdown (client p.9)
+  | 'supplierSpotlight' // Dynamic Supplier Spotlight (1 page per top-5 supplier by abs variance)
+  | 'suppliersAll'   // Top 15 Suppliers by ERP Value (client p.9)
   | 'workforce'      // Workforce Analysis — Count Team Performance (client p.10)
   | 'leaderboard'    // Physical Count Team Leaderboard (client p.11)
   | 'distribution'   // (legacy) Inventory Distribution
@@ -61,7 +62,11 @@ export interface UploadedImage {
   url: string;
   caption: string;
   category: string;
+  supplierName?: string;
 }
+
+/** Maps supplier names (top 5 by absolute variance) to evidence image IDs. */
+export type SupplierImageMapping = Record<string, string | null>;
 
 export interface ApprovalState {
   reportReviewed: boolean;
@@ -86,15 +91,20 @@ export const DEFAULT_SECTIONS: ReportSection[] = [
   { id: 'divisionItems', title: 'Division Items Mapped & Risk Table', type: 'divisionItems', enabled: true, order: 5, description: 'Item catalog distribution by cost center and top variance divisions', notes: '' },
   { id: 'workbooks', title: 'Workbook Ingestion & Count Comparison', type: 'workbooks', enabled: true, order: 6, description: 'Ingested worksheet statistics and physical vs system quantities', notes: '' },
   { id: 'suppliers', title: 'Supplier Risk Overview', type: 'suppliers', enabled: true, order: 7, description: 'Supplier analysis: mapped entities, exposure, and variance share', notes: '' },
-  { id: 'suppliersAll', title: 'All Suppliers Breakdown', type: 'suppliersAll', enabled: true, order: 8, description: 'Detailed inventory analytics for all resolved supplier entities', notes: '' },
-  { id: 'workforce', title: 'Count Team Performance', type: 'workforce', enabled: true, order: 9, description: 'Workforce analysis: active counters, productivity, and accuracy', notes: '' },
-  { id: 'leaderboard', title: 'Physical Count Team Leaderboard', type: 'leaderboard', enabled: true, order: 10, description: 'Verification speed and accuracy metrics for field counters', notes: '' },
-  { id: 'risk', title: 'High-Risk Discrepancy Analysis', type: 'risk', enabled: true, order: 11, description: 'Financial risk: absolute exposure and where it concentrates', notes: '' },
-  { id: 'riskItems', title: 'Top 10 High-Risk Discrepancy Items', type: 'riskItems', enabled: true, order: 12, description: 'Item rows representing the highest financial vulnerability', notes: '' },
-  { id: 'validation', title: 'Reconciliation Registry Overview', type: 'validation', enabled: true, order: 13, description: 'Full registry: filtered stats and action-required summary', notes: '' },
-  { id: 'actionItems', title: 'Items Requiring Action', type: 'actionItems', enabled: true, order: 14, description: 'High-risk open items requiring management follow-up', notes: '' },
-  { id: 'team', title: 'Proofs & Site Photographs', type: 'team', enabled: true, order: 15, description: 'Uploaded proof photographs; expands to extra pages, skipped when empty', notes: '' },
-  { id: 'backcover', title: 'Thank You', type: 'backcover', enabled: true, order: 16, description: 'Closing page', notes: '' },
+  { id: 'supplierSpotlight1', title: 'Supplier Spotlight #1', type: 'supplierSpotlight', enabled: true, order: 8, description: 'Deep-dive page for the #1 supplier by absolute variance', notes: '' },
+  { id: 'supplierSpotlight2', title: 'Supplier Spotlight #2', type: 'supplierSpotlight', enabled: true, order: 9, description: 'Deep-dive page for the #2 supplier by absolute variance', notes: '' },
+  { id: 'supplierSpotlight3', title: 'Supplier Spotlight #3', type: 'supplierSpotlight', enabled: true, order: 10, description: 'Deep-dive page for the #3 supplier by absolute variance', notes: '' },
+  { id: 'supplierSpotlight4', title: 'Supplier Spotlight #4', type: 'supplierSpotlight', enabled: true, order: 11, description: 'Deep-dive page for the #4 supplier by absolute variance', notes: '' },
+  { id: 'supplierSpotlight5', title: 'Supplier Spotlight #5', type: 'supplierSpotlight', enabled: true, order: 12, description: 'Deep-dive page for the #5 supplier by absolute variance', notes: '' },
+  { id: 'suppliersAll', title: 'Top 15 Suppliers by ERP Value', type: 'suppliersAll', enabled: true, order: 13, description: 'Suppliers ranked by total ERP inventory value for the current reporting period', notes: '' },
+  { id: 'workforce', title: 'Count Team Performance', type: 'workforce', enabled: true, order: 14, description: 'Workforce analysis: active counters, productivity, and accuracy', notes: '' },
+  { id: 'leaderboard', title: 'Physical Count Team Leaderboard', type: 'leaderboard', enabled: true, order: 15, description: 'Verification speed and accuracy metrics for field counters', notes: '' },
+  { id: 'risk', title: 'High-Risk Discrepancy Analysis', type: 'risk', enabled: true, order: 16, description: 'Financial risk: absolute exposure and where it concentrates', notes: '' },
+  { id: 'riskItems', title: 'Top 10 High-Risk Discrepancy Items', type: 'riskItems', enabled: true, order: 17, description: 'Item rows representing the highest financial vulnerability', notes: '' },
+  { id: 'validation', title: 'Reconciliation Registry Overview', type: 'validation', enabled: true, order: 18, description: 'Full registry: filtered stats and action-required summary', notes: '' },
+  { id: 'actionItems', title: 'Top 15 High-Risk Items', type: 'actionItems', enabled: true, order: 19, description: 'High-risk open items requiring management follow-up', notes: '' },
+  { id: 'team', title: 'Proofs & Site Photographs', type: 'team', enabled: true, order: 20, description: 'Uploaded proof photographs; expands to extra pages, skipped when empty', notes: '' },
+  { id: 'backcover', title: 'Thank You', type: 'backcover', enabled: true, order: 21, description: 'Closing page', notes: '' },
 ];
 
 /**
@@ -171,3 +181,12 @@ export const DEFAULT_APPROVAL: ApprovalState = {
   tablesVerified: false,
   readyForExport: false,
 };
+
+export interface ReportMeta {
+  quarter: string;
+  year: number | string;
+  location: string;
+  title?: string;
+  warehouseName?: string;
+}
+

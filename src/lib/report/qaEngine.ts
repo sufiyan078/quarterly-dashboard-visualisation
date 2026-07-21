@@ -1,6 +1,5 @@
-import { ReportSection, CoverPageData, EditableContent, UploadedImage } from "@/types/preReport";
+import { ReportSection, CoverPageData, EditableContent, UploadedImage, ReportMeta } from "@/types/preReport";
 import { PreReportMetrics, ReportNarrative } from "@/lib/report/insightEngine";
-import { ReportMeta } from "@/components/pre-report/ExecutiveReportDocument";
 
 export interface QAIssue {
   id: string;

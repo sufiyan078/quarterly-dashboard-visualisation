@@ -19,13 +19,15 @@ import { PersonnelEntry } from "@/types/personnel";
 import { computeDashboardMetrics } from "@/lib/inventory/dashboardCalculations";
 import { buildReportNarrative, PreReportMetrics } from "@/lib/report/insightEngine";
 import {
-  ReportSection, CoverPageData, EditableContent, UploadedImage, ApprovalState,
+  ReportSection, CoverPageData, EditableContent, UploadedImage, ApprovalState, SupplierImageMapping,
   DEFAULT_COVER, DEFAULT_CONTENT, mergeWithDefaultSections
 } from "@/types/preReport";
 import {
   ClientReportDocument, countClientReportPages, CLIENT_PAGE_W, CLIENT_PAGE_H,
 } from "@/components/pre-report/ClientReportDocument";
 import { buildReportAnalytics, validateReportAnalytics } from "@/lib/report/analytics";
+import { buildSharedReportModel } from "@/lib/report/reportModel";
+import { validateReportParity } from "@/lib/report/reportValidationGate";
 import { exportReportPpt } from "@/lib/report/pptExport";
 import { loadProofImages } from "@/lib/report/proofImages";
 import { C, TYPOGRAPHY, LAYOUT } from "@/lib/report/designTokens";
@@ -63,6 +65,7 @@ interface Report {
     content: EditableContent;
     images: UploadedImage[];
     approval: ApprovalState;
+    supplierImageMapping?: SupplierImageMapping;
   };
 }
 
@@ -178,6 +181,89 @@ export default function ReportBuilder() {
     fetchReportAndItems();
   }, [id]);
 
+  // Format raw items once; reused by metrics and the narrative engine
+  const formattedRows = items.map(item => {
+    const erpQty = item.erpQty !== undefined ? item.erpQty : 0;
+    const physicalQty = item.physicalQty !== undefined ? item.physicalQty : 0;
+    const differenceQty = physicalQty - erpQty;
+    const unitCost = item.unitCost || 0;
+    const erpValue = erpQty * unitCost;
+    const physicalValue = physicalQty * unitCost;
+    const varianceValue = differenceQty * unitCost;
+    const absoluteVarianceValue = Math.abs(varianceValue);
+    
+    return {
+      ...item,
+      itemCode: item.itemCode || "",
+      erpQty,
+      physicalQty,
+      differenceQty,
+      absoluteDifferenceQty: Math.abs(differenceQty),
+      unitCost,
+      erpValue,
+      physicalValue,
+      varianceValue,
+      absoluteVarianceValue,
+      sheetName: item.sheetName || "Sheet 1",
+      supplier: item.supplierName || item.detectedSupplierName || item.supplier || "Others",
+      reported: item.reported || "",
+      status: (item.status as any) || "open",
+      validationWarnings: item.validationWarnings || []
+    };
+  });
+
+  // Shared analytics object — the single source of truth consumed by the
+  // dashboard, the pre-report preview, and the final PDF (no duplicate KPIs).
+  const reportAnalytics = buildReportAnalytics(formattedRows, agingRecords);
+  const extendedMetrics: PreReportMetrics = reportAnalytics.metrics;
+
+  // Resolve the pre-report configuration saved at step 4 (with fallbacks
+  // for reports that never visited the pre-report stage).
+  const preConfig = report?.preReportConfig;
+  const pdfSections = mergeWithDefaultSections(preConfig?.sections);
+  const pdfCover: CoverPageData = preConfig?.cover ?? {
+    ...DEFAULT_COVER,
+    reportTitle: report?.title || "Inventory Report",
+    clientName: report?.warehouseName || report?.location || "",
+    reportingPeriod: `${report?.quarter || ""} ${report?.year || ""}`.trim(),
+    preparedBy: report?.preparedBy || "",
+    checkedBy: report?.checkedBy || "",
+    approvedBy: report?.approvedBy || "",
+  };
+  const pdfContent: EditableContent = preConfig?.content ?? DEFAULT_CONTENT;
+  const pdfImages: UploadedImage[] = proofImages.length > 0 ? proofImages : (preConfig?.images ?? []);
+
+  // Generated narrative (insights, risks, recommendations) — presentation only
+  const narrative = buildReportNarrative({
+    quarter: report?.quarter || "",
+    year: report?.year || "",
+    clientName: pdfCover.clientName || "",
+    location: report?.location || "",
+    metrics: extendedMetrics,
+    rows: formattedRows,
+  });
+
+  const enabledSectionCount = pdfSections.filter(s => s.enabled).length;
+
+  // ── SINGLE SOURCE OF TRUTH: SharedReportModel ──
+  // Build the canonical model once. The same model is consumed by:
+  //   1. PDF capture template (ClientReportDocument via model prop below)
+  //   2. Export handlers (handleGeneratePdf / handleExportPpt) for validation
+  //   3. PowerPoint exporter (pptExport.ts) for deck generation
+  const sharedModel = buildSharedReportModel({
+    sections: pdfSections,
+    cover: pdfCover,
+    content: pdfContent,
+    images: pdfImages,
+    formattedRows,
+    agingRecords,
+    reportMeta: { quarter: report?.quarter || "", year: report?.year || "", location: report?.location || "" },
+    supplierImageMapping: preConfig?.supplierImageMapping,
+  });
+
+  const documentPageCount = sharedModel.totalPages;
+  const totalPdfPages = documentPageCount + (personnelList.length > 0 ? 1 : 0);
+
   const handleGeneratePdf = async () => {
     if (isGenerating) return;
     if (!report) {
@@ -188,13 +274,12 @@ export default function ReportBuilder() {
     setMessage(null);
     setError(null);
 
-    // Consistency gate: the report may only be generated when the shared
-    // analytics object passes cross-validation, guaranteeing the PDF can
-    // never contradict the dashboard.
-    const consistencyErrors = validateReportAnalytics(reportAnalytics);
-    if (consistencyErrors.length > 0) {
+    // Single source of truth consistency gate: validate the pre-computed
+    // SharedReportModel (the exact same model driving the PDF template) before export
+    const validation = validateReportParity(sharedModel);
+    if (!validation.isValid) {
       setError(
-        `Report generation blocked — dashboard/report consistency check failed: ${consistencyErrors.join(" ")}`
+        `PDF generation blocked — dashboard/report consistency check failed: ${validation.errors.join("; ")}`
       );
       setIsGenerating(false);
       return;
@@ -268,12 +353,12 @@ export default function ReportBuilder() {
     setMessage(null);
     setError(null);
 
-    // Same consistency gate as the PDF: the deck may only be generated
-    // when the shared analytics object passes cross-validation.
-    const consistencyErrors = validateReportAnalytics(reportAnalytics);
-    if (consistencyErrors.length > 0) {
+    // Single source of truth consistency gate: validate the pre-computed
+    // SharedReportModel (the exact same model driving the PDF template) before export
+    const validation = validateReportParity(sharedModel);
+    if (!validation.isValid) {
       setError(
-        `PowerPoint export blocked — dashboard/report consistency check failed: ${consistencyErrors.join(" ")}`
+        `PowerPoint export blocked — dashboard/report consistency check failed: ${validation.errors.join("; ")}`
       );
       setIsExportingPpt(false);
       return;
@@ -282,12 +367,13 @@ export default function ReportBuilder() {
     try {
       const safeTitle = (report.title || "Inventory_Report").replace(/[^a-z0-9]/gi, "_").toLowerCase();
       await exportReportPpt({
-        sections: pdfSections,
+        model: sharedModel,
+        analytics: reportAnalytics,
+        narrative: narrative,
         cover: pdfCover,
         content: pdfContent,
+        sections: pdfSections,
         images: pdfImages,
-        analytics: reportAnalytics,
-        narrative,
         reportMeta: { quarter: report.quarter, year: report.year, location: report.location },
         fileName: `${safeTitle}_${report.quarter}_${report.year}.pptx`,
       });
@@ -301,8 +387,6 @@ export default function ReportBuilder() {
     }
   };
 
-
-
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-[#090b11]">
@@ -311,72 +395,6 @@ export default function ReportBuilder() {
       </div>
     );
   }
-
-  // Format raw items once; reused by metrics and the narrative engine
-  const formattedRows = items.map(item => {
-      const erpQty = item.erpQty !== undefined ? item.erpQty : 0;
-      const physicalQty = item.physicalQty !== undefined ? item.physicalQty : 0;
-      const differenceQty = physicalQty - erpQty;
-      const unitCost = item.unitCost || 0;
-      const erpValue = erpQty * unitCost;
-      const physicalValue = physicalQty * unitCost;
-      const varianceValue = differenceQty * unitCost;
-      const absoluteVarianceValue = Math.abs(varianceValue);
-      
-      return {
-        ...item,
-        itemCode: item.itemCode || "",
-        erpQty,
-        physicalQty,
-        differenceQty,
-        absoluteDifferenceQty: Math.abs(differenceQty),
-        unitCost,
-        erpValue,
-        physicalValue,
-        varianceValue,
-        absoluteVarianceValue,
-        sheetName: item.sheetName || "Sheet 1",
-        supplier: item.supplierName || item.detectedSupplierName || item.supplier || "Others",
-        reported: item.reported || "",
-        status: (item.status as any) || "open",
-        validationWarnings: item.validationWarnings || []
-      };
-    });
-
-  // Shared analytics object — the single source of truth consumed by the
-  // dashboard, the pre-report preview, and the final PDF (no duplicate KPIs).
-  const reportAnalytics = buildReportAnalytics(formattedRows, agingRecords);
-  const extendedMetrics: PreReportMetrics = reportAnalytics.metrics;
-
-  // Resolve the pre-report configuration saved at step 4 (with fallbacks
-  // for reports that never visited the pre-report stage).
-  const preConfig = report?.preReportConfig;
-  const pdfSections = mergeWithDefaultSections(preConfig?.sections);
-  const pdfCover: CoverPageData = preConfig?.cover ?? {
-    ...DEFAULT_COVER,
-    reportTitle: report?.title || "Inventory Report",
-    clientName: report?.warehouseName || report?.location || "",
-    reportingPeriod: `${report?.quarter || ""} ${report?.year || ""}`.trim(),
-    preparedBy: report?.preparedBy || "",
-    checkedBy: report?.checkedBy || "",
-    approvedBy: report?.approvedBy || "",
-  };
-  const pdfContent: EditableContent = preConfig?.content ?? DEFAULT_CONTENT;
-  const pdfImages: UploadedImage[] = proofImages.length > 0 ? proofImages : (preConfig?.images ?? []);
-
-  // Generated narrative (insights, risks, recommendations) — presentation only
-  const narrative = buildReportNarrative({
-    quarter: report?.quarter || "",
-    year: report?.year || "",
-    clientName: pdfCover.clientName || "",
-    location: report?.location || "",
-    metrics: extendedMetrics,
-    rows: formattedRows,
-  });
-
-  const enabledSectionCount = pdfSections.filter(s => s.enabled).length;
-  const documentPageCount = countClientReportPages(pdfSections, pdfImages);
-  const totalPdfPages = documentPageCount + (personnelList.length > 0 ? 1 : 0);
 
 
 
@@ -558,17 +576,9 @@ export default function ReportBuilder() {
             color: "#E8EEF7",
           }}
         >
-          {/* Client-blueprint report pages (shared with Pre-Report preview) */}
+          {/* Client-blueprint report pages — driven by SharedReportModel */}
           <ClientReportDocument
-            sections={pdfSections}
-            cover={pdfCover}
-            content={pdfContent}
-            images={pdfImages}
-            metrics={extendedMetrics}
-            narrative={narrative}
-            rows={formattedRows}
-            analytics={reportAnalytics}
-            reportMeta={{ quarter: report.quarter, year: report.year, location: report.location }}
+            model={sharedModel}
             totalPagesOverride={totalPdfPages}
           />
 

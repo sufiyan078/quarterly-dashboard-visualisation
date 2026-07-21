@@ -2,12 +2,13 @@
 
 import React from "react";
 import {
-  ReportSection, CoverPageData, EditableContent, UploadedImage,
+  ReportSection, CoverPageData, EditableContent, UploadedImage, SupplierImageMapping,
 } from "@/types/preReport";
 import {
   ReportNarrative, PreReportMetrics, fmtSAR, fmtPct,
 } from "@/lib/report/insightEngine";
 import { ReportAnalytics, buildReportAnalytics } from "@/lib/report/analytics";
+import { SharedReportModel } from "@/lib/report/reportModel";
 import { DARK, TYPOGRAPHY } from "@/lib/report/designTokens";
 
 /* ════════════════════════════════════════════════════════════════
@@ -32,13 +33,18 @@ export interface ReportMeta {
 }
 
 interface ClientReportDocumentProps {
-  sections: ReportSection[];
-  cover: CoverPageData;
-  content: EditableContent;
-  images: UploadedImage[];
-  metrics: PreReportMetrics;
-  narrative: ReportNarrative;
-  reportMeta: ReportMeta;
+  /** When provided, the SharedReportModel is the SINGLE SOURCE OF TRUTH.
+      All page order, kickers, totalPages, analytics, metrics, narrative,
+      and content are derived exclusively from this model. The individual
+      props below are ignored when `model` is supplied. */
+  model?: SharedReportModel;
+  sections?: ReportSection[];
+  cover?: CoverPageData;
+  content?: EditableContent;
+  images?: UploadedImage[];
+  metrics?: PreReportMetrics;
+  narrative?: ReportNarrative;
+  reportMeta?: ReportMeta;
   /** Raw formatted rows (already produced by the existing pipeline);
       used only for display-time grouping. Optional. */
   rows?: any[];
@@ -48,6 +54,8 @@ interface ClientReportDocumentProps {
   /** Extra pages the host appends after this document (e.g. the
       builder's personnel appendix) so footers number correctly. */
   totalPagesOverride?: number;
+  /** Supplier-to-evidence-image mapping for spotlight pages. */
+  supplierImageMapping?: SupplierImageMapping;
 }
 
 /* ─── Layout (A4 landscape @96dpi) ─── */
@@ -59,7 +67,7 @@ const PROOFS_PER_PAGE = 6;
 
 /** Images that appear on Proofs & Site Photographs pages. */
 export function getProofImages(images: UploadedImage[]): UploadedImage[] {
-  return images.filter(img => !String(img.category || "").toLowerCase().includes("logo"));
+  return images.filter(img => !String(img.category || "").toLowerCase().includes("logo") && !img.supplierName);
 }
 
 /** Total pages this document renders for the given config. */
@@ -250,6 +258,7 @@ const signedMoney = (n: number) =>
 /* ─── Page shell ─── */
 function DeckPage({
   children, pageNumber, totalPages, kicker, title, subtitle, notes, sectionId, brandFooter,
+  compact, padOverride,
 }: {
   children: React.ReactNode;
   pageNumber: number;
@@ -260,6 +269,10 @@ function DeckPage({
   notes?: string;
   sectionId?: string;
   brandFooter?: boolean;
+  /** Tighter header / footer spacing to maximize content area. */
+  compact?: boolean;
+  /** Override the default page padding (CSS shorthand). */
+  padOverride?: string;
 }) {
   return (
     <div
@@ -267,7 +280,7 @@ function DeckPage({
       className="pdf-report-page pdf-report-page--deck"
       style={{
         width: `${CLIENT_PAGE_W}px`, height: `${CLIENT_PAGE_H}px`,
-        padding: PAD, boxSizing: "border-box",
+        padding: padOverride || PAD, boxSizing: "border-box",
         display: "flex", flexDirection: "column",
         backgroundColor: DARK.pageBg,
         backgroundImage: `linear-gradient(165deg, ${DARK.pageBg} 0%, ${DARK.pageBgEnd} 100%)`,
@@ -284,11 +297,11 @@ function DeckPage({
       </span>
 
       {(kicker || title) && (
-        <div style={{ marginBottom: "14px" }}>
+        <div style={{ marginBottom: compact ? "6px" : "14px" }}>
           {kicker && <span style={{ ...kickerStyle, display: "block" }}>{kicker}</span>}
           {title && <h2 style={titleStyle}>{title}</h2>}
-          <div style={{ height: "1px", backgroundColor: DARK.divider, marginTop: "12px" }} />
-          {subtitle && <span style={{ ...dimCaption, fontSize: "10px", display: "block", marginTop: "9px" }}>{subtitle}</span>}
+          <div style={{ height: "1px", backgroundColor: DARK.divider, marginTop: compact ? "6px" : "12px" }} />
+          {subtitle && <span style={{ ...dimCaption, fontSize: "10px", display: "block", marginTop: compact ? "4px" : "9px" }}>{subtitle}</span>}
         </div>
       )}
 
@@ -300,7 +313,7 @@ function DeckPage({
         <p style={{ fontFamily: F, fontSize: "8.5px", color: DARK.faint, fontStyle: "italic", margin: "8px 0 0" }}>{notes}</p>
       )}
 
-      <div style={{ marginTop: "12px" }}>
+      <div style={{ marginTop: compact ? "6px" : "12px" }}>
         <span style={{ ...dimCaption, display: "block" }}>Physical Inventory Verification &amp; Reconciliation Report</span>
         {brandFooter && (
           <span style={{ ...dimCaption, display: "block", marginTop: "2px" }}>
@@ -334,14 +347,25 @@ const riskColorOf = (level: string) =>
 function CoverPage({ cover, metrics, pageNumber, totalPages }: {
   cover: CoverPageData; metrics: PreReportMetrics; pageNumber: number; totalPages: number;
 }) {
-  const dateLabel = (cover.reportingPeriod || "").trim()
-    ? cover.reportingPeriod.toUpperCase()
-    : new Date().toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" }).toUpperCase();
-  const title = (cover.reportTitle || "Physical Inventory Verification Report").toUpperCase();
-  const words = title.split(/\s+/);
-  const mid = Math.ceil(words.length / 2);
-  const line1 = words.slice(0, mid).join(" ");
-  const line2 = words.slice(mid).join(" ");
+  const kickerPeriod = (cover.reportingPeriod || "").trim() || "Q2 2026";
+  /* ── Client-mandated fixed cover layout ──
+     Title and subtitle are hardcoded to match the client-approved reference
+     deck (Screenshot 2). The cover.reportTitle / reportSubtitle fields are
+     intentionally ignored here so the cover page is pixel-identical to the
+     approved design regardless of what the user enters in Cover Designer. */
+  const formattedTitle = "PHYSICAL INVENTORY\nVERIFICATION &\nRECONCILIATION";
+  const subtitle = "Inventory Health, Reconciliation & Financial Risk Review";
+  const clientName = (cover.clientName || "GAS ARABIAN SERVICES").toUpperCase();
+
+  const score = Number(metrics.healthScore) || 0;
+  const rawStatus = (metrics.inventoryHealthStatus || "").trim().toUpperCase();
+  const ratingText = rawStatus.endsWith("RATING") ? rawStatus : `${rawStatus || "EXCELLENT"} RATING`;
+
+  // SVG Circular progress ring parameters
+  const radius = 90;
+  const strokeWidth = 18;
+  const circumference = 2 * Math.PI * radius;
+  const strokeDashoffset = circumference - (Math.min(100, Math.max(0, score)) / 100) * circumference;
 
   return (
     <div
@@ -349,68 +373,161 @@ function CoverPage({ cover, metrics, pageNumber, totalPages }: {
       className="pdf-report-page pdf-report-page--deck"
       style={{
         width: `${CLIENT_PAGE_W}px`, height: `${CLIENT_PAGE_H}px`,
-        padding: "40px 56px", boxSizing: "border-box",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        backgroundColor: DARK.pageBg,
-        backgroundImage: `linear-gradient(165deg, ${DARK.pageBg} 0%, ${DARK.pageBgEnd} 100%)`,
-        position: "relative", overflow: "hidden", fontFamily: F,
+        padding: 0, margin: 0, boxSizing: "border-box",
+        display: "flex", flexDirection: "row", alignItems: "stretch",
+        backgroundColor: "#0B182B",
+        position: "relative", overflow: "hidden",
       }}
     >
-      <span style={{ position: "absolute", top: "30px", right: "38px", fontFamily: F, fontSize: "12px", fontWeight: 800, color: DARK.gold }}>
-        {pageNumber}
-      </span>
+      {/* Left Column (~62% width) - Dark Navy Background #0B182B */}
+      <div style={{
+        width: "62%", height: "100%",
+        backgroundColor: "#0B182B",
+        padding: "54px 64px 40px",
+        display: "flex", flexDirection: "column", justifyContent: "space-between",
+        boxSizing: "border-box",
+      }}>
+        {/* Top Content: Kicker, Title, Subtitle, Gold Line, Logos */}
+        <div>
+          {/* Top Logo Container: Company Logo & "Is Certified By" Client Logo */}
+          {(cover.companyLogoUrl || cover.clientLogoUrl) ? (
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              minHeight: "48px", marginBottom: "24px", gap: "16px",
+            }}>
+              {cover.companyLogoUrl ? (
+                <img
+                  src={cover.companyLogoUrl}
+                  alt="Company Logo"
+                  style={{ maxHeight: "48px", maxWidth: "200px", objectFit: "contain" }}
+                />
+              ) : <div />}
 
-      <div />
+              {cover.clientLogoUrl ? (
+                <img
+                  src={cover.clientLogoUrl}
+                  alt="Is Certified By"
+                  style={{ maxHeight: "44px", maxWidth: "160px", objectFit: "contain" }}
+                />
+              ) : <div />}
+            </div>
+          ) : (
+            <div style={{ height: "32px", marginBottom: "32px" }} />
+          )}
 
-      <div>
-        {cover.companyLogoUrl && (
-          <img src={cover.companyLogoUrl} alt="Logo" style={{ maxHeight: "48px", objectFit: "contain", marginBottom: "22px" }} />
-        )}
-        <h1 style={{
-          fontFamily: F, fontSize: "44px", fontWeight: 800, color: DARK.white,
-          lineHeight: 1.25, letterSpacing: "0.005em", margin: 0,
-        }}>
-          {line1}
-          <br />
-          {line2}
-        </h1>
-        <div style={{
-          display: "inline-block", marginTop: "26px",
-          backgroundColor: DARK.gold, borderRadius: "5px", padding: "11px 30px",
-        }}>
-          <span style={{ fontFamily: F, fontSize: "12px", fontWeight: 800, color: "#102039", letterSpacing: "0.04em" }}>
-            DATE: {dateLabel}
+          {/* Kicker: Q2 2026 · EXECUTIVE AUDIT REPORT */}
+          <div style={{
+            fontFamily: "sans-serif", fontSize: "13px", fontWeight: 700,
+            letterSpacing: "0.2em", textTransform: "uppercase", color: "#C69A39",
+            marginBottom: "18px",
+          }}>
+            {kickerPeriod} &nbsp;·&nbsp; EXECUTIVE AUDIT REPORT
+          </div>
+
+          {/* Main Title: Georgia Serif, Bold White, 3 Lines */}
+          <h1 style={{
+            fontFamily: 'Georgia, "Times New Roman", Times, serif',
+            fontSize: "44px", fontWeight: 700, color: "#FFFFFF",
+            lineHeight: 1.15, letterSpacing: "-0.01em", margin: "0 0 20px 0",
+            whiteSpace: "pre-line", textTransform: "uppercase",
+          }}>
+            {formattedTitle}
+          </h1>
+
+          {/* Subtitle: Georgia Serif, Italic, Soft Grey-Blue */}
+          <p style={{
+            fontFamily: 'Georgia, "Times New Roman", Times, serif',
+            fontSize: "16px", fontWeight: 400, fontStyle: "italic",
+            color: "#A0B0C6", margin: "0 0 26px 0", lineHeight: 1.4,
+          }}>
+            {subtitle}
+          </p>
+
+          {/* Gold Accent Divider Bar */}
+          <div style={{
+            width: "100px", height: "3px", backgroundColor: "#C69A39", borderRadius: "2px",
+          }} />
+        </div>
+
+        {/* Bottom Left Meta / Branding */}
+        <div>
+          <span style={{
+            fontFamily: 'Georgia, "Times New Roman", Times, serif',
+            fontSize: "14px", fontWeight: 700, letterSpacing: "0.08em",
+            color: "#FFFFFF", textTransform: "uppercase", display: "block",
+          }}>
+            {clientName}
+          </span>
+          <span style={{
+            fontFamily: "sans-serif", fontSize: "11px", color: "#6C7D93", display: "block", marginTop: "6px",
+          }}>
+            © {new Date().getFullYear()} All Rights Reserved
           </span>
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
-        <div>
-          <span style={{
-            fontFamily: F, fontSize: "13px", fontWeight: 800, letterSpacing: "0.28em",
-            color: "#C6D2E4", display: "block",
+      {/* Right Column (~38% width) — Dedicated Health Score Panel */}
+      <div style={{
+        width: "38%", height: "100%",
+        backgroundColor: "#12243E",
+        padding: "0 32px",
+        display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
+        boxSizing: "border-box",
+        position: "relative",
+      }}>
+        {/* Panel Header: INVENTORY HEALTH SCORE */}
+        <span style={{
+          fontFamily: "sans-serif", fontSize: "13px", fontWeight: 700, letterSpacing: "0.24em",
+          color: "#A0B0C6", textTransform: "uppercase", marginBottom: "36px", display: "block",
+          textAlign: "center",
+        }}>
+          INVENTORY HEALTH SCORE
+        </span>
+
+        {/* Large SVG Circular Progress Ring (260px) */}
+        <div style={{ position: "relative", width: "260px", height: "260px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <svg width="260" height="260" viewBox="0 0 260 260" style={{ transform: "rotate(-90deg)" }}>
+            {/* Background Track Circle */}
+            <circle cx="130" cy="130" r="108" stroke="#0B182B" strokeWidth="22" fill="transparent" />
+            {/* Progress Arc (Gold) - strokeLinecap="butt" preserves exact gap for scores < 100% */}
+            <circle
+              cx="130" cy="130" r="108"
+              stroke="#C69A39" strokeWidth="22"
+              strokeDasharray={2 * Math.PI * 108}
+              strokeDashoffset={2 * Math.PI * 108 - (Math.min(100, Math.max(0, score)) / 100) * 2 * Math.PI * 108}
+              strokeLinecap="butt" fill="transparent"
+            />
+          </svg>
+
+          {/* Inner Content: Large Score Number + Rating Text */}
+          <div style={{
+            position: "absolute", top: 0, left: 0, width: "100%", height: "100%",
+            display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+            textAlign: "center", padding: "10px", boxSizing: "border-box", pointerEvents: "none",
           }}>
-            {(cover.clientName || "GAS ARABIAN SERVICES").toUpperCase()}
-          </span>
-          <span style={{ ...dimCaption, display: "block", marginTop: "5px" }}>
-            © {new Date().getFullYear()}  All Rights Reserved
-          </span>
+            <span style={{
+              fontFamily: 'Georgia, "Times New Roman", Times, serif',
+              fontSize: "62px", fontWeight: 700, color: "#FFFFFF",
+              lineHeight: 1, display: "block", letterSpacing: "-0.02em", margin: 0, padding: 0,
+            }}>
+              {score % 1 !== 0 ? score.toFixed(1) : score}
+            </span>
+            <span style={{
+              fontFamily: "sans-serif", fontSize: "12px", fontWeight: 700, letterSpacing: "0.2em",
+              color: "#C69A39", textTransform: "uppercase", display: "block", marginTop: "8px", margin: "8px 0 0 0",
+            }}>
+              {ratingText}
+            </span>
+          </div>
         </div>
 
-        <div style={{
-          border: `1.5px solid ${DARK.gold}`, borderRadius: "10px",
-          padding: "20px 40px", textAlign: "center", marginBottom: "8px",
+        {/* Bottom Right Page Number */}
+        <span style={{
+          position: "absolute", bottom: "24px", right: "32px",
+          fontFamily: "sans-serif", fontSize: "11px", color: "#6C7D93",
         }}>
-          <span style={{ fontFamily: F, fontSize: "28px", fontWeight: 800, color: DARK.green, display: "block" }}>
-            {metrics.healthScore}
-          </span>
-          <span style={{
-            fontFamily: F, fontSize: "8.5px", fontWeight: 800, letterSpacing: "0.1em",
-            color: DARK.white, textTransform: "uppercase", display: "block", marginTop: "8px",
-          }}>
-            Health Score · {metrics.inventoryHealthStatus}
-          </span>
-        </div>
+          {pageNumber}
+        </span>
       </div>
     </div>
   );
@@ -945,32 +1062,56 @@ function SuppliersPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAna
 }
 
 function SuppliersAllPage({ metrics, a }: { metrics: PreReportMetrics; a: ReportAnalytics }) {
-  const list = a.suppliersByVariance.slice(0, 15);
+  /* Sort by ERP Value descending — uses existing metrics.suppliers dataset,
+     the same single source of truth as the Dashboard. No new calculations. */
+  const list = [...a.metrics.suppliers]
+    .sort((x, y) => y.erpValue - x.erpValue)
+    .slice(0, 15);
+
+  /** Display-time sanitizer: strips Unicode replacement characters (U+FFFD)
+      that may appear when Excel source files contain non-UTF-8 encoded text.
+      This is purely cosmetic — no upstream data is modified. */
+  const cleanName = (name: string) => name.replace(/\uFFFD/g, "").trim();
+
+  const sth: React.CSSProperties = {
+    ...th,
+    padding: "10px 8px",
+    fontSize: "10.5px",
+  };
+  const std: React.CSSProperties = {
+    ...td,
+    padding: "10px 8px",
+    fontSize: "10.5px",
+    lineHeight: 1.3,
+  };
+  /* Column width percentages — give supplier name the lion's share;
+     tableLayout: fixed ensures columns respect these widths exactly. */
+  const colW = { name: "34%", items: "7%", erp: "18%", cov: "11%", var: "18%", match: "12%" };
   return (
-    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+    <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
       <thead>
         <tr>
-          <th style={th}>Supplier Name</th>
-          <th style={th}>Items</th>
-          <th style={th}>ERP Value</th>
-          <th style={th}>Coverage</th>
-          <th style={th}>Abs. Variance</th>
-          <th style={th}>Match Rate</th>
+          <th style={{ ...sth, width: colW.name }}>Supplier Name</th>
+          <th style={{ ...sth, width: colW.items }}>Items</th>
+          <th style={{ ...sth, width: colW.erp }}>ERP Value</th>
+          <th style={{ ...sth, width: colW.cov }}>Value Coverage</th>
+          <th style={{ ...sth, width: colW.var }}>Abs. Variance</th>
+          <th style={{ ...sth, width: colW.match }}>Line Match Rate</th>
         </tr>
       </thead>
       <tbody>
         {list.map((s) => (
           <tr key={s.supplier}>
-            <td style={{ ...td, fontWeight: 700, color: DARK.white }}>{s.supplier}</td>
-            <td style={td}>{s.itemCount.toLocaleString("en-US")}</td>
-            <td style={td}>{money(s.erpValue)}</td>
-            <td style={{ ...td, color: s.coverageRate >= 90 ? DARK.green : s.coverageRate >= 50 ? DARK.gold : DARK.orange }}>
+            <td style={{ ...std, fontWeight: 700, color: DARK.white, wordWrap: "break-word" as const, overflowWrap: "break-word" as const, whiteSpace: "normal" }}>{cleanName(s.supplier)}</td>
+            <td style={std}>{s.itemCount.toLocaleString("en-US")}</td>
+            <td style={std}>{money(s.erpValue, 0)}</td>
+            <td style={{ ...std, color: s.coverageRate >= 90 ? DARK.green : s.coverageRate >= 50 ? DARK.gold : DARK.orange }}>
               {fmtPct(s.coverageRate)}
             </td>
-            <td style={{ ...td, color: s.absoluteVarianceValue > 1000 ? DARK.orange : DARK.text, fontWeight: s.absoluteVarianceValue > 1000 ? 800 : 400 }}>
-              {money(s.absoluteVarianceValue)}
+            <td style={{ ...std, color: s.absoluteVarianceValue > 1000 ? DARK.orange : DARK.text, fontWeight: s.absoluteVarianceValue > 1000 ? 800 : 400 }}>
+              {money(s.absoluteVarianceValue, 0)}
             </td>
-            <td style={td}>{fmtPct(s.matchingRate)}</td>
+            <td style={std}>{fmtPct(s.matchingRate)}</td>
           </tr>
         ))}
       </tbody>
@@ -1218,8 +1359,23 @@ function ActionItemsPage({ a }: { a: ReportAnalytics }) {
   // Top 15 of the SAME dataset the dashboard ledger uses (non-closed
   // items), sorted by absolute variance descending.
   const rows = a.actionItems.slice(0, 15);
-  const cth: React.CSSProperties = { ...th, padding: "6px 10px", fontSize: "9px" };
-  const ctd: React.CSSProperties = { ...td, padding: "4px 10px", fontSize: "9px" };
+  const cleanVal = (val: string) => String(val ?? "").replace(/\uFFFD/g, "").trim();
+
+  const cth: React.CSSProperties = { ...th, padding: "6px 8px", fontSize: "9px" };
+  const ctd: React.CSSProperties = { ...td, padding: "5px 8px", fontSize: "9px" };
+  
+  const colW = {
+    itemCode: "12%",
+    supplier: "22%",
+    division: "10%",
+    erpQty: "9%",
+    physQty: "9%",
+    varQty: "9%",
+    varVal: "15%",
+    status: "7%",
+    priority: "7%"
+  };
+
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
       {rows.length === 0 ? (
@@ -1228,18 +1384,18 @@ function ActionItemsPage({ a }: { a: ReportAnalytics }) {
         </p>
       ) : (
         <>
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed" }}>
             <thead>
               <tr>
-                <th style={cth}>Item Code</th>
-                <th style={cth}>Supplier</th>
-                <th style={cth}>Division</th>
-                <th style={{ ...cth, textAlign: "right" }}>ERP Qty</th>
-                <th style={{ ...cth, textAlign: "right" }}>Physical Qty</th>
-                <th style={{ ...cth, textAlign: "right" }}>Variance Qty</th>
-                <th style={{ ...cth, textAlign: "right" }}>Variance Value</th>
-                <th style={cth}>Status</th>
-                <th style={cth}>Action Priority</th>
+                <th style={{ ...cth, width: colW.itemCode }}>Item Code</th>
+                <th style={{ ...cth, width: colW.supplier }}>Supplier</th>
+                <th style={{ ...cth, width: colW.division }}>Division</th>
+                <th style={{ ...cth, width: colW.erpQty, textAlign: "right" }}>ERP Qty</th>
+                <th style={{ ...cth, width: colW.physQty, textAlign: "right" }}>Physical Qty</th>
+                <th style={{ ...cth, width: colW.varQty, textAlign: "right" }}>Variance Qty</th>
+                <th style={{ ...cth, width: colW.varVal, textAlign: "right" }}>Variance Value</th>
+                <th style={{ ...cth, width: colW.status }}>Status</th>
+                <th style={{ ...cth, width: colW.priority }}>Action Priority</th>
               </tr>
             </thead>
             <tbody>
@@ -1248,11 +1404,31 @@ function ActionItemsPage({ a }: { a: ReportAnalytics }) {
                 const v = r.varianceValue ?? 0;
                 return (
                   <tr key={i}>
-                    <td style={{ ...ctd, fontWeight: 700, color: DARK.white }}>{r.itemCode || "N/A"}</td>
-                    <td style={{ ...ctd, whiteSpace: "nowrap" }}>
-                      {trunc(r.supplier || "Others", 22)}
+                    <td style={{ 
+                      ...ctd, 
+                      fontWeight: 700, 
+                      color: DARK.white,
+                      wordWrap: "break-word" as const, 
+                      overflowWrap: "break-word" as const, 
+                      whiteSpace: "normal" as const 
+                    }}>
+                      {cleanVal(r.itemCode || "N/A")}
                     </td>
-                    <td style={ctd}>{r.org || "—"}</td>
+                    <td style={{ 
+                      ...ctd, 
+                      wordWrap: "break-word" as const, 
+                      overflowWrap: "break-word" as const, 
+                      whiteSpace: "normal" as const,
+                      lineHeight: 1.25 
+                    }}>
+                      {cleanVal(r.supplier || "Others")}
+                    </td>
+                    <td style={{ 
+                      ...ctd, 
+                      wordWrap: "break-word" as const, 
+                      overflowWrap: "break-word" as const, 
+                      whiteSpace: "normal" as const 
+                    }}>{cleanVal(r.org || "—")}</td>
                     <td style={{ ...ctd, textAlign: "right" }}>{(r.erpQty ?? 0).toLocaleString("en-US")}</td>
                     <td style={{ ...ctd, textAlign: "right" }}>{(r.physicalQty ?? 0).toLocaleString("en-US")}</td>
                     <td style={{ ...ctd, textAlign: "right", color: (r.differenceQty ?? 0) < 0 ? DARK.red : (r.differenceQty ?? 0) > 0 ? DARK.green : DARK.text }}>
@@ -1314,6 +1490,9 @@ function ProofsPage({ images }: { images: UploadedImage[] }) {
 }
 
 function ThankYouPage({ cover, pageNumber }: { cover: CoverPageData; pageNumber: number }) {
+  const companyName = (cover.clientName || "GAS ARABIAN SERVICES").toUpperCase();
+  const currentYear = new Date().getFullYear();
+
   return (
     <div
       id="page-backcover"
@@ -1321,29 +1500,284 @@ function ThankYouPage({ cover, pageNumber }: { cover: CoverPageData; pageNumber:
       style={{
         width: `${CLIENT_PAGE_W}px`, height: `${CLIENT_PAGE_H}px`,
         padding: "40px 56px", boxSizing: "border-box",
-        display: "flex", flexDirection: "column", justifyContent: "space-between",
-        backgroundColor: DARK.pageBg,
-        backgroundImage: `linear-gradient(165deg, ${DARK.pageBg} 0%, ${DARK.pageBgEnd} 100%)`,
-        position: "relative", overflow: "hidden", fontFamily: F,
+        display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center",
+        backgroundColor: "#0B182B",
+        position: "relative", overflow: "hidden",
+        textAlign: "center",
       }}
     >
-      <span style={{ position: "absolute", top: "30px", right: "38px", fontFamily: F, fontSize: "12px", fontWeight: 800, color: DARK.gold }}>
+      {/* Subtle Bottom Right Page Number */}
+      <span style={{ position: "absolute", bottom: "28px", right: "38px", fontFamily: "sans-serif", fontSize: "11px", color: "#6C7D93" }}>
         {pageNumber}
       </span>
-      <div />
-      <h1 style={{ fontFamily: F, fontSize: "48px", fontWeight: 800, color: DARK.white, margin: 0 }}>
-        Thank You
-      </h1>
-      <div>
-        <span style={{
-          fontFamily: F, fontSize: "13px", fontWeight: 800, letterSpacing: "0.28em",
-          color: "#C6D2E4", display: "block",
+
+      {/* Centered Composition */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+        {/* Uploaded Logos Bar */}
+        {(cover.companyLogoUrl || cover.clientLogoUrl) && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "28px", marginBottom: "32px" }}>
+            {cover.companyLogoUrl && (
+              <img src={cover.companyLogoUrl} alt="Company Logo" style={{ maxHeight: "52px", maxWidth: "200px", objectFit: "contain" }} />
+            )}
+            {cover.clientLogoUrl && (
+              <img src={cover.clientLogoUrl} alt="Is Certified By" style={{ maxHeight: "46px", maxWidth: "160px", objectFit: "contain" }} />
+            )}
+          </div>
+        )}
+
+        {/* Main Title */}
+        <h1 style={{
+          fontFamily: 'Georgia, "Times New Roman", Times, serif',
+          fontSize: "56px",
+          fontWeight: 700,
+          color: "#FFFFFF",
+          margin: 0,
+          lineHeight: 1.1,
+          letterSpacing: "-0.01em",
         }}>
-          {(cover.clientName || "GAS ARABIAN SERVICES").toUpperCase()}
+          Thank You
+        </h1>
+
+        {/* Premium Gold Divider Line */}
+        <div style={{
+          width: "80px",
+          height: "3px",
+          backgroundColor: "#C69A39",
+          borderRadius: "2px",
+          margin: "24px 0",
+        }} />
+
+        {/* Dynamic Company Name */}
+        <span style={{
+          fontFamily: "sans-serif",
+          fontSize: "13px",
+          fontWeight: 700,
+          letterSpacing: "0.26em",
+          color: "#C69A39",
+          textTransform: "uppercase",
+          display: "block",
+        }}>
+          {companyName}
         </span>
-        <span style={{ ...dimCaption, display: "block", marginTop: "5px" }}>
-          © {new Date().getFullYear()}  All Rights Reserved
+
+        {/* Dynamic Copyright */}
+        <span style={{
+          fontFamily: "sans-serif",
+          fontSize: "11px",
+          color: "#6C7D93",
+          display: "block",
+          marginTop: "10px",
+          letterSpacing: "0.04em",
+        }}>
+          © {currentYear} All Rights Reserved
         </span>
+      </div>
+    </div>
+  );
+}
+
+/* ════════════════════════════════════════════════════════════════
+   SUPPLIER SPOTLIGHT PAGE
+   One page per top-5 supplier by absolute variance.
+   Reuses EXISTING SupplierPerformance data from ReportAnalytics —
+   no new calculations. Evidence image comes from the mapping or
+   falls back to uploaded proof images by rank.
+   ════════════════════════════════════════════════════════════════ */
+
+function SupplierSpotlightPage({ supplier, rank, totalSuppliers, totalAbsVariance, images, mappedImageId }: {
+  supplier: { supplier: string; erpValue: number; itemCount: number; matchedCount: number;
+    matchingRate: number; coverageRate: number; absoluteVarianceValue: number;
+    varianceValue: number; verifiedValue: number };
+  rank: number;
+  totalSuppliers: number;
+  totalAbsVariance: number;
+  images: UploadedImage[];
+  mappedImageId?: string | null;
+}) {
+  const s = supplier;
+  const varianceShare = totalAbsVariance > 0 ? (s.absoluteVarianceValue / totalAbsVariance) * 100 : 0;
+  const riskLevel = s.absoluteVarianceValue >= 50000 ? "CRITICAL" : s.absoluteVarianceValue >= 10000 ? "HIGH" : s.absoluteVarianceValue >= 1000 ? "MEDIUM" : "LOW";
+  const riskColor = riskLevel === "CRITICAL" ? DARK.red : riskLevel === "HIGH" ? DARK.orange : riskLevel === "MEDIUM" ? DARK.gold : DARK.green;
+
+  // Rule-based insight generation using existing thresholds
+  const insights: string[] = [];
+  insights.push(
+    `${fmtPct(s.coverageRate)} of the supplier's ERP inventory value (${fmtSAR(s.verifiedValue)} of ${fmtSAR(s.erpValue)}) was physically verified during the audit.`
+  );
+  insights.push(
+    `${s.matchedCount} of ${s.itemCount} inventory records reconciled successfully with zero variance, resulting in a ${fmtPct(s.matchingRate)} Line Item Match Rate.`
+  );
+
+  if (varianceShare >= 25) insights.push(`This supplier alone accounts for ${fmtPct(varianceShare)} of total portfolio absolute variance — a primary driver of organizational financial risk.`);
+  else if (varianceShare >= 10) insights.push(`Contributes ${fmtPct(varianceShare)} of total absolute variance, representing a notable risk concentration.`);
+
+  if (s.varianceValue < 0) insights.push(`Net shortage of ${fmtSAR(Math.abs(s.varianceValue))} suggests potential stock loss, damage, or unrecorded consumption.`);
+  else if (s.varianceValue > 0) insights.push(`Net excess of ${fmtSAR(s.varianceValue)} suggests unrecorded deliveries or incorrect unit-of-measure entries.`);
+
+  // Evidence images uploaded specifically for this supplier
+  const supplierEvidences = (images || []).filter(img => img.supplierName === s.supplier);
+  const primaryEvidence = supplierEvidences[0] || (mappedImageId ? images?.find(img => img.id === mappedImageId) : null);
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "12px", height: "100%" }}>
+      {/* Header: Supplier Name + Rank + Risk Badge */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px", minWidth: 0 }}>
+          <span style={{
+            fontFamily: F, fontSize: "26px", fontWeight: 800, color: DARK.gold,
+            backgroundColor: DARK.card, border: `1.5px solid ${DARK.cardBorder}`,
+            borderRadius: "10px", width: "48px", height: "48px",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            #{rank}
+          </span>
+          <div style={{ minWidth: 0 }}>
+            <span style={{ fontFamily: F, fontSize: "18px", fontWeight: 800, color: DARK.white, display: "block", whiteSpace: "nowrap" }}>
+              {trunc(s.supplier, 40)}
+            </span>
+            <span style={{ ...dimCaption, display: "block", marginTop: "3px" }}>
+              Supplier #{rank} of {totalSuppliers} by absolute variance
+            </span>
+          </div>
+        </div>
+        <span style={{
+          fontFamily: F, fontSize: "10px", fontWeight: 800, letterSpacing: "0.1em",
+          color: riskColor, backgroundColor: DARK.card, border: `1px solid ${DARK.cardBorder}`,
+          borderRadius: "6px", padding: "7px 16px", flexShrink: 0,
+        }}>
+          {riskLevel} RISK
+        </span>
+      </div>
+
+      {/* KPI Row */}
+      <div style={{ display: "flex", gap: "12px" }}>
+        <KpiCard label="Line Items" value={s.itemCount.toLocaleString("en-US")} caption="Catalog entries from this supplier" />
+        <KpiCard label="ERP Book Value" value={fmtSAR(s.erpValue)} caption="Total ledger valuation" />
+        <KpiCard label="Absolute Variance" value={fmtSAR(s.absoluteVarianceValue)} color={DARK.orange} caption={`${fmtPct(varianceShare)} of portfolio risk`} />
+        <KpiCard label="Line Match Rate" value={fmtPct(s.matchingRate)} color={s.matchingRate >= 95 ? DARK.green : s.matchingRate >= 80 ? DARK.gold : DARK.orange} caption="Zero-variance line items" />
+      </div>
+
+      {/* Main content: Charts + Evidence Image */}
+      <div style={{ display: "flex", gap: "14px", flexGrow: 1, minHeight: 0 }}>
+        {/* Left: Coverage & Match Donut + Insights */}
+        <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "12px", minWidth: 0 }}>
+          {/* Coverage & Match Rate visual */}
+          <div style={{ ...card, padding: "12px 16px", display: "flex", alignItems: "center", gap: "20px" }}>
+            <Donut
+              segments={[
+                { value: Math.max(s.coverageRate, 0.001), color: DARK.green },
+                { value: Math.max(100 - s.coverageRate, 0.001), color: "rgba(255,255,255,0.08)" },
+              ]}
+              size={110} thickness={18}
+              centerTop={fmtPct(s.coverageRate, 0)}
+              centerBottom="VAL COVERAGE"
+              centerTopSize="16px"
+            />
+            <div style={{ minWidth: 0, flex: 1, display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontFamily: F, fontSize: "11px", fontWeight: 800, color: DARK.white, display: "block" }}>
+                Verification Summary
+              </span>
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                {/* Metric 1: Inventory Value Coverage */}
+                <div style={{ backgroundColor: DARK.cardSoft, borderRadius: "5px", padding: "5px 9px", border: `1px solid ${DARK.cardBorder}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, color: DARK.white }}>
+                      Inventory Value Coverage
+                    </span>
+                    <span style={{ fontFamily: F, fontSize: "9.5px", fontWeight: 800, color: DARK.green }}>
+                      {fmtPct(s.coverageRate)}
+                    </span>
+                  </div>
+                  <span style={{ ...dimCaption, fontSize: "8px", display: "block", marginTop: "1px", lineHeight: 1.35 }}>
+                    {fmtSAR(s.verifiedValue)} of {fmtSAR(s.erpValue)} ERP inventory value was physically verified.
+                  </span>
+                </div>
+
+                {/* Metric 2: Line Item Match Rate */}
+                <div style={{ backgroundColor: DARK.cardSoft, borderRadius: "5px", padding: "5px 9px", border: `1px solid ${DARK.cardBorder}` }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontFamily: F, fontSize: "9px", fontWeight: 700, color: DARK.white }}>
+                      Line Item Match Rate
+                    </span>
+                    <span style={{ fontFamily: F, fontSize: "9.5px", fontWeight: 800, color: s.matchingRate >= 95 ? DARK.green : s.matchingRate >= 80 ? DARK.gold : DARK.orange }}>
+                      {fmtPct(s.matchingRate)}
+                    </span>
+                  </div>
+                  <span style={{ ...dimCaption, fontSize: "8px", display: "block", marginTop: "1px", lineHeight: 1.35 }}>
+                    {s.matchedCount} of {s.itemCount} inventory line items matched exactly with zero variance.
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Insights */}
+          <div style={{ ...card, padding: "14px 18px", flexGrow: 1, minHeight: 0 }}>
+            <span style={{ ...cardLabel, fontSize: "10px", letterSpacing: "0.06em" }}>Supplier Insights</span>
+            <div style={{ marginTop: "10px" }}>
+              {insights.slice(0, 4).map((ins, i) => (
+                <div key={i} style={{ display: "flex", gap: "10px", marginBottom: "8px" }}>
+                  <span style={{ color: DARK.gold, fontSize: "10px", lineHeight: "15px", flexShrink: 0 }}>▸</span>
+                  <span style={{ fontFamily: F, fontSize: "9.5px", color: DARK.text, lineHeight: 1.5 }}>{ins}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Evidence Image */}
+        <div style={{ ...card, padding: "12px", width: "320px", flexShrink: 0, display: "flex", flexDirection: "column" }}>
+          <span style={{ ...cardLabel, fontSize: "9px", letterSpacing: "0.06em", display: "block", marginBottom: "8px" }}>
+            SUPPLIER EVIDENCE {supplierEvidences.length > 0 ? `(${supplierEvidences.length})` : ""}
+          </span>
+          {primaryEvidence ? (
+            <>
+              <div style={{
+                flexGrow: 1, minHeight: 0, borderRadius: "6px", overflow: "hidden",
+                backgroundColor: DARK.cardSoft, display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <img src={primaryEvidence.url} alt={primaryEvidence.caption || primaryEvidence.name}
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }} />
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "6px", marginTop: "8px" }}>
+                <span style={{ fontFamily: F, fontSize: "8.5px", color: DARK.text, whiteSpace: "nowrap" }}>
+                  {trunc(primaryEvidence.caption || primaryEvidence.name || "Evidence photograph", 34)}
+                </span>
+                <span style={{
+                  flexShrink: 0, fontFamily: F, fontSize: "7px", fontWeight: 800, letterSpacing: "0.08em",
+                  textTransform: "uppercase", color: DARK.gold,
+                  border: `1px solid ${DARK.cardBorder}`, borderRadius: "3px", padding: "2px 6px",
+                }}>
+                  {s.supplier}
+                </span>
+              </div>
+              {supplierEvidences.length > 1 && (
+                <div style={{ display: "flex", gap: "6px", marginTop: "8px", overflowX: "auto" }}>
+                  {supplierEvidences.slice(1, 4).map((subImg) => (
+                    <div key={subImg.id} style={{
+                      width: "48px", height: "36px", borderRadius: "4px", overflow: "hidden",
+                      border: `1px solid ${DARK.cardBorder}`, flexShrink: 0, backgroundColor: DARK.cardSoft
+                    }}>
+                      <img src={subImg.url} alt={subImg.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div style={{
+              flexGrow: 1, minHeight: 0, borderRadius: "6px",
+              backgroundColor: DARK.cardSoft, display: "flex", flexDirection: "column",
+              alignItems: "center", justifyContent: "center", gap: "8px",
+            }}>
+              <span style={{ fontFamily: F, fontSize: "28px", color: DARK.faint }}>📷</span>
+              <span style={{ fontFamily: F, fontSize: "9px", color: DARK.faint, textAlign: "center" }}>
+                No evidence photo uploaded for {s.supplier}.
+                Upload photos in the Supplier Evidence Manager.
+              </span>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1361,6 +1795,7 @@ const SECTION_KICKERS: Record<string, string> = {
   divisionItems: "Division Analysis",
   workbooks: "Data Sources",
   suppliers: "Supplier Analysis",
+  supplierSpotlight: "Supplier Deep-Dive",
   suppliersAll: "Supplier Analysis",
   workforce: "Workforce Analysis",
   leaderboard: "Workforce Analysis",
@@ -1371,29 +1806,54 @@ const SECTION_KICKERS: Record<string, string> = {
   team: "Verification Evidence",
 };
 
-export function ClientReportDocument({
-  sections, cover, content, images, metrics, narrative, reportMeta, rows = [], analytics, totalPagesOverride,
-}: ClientReportDocumentProps) {
-  const enabled = [...sections].sort((a, b) => a.order - b.order).filter((s) => s.enabled);
-  const proofs = getProofImages(images);
+export function ClientReportDocument(props: ClientReportDocumentProps) {
+  // ── Resolve inputs: SharedReportModel is the canonical source ──
+  const m = props.model;
+  const sections = m?.enabledSections ?? [...(props.sections || [])].sort((a, b) => a.order - b.order).filter(s => s.enabled);
+  const cover = m?.cover ?? props.cover!;
+  const content = m?.content ?? props.content!;
+  const images = m?.images ?? props.images ?? [];
+  const metrics = m?.metrics ?? props.metrics!;
+  const narrative = m?.narrative ?? props.narrative!;
+  const supplierImageMapping = m?.supplierImageMapping ?? props.supplierImageMapping;
+  const rows = props.rows ?? [];
+
+  const proofs = m?.proofImages ?? getProofImages(images);
   const proofChunks: UploadedImage[][] = [];
   for (let i = 0; i < proofs.length; i += PROOFS_PER_PAGE) {
     proofChunks.push(proofs.slice(i, i + PROOFS_PER_PAGE));
   }
 
   // Single source of truth for every KPI (same object as the dashboard).
-  const a = analytics ?? buildReportAnalytics(rows);
-  const totalPages = totalPagesOverride ?? countClientReportPages(sections, images);
+  const a = m?.analytics ?? props.analytics ?? buildReportAnalytics(rows);
+  const totalPages = m?.totalPages ?? props.totalPagesOverride ?? countClientReportPages(props.sections || sections, images);
 
-  // Flatten sections into page descriptors (team expands / collapses)
-  type PageDesc = { section: ReportSection; proofChunk?: UploadedImage[]; proofIndex?: number };
+  // Page descriptors — when SharedReportModel is provided, use its
+  // deterministic page sequence (pageIndex, kicker, title) so that
+  // Web Preview, PDF, and PowerPoint share the exact same ordering.
+  type PageDesc = { section: ReportSection; proofChunk?: UploadedImage[]; proofIndex?: number; modelPageIndex?: number; modelKicker?: string };
   const pageDescs: PageDesc[] = [];
-  for (const section of enabled) {
-    if (section.type === "team") {
-      proofChunks.forEach((chunk, i) => pageDescs.push({ section, proofChunk: chunk, proofIndex: i }));
-      // no images -> section skipped entirely
-    } else {
-      pageDescs.push({ section });
+
+  if (m) {
+    // SharedReportModel path: deterministic page sequence
+    for (const page of m.pages) {
+      const section = sections.find(s => s.id === page.sectionId) || sections.find(s => s.type === page.sectionType);
+      if (!section) continue;
+      if (section.type === "team" && page.pageData?.chunk) {
+        pageDescs.push({ section, proofChunk: page.pageData.chunk, proofIndex: (page.pageData.pageNumber ?? 1) - 1, modelPageIndex: page.pageIndex, modelKicker: page.kicker });
+      } else {
+        pageDescs.push({ section, modelPageIndex: page.pageIndex, modelKicker: page.kicker });
+      }
+    }
+  } else {
+    // Legacy prop-based path (backward compatibility)
+    const enabled = sections;
+    for (const section of enabled) {
+      if (section.type === "team") {
+        proofChunks.forEach((chunk, i) => pageDescs.push({ section, proofChunk: chunk, proofIndex: i }));
+      } else {
+        pageDescs.push({ section });
+      }
     }
   }
 
@@ -1401,8 +1861,8 @@ export function ClientReportDocument({
     <>
       {pageDescs.map((desc, idx) => {
         const { section } = desc;
-        const pageNumber = idx + 1;
-        const kicker = SECTION_KICKERS[section.type] || section.title;
+        const pageNumber = desc.modelPageIndex ?? (idx + 1);
+        const kicker = desc.modelKicker ?? SECTION_KICKERS[section.type] ?? section.title;
 
         if (section.type === "cover") {
           return <CoverPage key={`${section.id}-${idx}`} cover={cover} metrics={metrics} pageNumber={pageNumber} totalPages={totalPages} />;
@@ -1463,10 +1923,29 @@ export function ClientReportDocument({
             );
           case "suppliersAll":
             return (
-              <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} subtitle="Detailed inventory analytics for all resolved supplier entities" brandFooter>
+              <DeckPage key={`${section.id}-${idx}`} {...pageProps} title="Top 15 Suppliers by ERP Value" subtitle="Suppliers ranked by total ERP inventory value for the current reporting period." brandFooter compact padOverride="28px 30px 22px">
                 <SuppliersAllPage metrics={metrics} a={a} />
               </DeckPage>
             );
+          case "supplierSpotlight": {
+            // Derive rank from section ID: supplierSpotlight1 → 0, supplierSpotlight2 → 1, etc.
+            const spotlightIndex = parseInt(section.id.replace("supplierSpotlight", ""), 10) - 1;
+            const spotlightSupplier = a.suppliersByVariance[spotlightIndex];
+            if (!spotlightSupplier) return null; // supplier doesn't exist at this rank
+            const mappedImgId = supplierImageMapping?.[spotlightSupplier.supplier] ?? null;
+            return (
+              <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={`Supplier Spotlight — ${trunc(spotlightSupplier.supplier, 32)}`} brandFooter>
+                <SupplierSpotlightPage
+                  supplier={spotlightSupplier}
+                  rank={spotlightIndex + 1}
+                  totalSuppliers={metrics.suppliers.length}
+                  totalAbsVariance={a.supplierAbsVarianceTotal}
+                  images={images}
+                  mappedImageId={mappedImgId}
+                />
+              </DeckPage>
+            );
+          }
           case "workforce":
             return (
               <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={section.title} brandFooter>
@@ -1499,7 +1978,15 @@ export function ClientReportDocument({
             );
           case "actionItems":
             return (
-              <DeckPage key={`${section.id}-${idx}`} {...pageProps} title={`${section.title} (${a.actionRequiredCount.toLocaleString("en-US")})`} subtitle="High-risk open items — displaying top rows" brandFooter>
+              <DeckPage 
+                key={`${section.id}-${idx}`} 
+                {...pageProps} 
+                title={`Top 15 High-Risk Items (${a.actionRequiredCount.toLocaleString("en-US")} Total Items Requiring Action)`} 
+                subtitle="The table below highlights the 15 highest-risk inventory items identified from the client's uploaded inventory data using the existing inventory risk assessment." 
+                brandFooter
+                compact
+                padOverride="28px 30px 22px"
+              >
                 <ActionItemsPage a={a} />
               </DeckPage>
             );
